@@ -17,10 +17,11 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include "private.h"
+#include <internals.h>
 #include <udjat/url.h>
+#include <udjat/tools/configuration.h>
 
-#ifdef HAVE_WINHTTP
+namespace Udjat {
 
 	#define INTERNET_TEXT wchar_t * __attribute__((cleanup(wchar_t_cleanup)))
 	#define INTERNET_HANDLE HINTERNET __attribute__((cleanup(hinternet_t_cleanup)))
@@ -39,64 +40,11 @@
 		}
 	}
 
-	Udjat::HTTP::Client::Client(const char *u) : url(u) {
-	}
-
-	Udjat::HTTP::Client::~Client() {
-	}
-
-	Udjat::HTTP::Client::Worker * Udjat::HTTP::Client::Worker::getInstance(HTTP::Client *client) {
+	HTTP::Client::Worker * HTTP::Client::Worker::getInstance(HTTP::Client *client) {
 		return new Worker(client);
 	}
 
-	std::string Udjat::HTTP::Client::get() {
-
-		string response;
-		Worker * worker = Worker::getInstance(this);
-
-		try {
-
-			response = worker->call("GET");
-
-		} catch(...) {
-
-			delete worker;
-			throw;
-
-		}
-
-		delete worker;
-		return response;
-
-	}
-
-	std::string Udjat::HTTP::Client::post(const char *payload) {
-
-		string response;
-		Worker * worker = Worker::getInstance(this);
-
-		try {
-
-			response = worker->call("POST",payload);
-
-		} catch(...) {
-
-			delete worker;
-			throw;
-
-		}
-
-		delete worker;
-		return response;
-
-	}
-
-	void Udjat::HTTP::Client::set(const HTTP::Client::Header &header) {
-		headers.push_back(header);
-		throw system_error(ENOTSUP,system_category(),"Not implemented");
-	}
-
-	Udjat::HTTP::Client::Worker::Worker(HTTP::Client *c) : client(c) {
+	HTTP::Client::Worker::Worker(HTTP::Client *c) : client(c) {
 
 		if(client->url.empty()) {
 			throw runtime_error("Empty URL");
@@ -104,7 +52,7 @@
 
 		// Open HTTP session
 		// https://docs.microsoft.com/en-us/windows/desktop/api/winhttp/nf-winhttp-winhttpopenrequest
-		static const char * userAgent = PACKAGE_NAME "/" PACKAGE_VERSION;
+		static const char * userAgent = "udjat/1.0";
 		wchar_t wUserAgent[256];
 		mbstowcs(wUserAgent, userAgent, strlen(userAgent)+1);
 
@@ -165,7 +113,7 @@
 
 	}
 
-	Udjat::HTTP::Client::Worker::~Worker() {
+	HTTP::Client::Worker::~Worker() {
 		WinHttpCloseHandle(this->session);
 	}
 
@@ -183,7 +131,7 @@
 		}
 	}
 
-	HINTERNET Udjat::HTTP::Client::Worker::connect() {
+	HINTERNET HTTP::Client::Worker::connect() {
 
 		URL_COMPONENTS urlComp;
 
@@ -191,6 +139,12 @@
 		mbstowcs(pwszUrl, client->url.c_str(), client->url.size()+1);
 
 		CrackUrl(pwszUrl, urlComp);
+
+#ifdef DEBUG
+		cout << "Connecting '";
+		wcout << urlComp.lpszHostName;
+		cout << "' port=" << urlComp.nPort << endl;
+#endif // DEBUG
 
 		HINTERNET connection =
 			WinHttpConnect(
@@ -208,12 +162,20 @@
 
 	}
 
-	std::string Udjat::HTTP::Client::Worker::wait(HINTERNET request) {
+	std::string HTTP::Client::Worker::wait(HINTERNET request) {
+
+#ifdef DEBUG
+		cout << "Waiting for response" << endl;
+#endif // DEBUG
 
 		// Wait for response
 		if(!WinHttpReceiveResponse(request, NULL)) {
 			throw Win32::Exception(this->client->url + ": Error receiving response");
 		}
+
+#ifdef DEBUG
+		cout << "Got response" << endl;
+#endif // DEBUG
 
 		// Get status code.
 		{
@@ -230,6 +192,10 @@
 				)) {
 					throw Udjat::Win32::Exception("Cant get HTTP status code");
 				}
+
+#ifdef DEBUG
+			cout << "The status code was " << dwStatusCode << endl;
+#endif // DEBUG
 
 			if(dwStatusCode != 200) {
 
@@ -279,7 +245,7 @@
 
 	}
 
-	HINTERNET Udjat::HTTP::Client::Worker::open(HINTERNET connection, const LPCWSTR pwszVerb) {
+	HINTERNET HTTP::Client::Worker::open(HINTERNET connection, const LPCWSTR pwszVerb) {
 
 		URL_COMPONENTS urlComp;
 
@@ -287,6 +253,12 @@
 		mbstowcs(pwszUrl, client->url.c_str(), client->url.size()+1);
 
 		CrackUrl(pwszUrl, urlComp);
+
+#ifdef DEBUG
+		cout << "Requesting '";
+		wcout << urlComp.lpszUrlPath;
+		cout << "'" << endl;
+#endif // DEBUG
 
 		HINTERNET req =
 			WinHttpOpenRequest(
@@ -309,7 +281,7 @@
 
 	}
 
-	void Udjat::HTTP::Client::Worker::send(HINTERNET request, const char *payload) {
+	void HTTP::Client::Worker::send(HINTERNET request, const char *payload) {
 
 		INTERNET_TEXT	lpszHeaders = NULL;
 		DWORD			dwHeadersLength = 0;
@@ -336,7 +308,7 @@
 
 	}
 
-	std::string Udjat::HTTP::Client::Worker::call(const char *verb, const char *payload) {
+	std::string HTTP::Client::Worker::call(const char *verb, const char *payload) {
 
 		INTERNET_TEXT wVerb = (wchar_t *) malloc(strlen(verb)*3);
 		mbstowcs(wVerb, verb, strlen(verb)+1);
@@ -357,11 +329,11 @@
 
 		}
 
-		return wait(request);
+		return this->wait(request);
 	}
 
 	/*
-	std::string Udjat::HTTP::Client::Worker::get() {
+	std::string HTTP::Client::Worker::get() {
 
 		INTERNET_HANDLE	connection = connect();
 		INTERNET_HANDLE	request = open(connection,L"GET");
@@ -371,7 +343,7 @@
 
 	}
 
-	std::string Udjat::HTTP::Client::Worker::post() {
+	std::string HTTP::Client::Worker::post() {
 
 		INTERNET_HANDLE	connection = connect();
 		INTERNET_HANDLE	request = open(connection,L"POST");
@@ -389,4 +361,4 @@
 	}
 	*/
 
-#endif // HAVE_WINHTTP
+}
