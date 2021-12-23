@@ -222,26 +222,16 @@ namespace Udjat {
 
 		}
 
-		DWORD szResponse = 0;
-		if(!WinHttpQueryDataAvailable(request, &szResponse)) {
-			return "";
+		stringstream response;
+		char buffer[4096] = {0};
+		DWORD length = 0;
+
+		while(WinHttpReadData(request, buffer, sizeof(buffer), &length) && length > 0) {
+			response.write(buffer,length);
+			length = 0;
 		}
 
-		char * text = new char[szResponse+1];
-		memset(text,0,szResponse+1);
-
-		if(!WinHttpReadData(request,text,szResponse,&szResponse)){
-
-			delete[] text;
-
-			throw Win32::Exception(this->client->url + ": Can't read data");
-		}
-
-		string response(text);
-
-		delete[] text;
-
-		return response;
+		return response.str();
 
 	}
 
