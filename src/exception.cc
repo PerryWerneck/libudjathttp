@@ -17,21 +17,36 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
- #include <config.h>
- #include <udjat/tools/http.h>
- #include <iostream>
+ #include <internals.h>
 
- using namespace std;
- using namespace Udjat;
+ namespace Udjat {
 
- #pragma GCC diagnostic ignored "-Wunused-parameter"
- #pragma GCC diagnostic ignored "-Wunused-function"
+	HTTP::Exception::Exception(unsigned int c, const char *u) : system_error(syscode(c), system_category()), code(c), url(u) {
+	}
 
-//---[ Implement ]------------------------------------------------------------------------------------------
+	HTTP::Exception::Exception(unsigned int c, const char *u, const char *m) : system_error(syscode(c),system_category(),m), code(c), url(u) {
+	}
 
-int main(int argc, char **argv) {
+	int HTTP::Exception::syscode(unsigned int code) {
 
-	cout << HTTP::Client("http://localhost").get() << endl;
+		static const struct {
+			unsigned int http;
+			int syscode;
+		} syscodes[] = {
+			{ 404, ENOENT },
+			{ 403, EPERM  }
+		};
 
-	return 0;
-}
+		for(size_t ix = 0; ix < (sizeof(syscodes)/sizeof(syscodes[0])); ix++) {
+
+			if(syscodes[ix].http == code) {
+				return syscodes[ix].syscode;
+			}
+
+		}
+
+		return ENODATA;
+	}
+
+
+ }

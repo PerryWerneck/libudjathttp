@@ -170,6 +170,12 @@ AC_DEFINE_UNQUOTED(PRODUCT_NAME, $app_cv_product, [The product name])
 AC_SUBST(PRODUCT_NAME,$app_cv_product)
 
 dnl ---------------------------------------------------------------------------
+dnl Check for libcurl
+dnl ---------------------------------------------------------------------------
+
+PKG_CHECK_MODULES( [CURL], [libcurl], AC_DEFINE(HAVE_CURL,[],[Do we have libcurl?]), AC_MSG_NOTICE([libcurl not present.]) )
+
+dnl ---------------------------------------------------------------------------
 dnl Output config
 dnl ---------------------------------------------------------------------------
 

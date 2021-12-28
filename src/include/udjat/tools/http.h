@@ -22,10 +22,25 @@
  #include <udjat/defs.h>
  #include <string>
  #include <vector>
+ #include <system_error>
 
  namespace Udjat {
 
 	namespace HTTP {
+
+		/// @brief Generic http exception
+		class Exception : public std::system_error {
+		private:
+			std::string url;
+			unsigned int code;
+
+		public:
+			Exception(unsigned int code, const char *url);
+			Exception(unsigned int code, const char *url, const char *message);
+
+			static int syscode(unsigned int code);
+
+		};
 
 		/// @brief Generic HTTP client component.
 		class UDJAT_API Client {
@@ -56,8 +71,7 @@
 			struct {
 				std::string username;
 				std::string password;
-			} authentication;
-
+			} credentials;
 
 		public:
 			Client(const Client &src) = delete;
@@ -69,6 +83,8 @@
 			~Client();
 
 			void set(const Header &header);
+
+			Client & setCredentials(const char *username, const char *password);
 
 			std::string get();
 			std::string post(const char *payload);
