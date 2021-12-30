@@ -26,8 +26,14 @@
 		unsigned int http;
 		int syscode;
 	} syscodes[] = {
-		{ 404, ENOENT },
-		{ 403, EPERM  }
+		{ 401, EPERM 		},
+		{ 403, EPERM 		},
+		{ 404, ENOENT		},
+		{ 405, EINVAL		},
+		{ 407, EPERM	 	},
+//		{ 407, ETIMEOUT 	},
+		{ 501, ENOTSUP		},
+//		{ 504, ETIMEOUT 	},
 	};
 
 	static int toSysError(unsigned int http) {
