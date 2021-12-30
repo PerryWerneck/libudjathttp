@@ -25,17 +25,17 @@
  namespace Udjat {
  #ifdef HAVE_CURL
 
+	#ifdef DEBUG
+		#define TRACE_DEFAULT true
+	#else
+		#define TRACE_DEFAULT false
+	#endif  // DEBUG
+
 	class CurlException : HTTP::Exception {
 	public:
 		CurlException(CURLcode code, const string &url) : HTTP::Exception(url.c_str(),curl_easy_strerror(code)) {
 		}
 	};
-
-//	#ifdef DEBUG
-//		#define TRACE_DEFAULT true
-//	#else
-		#define TRACE_DEFAULT false
-//	#endif  // DEBUG
 
 	HTTP::Client::Worker * HTTP::Client::Worker::getInstance(HTTP::Client *client) {
 		return new HTTP::Client::Worker(client);
@@ -75,11 +75,10 @@
 			}
 		}
 
-		/*
 		if(headers) {
-			curl_easy_setopt(hCurl, CURLOPT_HTTPHEADER, headers);
+			throw system_error(ENOTSUP,system_category(),"Cant set HTTP headers");
+//			curl_easy_setopt(hCurl, CURLOPT_HTTPHEADER, headers);
 		}
-		*/
 
 		if(!client->credentials.username.empty()) {
 			// Set credentials.
@@ -128,13 +127,12 @@
 
 		if(!strcasecmp(verb,"post")) {
 			curl_easy_setopt(hCurl, CURLOPT_POST, 1);
-
 		} else if(!strcasecmp(verb,"put")) {
 			curl_easy_setopt(hCurl, CURLOPT_PUT, 1);
-
-		} else if(strcasecmp(verb,"delete")) {
+		} else if(!strcasecmp(verb,"delete")) {
 			curl_easy_setopt(hCurl, CURLOPT_CUSTOMREQUEST, "DELETE");
-
+		} else if(strcasecmp(verb,"get")) {
+			throw system_error(EINVAL,system_category(),string{"Invalid or unsupported http verb: '"} + verb + "'");
 		}
 
 		if(Config::Value<bool>("http","trace",TRACE_DEFAULT).get()) {
