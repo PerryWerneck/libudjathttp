@@ -217,7 +217,7 @@ namespace Udjat {
 				ZeroMemory(text, sizeof(text));
 				wcstombs(text, buffer, 1023);
 
-				throw Udjat::HTTP::Exception(dwStatusCode,text);
+				throw Udjat::HTTP::Exception((unsigned int) dwStatusCode, this->client->url.c_str(), text);
 			}
 
 		}

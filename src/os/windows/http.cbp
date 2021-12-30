@@ -43,7 +43,7 @@
 		<Unit filename="../../client.cc" />
 		<Unit filename="../../include/internals.h" />
 		<Unit filename="../../include/udjat/tools/http.h" />
-		<Unit filename="../../testprogram/testprogram.cc" />
+		<Unit filename="../../testprogram/private-test.cc" />
 		<Unit filename="worker.cc" />
 		<Extensions />
 	</Project>
