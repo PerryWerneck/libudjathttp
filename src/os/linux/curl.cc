@@ -25,6 +25,12 @@
  namespace Udjat {
  #ifdef HAVE_CURL
 
+	class CurlException : HTTP::Exception {
+	public:
+		CurlException(CURLcode code, const string &url) : HTTP::Exception(url.c_str(),curl_easy_strerror(code)) {
+		}
+	};
+
 //	#ifdef DEBUG
 //		#define TRACE_DEFAULT true
 //	#else
@@ -96,7 +102,10 @@
 		CURLcode res = curl_easy_perform(hCurl);
 
 		if(res != CURLE_OK) {
-			throw runtime_error(string{"Error '"} + curl_easy_strerror(res) + " getting '" + this->client->url + "'");
+#ifdef DEBUG
+			cout << "CURL-Error=" << res << endl;
+#endif // DEBUG
+			throw CurlException(res,this->client->url);
 		}
 
 		long response_code = 0;

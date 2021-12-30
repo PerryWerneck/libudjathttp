@@ -74,5 +74,10 @@ namespace Udjat {
 		throw system_error(ENOTSUP,system_category(),"Not implemented");
 	}
 
+	HTTP::Client & HTTP::Client::setCredentials(const char *username, const char *password) {
+		credentials.username = username;
+		credentials.password = password;
+		return *this;
+	}
 
 }

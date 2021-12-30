@@ -28,17 +28,24 @@
 
 	namespace HTTP {
 
-		/// @brief Generic http exception
-		class Exception : public std::system_error {
-		private:
+		/// @brief HTTP exception.
+		class Exception : public std::runtime_error {
+		protected:
 			std::string url;
-			unsigned int code;
+
+			struct {
+				unsigned int http = -1;	///< @brief HTTP error code
+				std::error_code system;
+			} codes;
 
 		public:
-			Exception(unsigned int code, const char *url);
+			Exception(const char *url, const char *message);
 			Exception(unsigned int code, const char *url, const char *message);
+			Exception(unsigned int code, const char *url);
 
-			static int syscode(unsigned int code);
+			inline const std::error_code& code() const noexcept {
+				return codes.system;
+			}
 
 		};
 

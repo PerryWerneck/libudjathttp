@@ -18,35 +18,52 @@
  */
 
  #include <internals.h>
+ #include <cstring>
 
  namespace Udjat {
 
-	HTTP::Exception::Exception(unsigned int c, const char *u) : system_error(syscode(c), system_category()), code(c), url(u) {
-	}
+	static const struct {
+		unsigned int http;
+		int syscode;
+	} syscodes[] = {
+		{ 404, ENOENT },
+		{ 403, EPERM  }
+	};
 
-	HTTP::Exception::Exception(unsigned int c, const char *u, const char *m) : system_error(syscode(c),system_category(),m), code(c), url(u) {
-	}
-
-	int HTTP::Exception::syscode(unsigned int code) {
-
-		static const struct {
-			unsigned int http;
-			int syscode;
-		} syscodes[] = {
-			{ 404, ENOENT },
-			{ 403, EPERM  }
-		};
+	static int toSysError(unsigned int http) {
 
 		for(size_t ix = 0; ix < (sizeof(syscodes)/sizeof(syscodes[0])); ix++) {
-
-			if(syscodes[ix].http == code) {
+			if(syscodes[ix].http == http) {
 				return syscodes[ix].syscode;
 			}
-
 		}
 
-		return ENODATA;
+		return -1;
 	}
 
+	static string toSysMessage(unsigned int http) {
+
+		for(size_t ix = 0; ix < (sizeof(syscodes)/sizeof(syscodes[0])); ix++) {
+			if(syscodes[ix].http == http) {
+				return string(strerror(syscodes[ix].syscode));
+			}
+		}
+
+		return string{"HTTP error " + to_string(http)};
+	}
+
+	HTTP::Exception::Exception(const char *u, const char *message) : runtime_error(message), url(u) {
+#ifdef DEBUG
+		cerr << "Exception(" << url << "): " << message << endl;
+#endif // DEBUG
+	}
+
+	HTTP::Exception::Exception(unsigned int code, const char *url, const char *message) : Exception(url,message) {
+		codes.http = code;
+		codes.system = error_code(toSysError(code),system_category());
+	}
+
+	HTTP::Exception::Exception(unsigned int code, const char *url) : Exception(code,url,toSysMessage(code).c_str()) {
+	}
 
  }
