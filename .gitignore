@@ -52,4 +52,6 @@ po
 scripts
 config.h
 stamp-h1
+*.[0-9]
+
 

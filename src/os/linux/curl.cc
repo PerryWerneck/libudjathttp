@@ -264,7 +264,7 @@
 			unsigned int code;
 			char str[200];
 
-			if(sscanf(header.c_str()+5,"%u.%u %d %s",&v[0],&v[1],&code,&str) == 4) {
+			if(sscanf(header.c_str()+5,"%u.%u %d %s",&v[0],&v[1],&code,str) == 4) {
 				worker->message = str;
 			}
 

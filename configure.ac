@@ -58,10 +58,11 @@ case "$host" in
 		CFLAGS="$CFLAGS -pthread -D_WIN32_WINNT=0x0600"
 		CXXFLAGS="$CXXFLAGS -pthread -D_WIN32_WINNT=0x0600"
 		LDFLAGS="$LDFLAGS -pthread -lwinhttp"
-		DLL_LDFLAGS="-shared -Wl,--output-def,\$(@D)/\$(LIBNAME).def"
+		DLL_LDFLAGS="-shared -Wl,--output-def,\$(@D)/udjathttp.def"
 		AC_SUBST(LIBEXT,.dll)
 		AC_SUBST(EXEEXT,.exe)
 		AC_SUBST(OSNAME,windows)
+		AC_SUBST(SONAME,udjathttp.dll)
 		;;
 
  	*)
@@ -71,6 +72,8 @@ case "$host" in
 		AC_SUBST(LIBEXT,.so)
 		AC_SUBST(EXEEXT)
 		AC_SUBST(OSNAME,linux)
+		AC_SUBST(SONAME,libudjathttp.so.$app_vrs_major.$app_vrs_minor)
+		
 
 esac
 
@@ -81,6 +84,7 @@ dnl Check for tools
 dnl ---------------------------------------------------------------------------
 
 AC_PATH_TOOL([VALGRIND], [valgrind], [no])
+AC_PATH_TOOL([AR], [ar], [no])
 
 dnl ---------------------------------------------------------------------------
 dnl Check for C++ 2017 support
@@ -174,6 +178,8 @@ dnl Check for libcurl
 dnl ---------------------------------------------------------------------------
 
 PKG_CHECK_MODULES( [CURL], [libcurl], AC_DEFINE(HAVE_CURL,[],[Do we have libcurl?]), AC_MSG_NOTICE([libcurl not present.]) )
+AC_SUBST(CURL_LIBS)
+AC_SUBST(CURL_CFLAGS)
 
 dnl ---------------------------------------------------------------------------
 dnl Output config

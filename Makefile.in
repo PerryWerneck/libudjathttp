@@ -2,6 +2,7 @@
 #---[ Library configuration ]------------------------------------------------------------
 
 PACKAGE_NAME=@PACKAGE_NAME@
+SONAME=@SONAME@
 
 MAIN_SOURCES= \
 	$(wildcard src/*.cc) \
@@ -40,6 +41,7 @@ docdir=@docdir@
 sysconfdir=/etc
 
 BASEDIR=@BASEDIR@
+DLL_LDFLAGS=@DLL_LDFLAGS@
 
 OBJDIR=.obj
 OBJDBG=$(OBJDIR)/Debug
@@ -59,7 +61,7 @@ CFLAGS= \
 	-Isrc/include \
 	-DBUILD_DATE=`date +%Y%m%d` \
 	@UDJAT_CFLAGS@ \
-	@PUGIXML_CFLAGS@
+	@CURL_CFLAGS@
 
 LDFLAGS=\
 	@LDFLAGS@
@@ -67,8 +69,7 @@ LDFLAGS=\
 LIBS= \
 	@LIBS@ \
 	@UDJAT_LIBS@ \
-	@PUGIXML_LIBS@ \
-	-lcivetweb
+	@CURL_LIBS@
 
 #---[ Debug Rules ]----------------------------------------------------------------------
 
@@ -128,12 +129,12 @@ $(OBJRLS)/%.o: \
 #---[ Release Targets ]------------------------------------------------------------------
 
 all: \
-	$(BINRLS)/$(PACKAGE_NAME)@LIBEXT@
+	$(BINRLS)/$(SONAME)
 
 Release: \
-	$(BINRLS)/$(PACKAGE_NAME)@LIBEXT@
+	$(BINRLS)/$(SONAME)
 
-$(BINRLS)/$(PACKAGE_NAME)@LIBEXT@: \
+$(BINRLS)/$(SONAME): \
 	$(foreach SRC, $(basename $(MAIN_SOURCES)), $(OBJRLS)/$(SRC).o)
 
 	@$(MKDIR) $(@D)
@@ -142,25 +143,53 @@ $(BINRLS)/$(PACKAGE_NAME)@LIBEXT@: \
 		-shared \
 		-Wl,-soname,$(@F) \
 		-o $@ \
-		$(LDFLAGS) \
+		$(DLL_LDFLAGS) \
 		$^ \
 		$(LIBS)
 
+$(BINRLS)/libudjathttp.a: \
+	$(foreach SRC, $(basename $(MAIN_SOURCES)), $(OBJRLS)/$(SRC).o)
+
+	@$(MKDIR) $(@D)
+	@echo $< ...
+	@$(AR) rcs $@ $^
 
 #---[ Install Targets ]------------------------------------------------------------------
 
 install: \
-	install-@OSNAME@
+	install-@OSNAME@ \
+	install-@OSNAME@-dev \
+	install-static
 
 install-linux: \
-	$(BINRLS)/$(PACKAGE_NAME)@LIBEXT@
+	$(BINRLS)/$(SONAME)
 
-	@$(MKDIR) \
-		$(DESTDIR)@MODULE_PATH@
+	# Install library
+	@$(MKDIR) $(DESTDIR)$(libdir)
 
 	@$(INSTALL_PROGRAM) \
-		$(BINRLS)/$(PACKAGE_NAME)@LIBEXT@ \
-		$(DESTDIR)@MODULE_PATH@/$(PACKAGE_NAME)@LIBEXT@
+		$(BINRLS)/$(SONAME) \
+		$(DESTDIR)$(libdir)/$(SONAME)
+		
+install-static: \
+	$(BINRLS)/libudjathttp.a
+
+	# Install static library
+	@$(MKDIR) $(DESTDIR)$(libdir)
+	@$(INSTALL_DATA) \
+		$(BINRLS)/libudjathttp.a \
+		$(DESTDIR)$(libdir)/libudjathttp.static.a
+
+
+install-linux-dev:
+
+	# Install linux SDK
+	@$(MKDIR) \
+		$(DESTDIR)$(libdir)
+
+	@$(LN_S) \
+		$(SONAME) \
+		$(DESTDIR)$(libdir)/libudjathttp.so
 		
 #---[ Uninstall Targets ]----------------------------------------------------------------
 
@@ -178,9 +207,11 @@ Debug: \
 	$(BINDBG)/$(PACKAGE_NAME)-test@EXEEXT@
 
 $(BINDBG)/$(PACKAGE_NAME)-test@EXEEXT@: \
-	$(foreach SRC, $(basename $(TEST_SOURCES)), $(OBJDBG)/$(SRC).o) \
-	$(BINDBG)/$(PACKAGE_NAME)@LIBEXT@
+	$(BINDBG)/$(SONAME) \
+	$(foreach SRC, $(basename $(TEST_SOURCES)), $(OBJDBG)/$(SRC).o)
 
+	echo $(TEST_SOURCES)
+	
 	@$(MKDIR) $(@D)
 	@echo $< ...
 	@$(LD) \
@@ -192,7 +223,7 @@ $(BINDBG)/$(PACKAGE_NAME)-test@EXEEXT@: \
 		$(LIBS)
 
 
-$(BINDBG)/$(PACKAGE_NAME)@LIBEXT@: \
+$(BINDBG)/$(SONAME): \
 	$(foreach SRC, $(basename $(MAIN_SOURCES)), $(OBJDBG)/$(SRC).o)
 
 	@$(MKDIR) $(@D)
