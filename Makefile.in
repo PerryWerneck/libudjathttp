@@ -158,8 +158,7 @@ $(BINRLS)/libudjathttp.a: \
 
 install: \
 	install-@OSNAME@ \
-	install-@OSNAME@-dev \
-	install-static
+	install-dev
 
 install-linux: \
 	$(BINRLS)/$(SONAME)
@@ -171,14 +170,38 @@ install-linux: \
 		$(BINRLS)/$(SONAME) \
 		$(DESTDIR)$(libdir)/$(SONAME)
 		
-install-static: \
+install-dev: \
+	install-@OSNAME@-dev \
+	install-@OSNAME@-static 
+	
+	@$(MKDIR) \
+		$(DESTDIR)$(includedir)/udjat/tools
+
+	@$(INSTALL_DATA) \
+		src/include/udjat/tools/*.h \
+		$(DESTDIR)$(includedir)/udjat/tools
+
+	# Install PKG-CONFIG files
+	@$(MKDIR) \
+		$(DESTDIR)$(libdir)/pkgconfig
+
+	@$(INSTALL_DATA) \
+		sdk/@OSNAME@/dynamic.pc \
+		$(DESTDIR)$(libdir)/pkgconfig/@PACKAGE_NAME@.pc
+
+	@$(INSTALL_DATA) \
+		sdk/@OSNAME@/static.pc \
+		$(DESTDIR)$(libdir)/pkgconfig/@PACKAGE_NAME@-static.pc
+
+install-linux-static: \
 	$(BINRLS)/libudjathttp.a
 
 	# Install static library
 	@$(MKDIR) $(DESTDIR)$(libdir)
 	@$(INSTALL_DATA) \
 		$(BINRLS)/libudjathttp.a \
-		$(DESTDIR)$(libdir)/libudjathttp.static.a
+		$(DESTDIR)$(libdir)/libudjathttp.a
+
 
 
 install-linux-dev:

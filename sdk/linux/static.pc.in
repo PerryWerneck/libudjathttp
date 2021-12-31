@@ -1,0 +1,12 @@
+prefix=/usr/local
+exec_prefix=${prefix}
+libdir=${exec_prefix}/lib64
+includedir=${prefix}/include
+
+Name: udjat-http-client
+Description: UDJAT Simple HTTP client library
+Version: @PACKAGE_VERSION@
+Libs: libudjathttp.a @LIBS@ @UDJAT_LIBS@
+
+Cflags: -I${prefix}/include
+

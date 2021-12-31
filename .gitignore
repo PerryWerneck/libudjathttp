@@ -53,5 +53,5 @@ scripts
 config.h
 stamp-h1
 *.[0-9]
-
+*.pc
 

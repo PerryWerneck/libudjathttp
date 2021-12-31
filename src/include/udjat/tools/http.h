@@ -29,7 +29,7 @@
 	namespace HTTP {
 
 		/// @brief HTTP exception.
-		class Exception : public std::runtime_error {
+		class UDJAT_API Exception : public std::runtime_error {
 		protected:
 			std::string url;
 

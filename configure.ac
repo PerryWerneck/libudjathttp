@@ -73,6 +73,8 @@ case "$host" in
 		AC_SUBST(EXEEXT)
 		AC_SUBST(OSNAME,linux)
 		AC_SUBST(SONAME,libudjathttp.so.$app_vrs_major.$app_vrs_minor)
+		AC_CONFIG_FILES(sdk/linux/dynamic.pc)
+		AC_CONFIG_FILES(sdk/linux/static.pc)
 		
 
 esac
