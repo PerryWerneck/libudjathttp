@@ -139,17 +139,18 @@ namespace Udjat {
 		mbstowcs(pwszUrl, client->url.c_str(), client->url.size()+1);
 
 		CrackUrl(pwszUrl, urlComp);
+		wstring hostname(urlComp.lpszHostName, urlComp.dwHostNameLength);
 
 #ifdef DEBUG
-		cout << "Connecting '";
-		wcout << urlComp.lpszHostName;
-		cout << "' port=" << urlComp.nPort << endl;
+		cout << "Connecting hostname='";
+		wcout << hostname;
+		cout << "' (" << urlComp.dwHostNameLength << ") port='" << urlComp.nPort << "'" << endl;
 #endif // DEBUG
 
 		HINTERNET connection =
 			WinHttpConnect(
 				this->session,
-				urlComp.lpszHostName,
+				hostname.c_str(),
 				urlComp.nPort,
 				0
 			);
@@ -217,7 +218,7 @@ namespace Udjat {
 				ZeroMemory(text, sizeof(text));
 				wcstombs(text, buffer, 1023);
 
-				throw Udjat::HTTP::Exception(dwStatusCode,text);
+				throw Udjat::HTTP::Exception((unsigned int) dwStatusCode, this->client->url.c_str(), text);
 			}
 
 		}
