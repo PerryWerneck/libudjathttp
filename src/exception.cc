@@ -20,6 +20,7 @@
  #include <internals.h>
  #include <cstring>
 
+ /*
  namespace Udjat {
 
 	static const struct {
@@ -73,3 +74,5 @@
 	}
 
  }
+
+ */
