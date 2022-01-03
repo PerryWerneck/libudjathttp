@@ -197,11 +197,11 @@ install-dev: \
 
 	@$(INSTALL_DATA) \
 		sdk/@OSNAME@/dynamic.pc \
-		$(DESTDIR)$(libdir)/pkgconfig/@PACKAGE_NAME@.pc
+		$(DESTDIR)$(libdir)/pkgconfig/udjat-http.pc
 
 	@$(INSTALL_DATA) \
 		sdk/@OSNAME@/static.pc \
-		$(DESTDIR)$(libdir)/pkgconfig/@PACKAGE_NAME@-static.pc
+		$(DESTDIR)$(libdir)/pkgconfig/udjat-http-static.pc
 
 install-linux-static: \
 	$(BINRLS)/libudjathttp.a
