@@ -20,6 +20,7 @@
  #pragma once
 
  #include <udjat/defs.h>
+ #include <udjat/tools/url.h>
  #include <string>
  #include <vector>
  #include <system_error>
@@ -27,27 +28,6 @@
  namespace Udjat {
 
 	namespace HTTP {
-
-		/// @brief HTTP exception.
-		class UDJAT_API Exception : public std::runtime_error {
-		protected:
-			std::string url;
-
-			struct {
-				unsigned int http = -1;	///< @brief HTTP error code
-				std::error_code system;
-			} codes;
-
-		public:
-			Exception(const char *url, const char *message);
-			Exception(unsigned int code, const char *url, const char *message);
-			Exception(unsigned int code, const char *url);
-
-			inline const std::error_code& code() const noexcept {
-				return codes.system;
-			}
-
-		};
 
 		/// @brief Generic HTTP client component.
 		class UDJAT_API Client {
