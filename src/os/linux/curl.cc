@@ -31,11 +31,13 @@
 		#define TRACE_DEFAULT false
 	#endif  // DEBUG
 
+	/*
 	class CurlException : HTTP::Exception {
 	public:
 		CurlException(CURLcode code, const string &url) : HTTP::Exception(url.c_str(),curl_easy_strerror(code)) {
 		}
 	};
+	*/
 
 	HTTP::Client::Worker * HTTP::Client::Worker::getInstance(HTTP::Client *client) {
 		return new HTTP::Client::Worker(client);
@@ -104,7 +106,7 @@
 #ifdef DEBUG
 			cout << "CURL-Error=" << res << endl;
 #endif // DEBUG
-			throw CurlException(res,this->client->url);
+			throw HTTP::Exception(this->client->url.c_str(),curl_easy_strerror(res));
 		}
 
 		long response_code = 0;

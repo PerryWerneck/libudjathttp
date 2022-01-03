@@ -36,8 +36,15 @@ namespace Udjat {
 
 			response = worker->call("GET");
 
+		} catch(const std::exception &e) {
+
+			cerr << "http\t" << url << " - " << e.what() << endl;
+			delete worker;
+			throw;
+
 		} catch(...) {
 
+			cerr << "http\t" << url << " - Unexpected error" << endl;
 			delete worker;
 			throw;
 
@@ -57,8 +64,15 @@ namespace Udjat {
 
 			response = worker->call("POST",payload);
 
+		} catch(const std::exception &e) {
+
+			cerr << "http\t" << url << ": " << e.what() << endl;
+			delete worker;
+			throw;
+
 		} catch(...) {
 
+			cerr << "http\t" << url << ": Unexpected error" << endl;
 			delete worker;
 			throw;
 
