@@ -66,6 +66,8 @@ case "$host" in
 		AC_SUBST(EXEEXT,.exe)
 		AC_SUBST(OSNAME,windows)
 		AC_SUBST(SONAME,udjathttp.dll)
+		AC_CONFIG_FILES(sdk/windows/dynamic.pc)
+		AC_CONFIG_FILES(sdk/windows/static.pc)
 		
 		;;
 
@@ -95,6 +97,7 @@ dnl ---------------------------------------------------------------------------
 
 AC_PATH_TOOL([VALGRIND], [valgrind], [no])
 AC_PATH_TOOL([AR], [ar], [no])
+AC_PATH_TOOL([DLLTOOL], [dlltool], [true])
 
 dnl ---------------------------------------------------------------------------
 dnl Check for C++ 2017 support

@@ -170,6 +170,16 @@ install-linux: \
 		$(BINRLS)/$(SONAME) \
 		$(DESTDIR)$(libdir)/$(SONAME)
 		
+install-windows: \
+	$(BINRLS)/@SONAME@
+
+	@$(MKDIR) \
+		$(DESTDIR)$(bindir)
+
+	@$(INSTALL_PROGRAM) \
+		$(BINRLS)/@SONAME@ \
+		$(DESTDIR)$(bindir)/@SONAME@
+		
 install-dev: \
 	install-@OSNAME@-dev \
 	install-@OSNAME@-static 
@@ -202,7 +212,15 @@ install-linux-static: \
 		$(BINRLS)/libudjathttp.a \
 		$(DESTDIR)$(libdir)/libudjathttp.a
 
+install-windows-static: \
+	$(BINRLS)/libudjathttp.a
 
+	@$(MKDIR) \
+		$(DESTDIR)$(libdir)
+
+	@$(INSTALL_PROGRAM) \
+		$(BINRLS)/libudjathttp.a \
+		$(DESTDIR)$(libdir)/libudjathttp.a
 
 install-linux-dev:
 
@@ -213,7 +231,18 @@ install-linux-dev:
 	@$(LN_S) \
 		$(SONAME) \
 		$(DESTDIR)$(libdir)/libudjathttp.so
+
+install-windows-dev:
+
+	@$(MKDIR) \
+		$(DESTDIR)$(libdir)
+
+	@$(DLLTOOL) \
+		--input-def $(BINRLS)/udjathttp.def \
+		--dllname @SONAME@ \
+		--output-lib $(DESTDIR)$(libdir)/libudjathttp.dll.a
 		
+	
 #---[ Uninstall Targets ]----------------------------------------------------------------
 
 uninstall: \
