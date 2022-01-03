@@ -42,8 +42,5 @@
 /* Define to the version of this package. */
 #undef PACKAGE_VERSION
 
-/* The product name */
-#undef PRODUCT_NAME
-
 /* Version number of package */
 #undef VERSION

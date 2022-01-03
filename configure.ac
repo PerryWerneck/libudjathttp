@@ -6,7 +6,7 @@ AC_PREREQ(2.59)
 
 dnl Initialise automake with the package name, version and
 dnl bug-reporting address.
-AC_INIT([udjat-protocol-http], [1.0], [perry.werneck@gmail.com],[udjat-module-civetweb],[https://github.com/PerryWerneck/udjat-module-protocol-http])
+AC_INIT([udjat-protocol-http], [1.0], [perry.werneck@gmail.com],[udjat-protocol-http],[https://github.com/PerryWerneck/udjat-module-protocol-http])
 
 dnl Place auxilliary scripts here.
 AC_CONFIG_AUX_DIR([scripts])
@@ -33,6 +33,8 @@ AC_PROG_SED
 AC_PROG_LN_S
 
 AC_LANG([C++])
+
+PKG_CHECK_EXISTS
 
 dnl ---------------------------------------------------------------------------
 dnl Version info
@@ -165,21 +167,12 @@ if test "$app_cv_pic" == "yes"; then
 fi
 
 dnl ---------------------------------------------------------------------------
-dnl Libraries
-dnl ---------------------------------------------------------------------------
-PKG_CHECK_EXISTS
-
-dnl ---------------------------------------------------------------------------
 dnl Check for libudjat
 dnl ---------------------------------------------------------------------------
 PKG_CHECK_MODULES( [UDJAT], [libudjat], AC_DEFINE(HAVE_UDJAT,[],[Do we have libudjat?]), AC_MSG_ERROR([libudjat not present.]) )
 
 AC_SUBST(UDJAT_LIBS)
 AC_SUBST(UDJAT_CFLAGS)
-
-app_cv_product=`pkg-config --variable=product_name libudjat`
-AC_DEFINE_UNQUOTED(PRODUCT_NAME, $app_cv_product, [The product name])
-AC_SUBST(PRODUCT_NAME,$app_cv_product)
 
 dnl ---------------------------------------------------------------------------
 dnl Output config
