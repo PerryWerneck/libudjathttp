@@ -140,10 +140,10 @@ $(BINRLS)/$(SONAME): \
 	@$(MKDIR) $(@D)
 	@echo $< ...
 	@$(LD) \
-		-shared \
+		$(DLL_LDFLAGS) \
 		-Wl,-soname,$(@F) \
 		-o $@ \
-		$(DLL_LDFLAGS) \
+		$(LDFLAGS) \
 		$^ \
 		$(LIBS)
 
@@ -252,9 +252,10 @@ $(BINDBG)/$(SONAME): \
 	@$(MKDIR) $(@D)
 	@echo $< ...
 	@$(LD) \
+		$(DLL_LDFLAGS) \
 		-Wl,-soname,$(@F) \
 		-o $@ \
-		$(DLL_LDFLAGS) \
+		$(LDFLAGS) \
 		$^ \
 		$(LIBS)
 

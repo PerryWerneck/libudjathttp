@@ -18,7 +18,7 @@
  */
 
 #include <internals.h>
-#include <udjat/url.h>
+#include <udjat/tools/url.h>
 #include <udjat/tools/configuration.h>
 
 namespace Udjat {

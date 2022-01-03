@@ -57,12 +57,14 @@ case "$host" in
 	*-mingw32)
 		CFLAGS="$CFLAGS -pthread -D_WIN32_WINNT=0x0600"
 		CXXFLAGS="$CXXFLAGS -pthread -D_WIN32_WINNT=0x0600"
-		LDFLAGS="$LDFLAGS -pthread -lwinhttp"
+		LDFLAGS="$LDFLAGS -pthread"
 		DLL_LDFLAGS="-shared -Wl,--output-def,\$(@D)/udjathttp.def"
+		LIBS="$LIBS  -lwinhttp"
 		AC_SUBST(LIBEXT,.dll)
 		AC_SUBST(EXEEXT,.exe)
 		AC_SUBST(OSNAME,windows)
 		AC_SUBST(SONAME,udjathttp.dll)
+		
 		;;
 
  	*)
@@ -76,9 +78,13 @@ case "$host" in
 		AC_CONFIG_FILES(sdk/linux/dynamic.pc)
 		AC_CONFIG_FILES(sdk/linux/static.pc)
 		
+		PKG_CHECK_MODULES( [CURL], [libcurl], AC_DEFINE(HAVE_CURL,[],[Do we have libcurl?]), AC_MSG_NOTICE([libcurl not present.]) )
+
 
 esac
 
+AC_SUBST(CURL_LIBS)
+AC_SUBST(CURL_CFLAGS)
 AC_SUBST(DLL_LDFLAGS)
 
 dnl ---------------------------------------------------------------------------
@@ -174,14 +180,6 @@ AC_SUBST(UDJAT_CFLAGS)
 app_cv_product=`pkg-config --variable=product_name libudjat`
 AC_DEFINE_UNQUOTED(PRODUCT_NAME, $app_cv_product, [The product name])
 AC_SUBST(PRODUCT_NAME,$app_cv_product)
-
-dnl ---------------------------------------------------------------------------
-dnl Check for libcurl
-dnl ---------------------------------------------------------------------------
-
-PKG_CHECK_MODULES( [CURL], [libcurl], AC_DEFINE(HAVE_CURL,[],[Do we have libcurl?]), AC_MSG_NOTICE([libcurl not present.]) )
-AC_SUBST(CURL_LIBS)
-AC_SUBST(CURL_CFLAGS)
 
 dnl ---------------------------------------------------------------------------
 dnl Output config
