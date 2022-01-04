@@ -210,7 +210,7 @@ install-linux-static: \
 	@$(MKDIR) $(DESTDIR)$(libdir)
 	@$(INSTALL_DATA) \
 		$(BINRLS)/libudjathttp.a \
-		$(DESTDIR)$(libdir)/libudjathttp.a
+		$(DESTDIR)$(libdir)/libudjathttp.static.a
 
 install-windows-static: \
 	$(BINRLS)/libudjathttp.a
