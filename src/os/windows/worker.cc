@@ -17,6 +17,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+#include <config.h>
 #include <internals.h>
 #include <udjat/tools/url.h>
 #include <udjat/tools/configuration.h>
@@ -52,7 +53,7 @@ namespace Udjat {
 
 		// Open HTTP session
 		// https://docs.microsoft.com/en-us/windows/desktop/api/winhttp/nf-winhttp-winhttpopenrequest
-		static const char * userAgent = "udjat/1.0";
+		static const char * userAgent = "udjat-winhttp/" PACKAGE_VERSION;
 		wchar_t wUserAgent[256];
 		mbstowcs(wUserAgent, userAgent, strlen(userAgent)+1);
 
@@ -88,28 +89,6 @@ namespace Udjat {
 
 			throw Win32::Exception(this->client->url + ": Can't set HTTP session timeouts");
 		}
-
-		/*
-		{
-			size_t hs = client->url.find("://");
-			if(hs == string::npos) {
-				throw runtime_error(string{"Can't parse hostname from '"} + client->url + "'");
-			}
-			hs += 3;
-
-			size_t he = client->url.find('/',hs);
-
-			if(he == string::npos) {
-				hostname.assign(client->url.c_str()+hs);
-				path.clear();
-			} else {
-				hostname = string(client->url.c_str()+hs,(he-hs));
-				path.assign(client->url.c_str()+he+1);
-			}
-		}
-
-		this->secure = (strncasecmp(this->client->url.c_str(),"https://",8) == 0);
-		*/
 
 	}
 
@@ -278,7 +257,18 @@ namespace Udjat {
 		DWORD			dwHeadersLength = 0;
 
 		if(!client->headers.empty()) {
-			throw runtime_error("There's no support for custom headers (yet)");
+
+			ostringstream headers;
+
+			for(auto header = client->headers.begin(); header != client->headers.end(); header++) {
+				headers << header->name << ": " << header->value << "\r\n";
+			}
+
+			auto text = headers.str();
+
+			lpszHeaders = (wchar_t *) malloc(text.size()*3);
+			dwHeadersLength = (DWORD) mbstowcs(lpszHeaders, text.c_str(), text.size()+1);
+
 		}
 
 		size_t sz = 0;

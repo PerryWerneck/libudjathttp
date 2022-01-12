@@ -19,6 +19,10 @@
 
 #include <internals.h>
 
+#ifdef _WIN32
+#include "os/windows/base64.h"
+#endif // _WIN32
+
 namespace Udjat {
 
 	HTTP::Client::Client(const char *u) : url(u) {
@@ -89,8 +93,36 @@ namespace Udjat {
 	}
 
 	HTTP::Client & HTTP::Client::setCredentials(const char *username, const char *password) {
+#ifdef _WIN32
+		// Encode authentication
+		// When the user agent wants to send authentication credentials to the server, it may use the Authorization field.
+		//
+		// The Authorization field is constructed as follows:
+		//
+		// The username and password are combined with a single colon (:). This means that the username itself cannot contain a colon.
+		// The resulting string is encoded into an octet sequence. The character set to use for this encoding is by default unspecified, as long as it is compatible with US-ASCII, but the server may suggest use of UTF-8 by sending the charset parameter.[8]
+		// The resulting string is encoded using a variant of Base64.
+		// The authorization method and a space (e.g. "Basic ") is then prepended to the encoded string.
+		// For example, if the browser uses Aladdin as the username and OpenSesame as the password, then the field's value is the Base64 encoding of Aladdin:OpenSesame, or QWxhZGRpbjpPcGVuU2VzYW1l. Then the Authorization header will appear as:
+		//
+		// Authorization: Basic QWxhZGRpbjpPcGVuU2VzYW1l
+		//
+		char text[4096];
+		memset(text,0,4096);
+
+		strncpy(text,username,4095);
+		strncat(text,":",4095);
+		strncat(text,password,4095);
+
+		string auth{"Basic "};
+		auth += base64::encode((const unsigned char *) text, strlen(text));
+
+		headers.push_back(Header{"Authorization",auth.c_str()});
+
+#else
 		credentials.username = username;
 		credentials.password = password;
+#endif // _WIN32
 		return *this;
 	}
 

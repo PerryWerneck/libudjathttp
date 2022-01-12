@@ -55,10 +55,12 @@
 			/// @brief HTTP headers.
 			std::vector<Header> headers;
 
+#ifndef _WIN32
 			struct {
 				std::string username;
 				std::string password;
 			} credentials;
+#endif // !_WIN32
 
 		public:
 			Client(const Client &src) = delete;
