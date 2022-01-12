@@ -50,6 +50,9 @@ intl
 m4
 po
 scripts
+resources.rc
+app-manifest.xml
+
 config.h
 stamp-h1
 *.[0-9]

@@ -9,7 +9,8 @@ MAIN_SOURCES= \
 	$(wildcard src/os/@OSNAME@/*.cc)
 
 TEST_SOURCES= \
-	$(wildcard src/testprogram/*.cc)
+	$(wildcard src/testprogram/*.cc) \
+	$(wildcard src/testprogram/@OSNAME@/*.rc)
 
 #---[ Tools ]----------------------------------------------------------------------------
 
