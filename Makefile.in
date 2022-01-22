@@ -4,13 +4,15 @@
 PACKAGE_NAME=@PACKAGE_NAME@
 SONAME=@SONAME@
 
-MAIN_SOURCES= \
-	$(wildcard src/*.cc) \
-	$(wildcard src/os/@OSNAME@/*.cc)
+LIBRARY_SOURCES= \
+	$(wildcard src/library/*.cc) \
+	$(wildcard src/library/os/@OSNAME@/*.cc)
+
+MODULE_SOURCES= \
+	$(wildcard src/module/*.cc)
 
 TEST_SOURCES= \
-	$(wildcard src/testprogram/*.cc) \
-	$(wildcard src/testprogram/@OSNAME@/*.rc)
+	$(wildcard src/testprogram/*.cc)
 
 #---[ Tools ]----------------------------------------------------------------------------
 
@@ -130,13 +132,15 @@ $(OBJRLS)/%.o: \
 #---[ Release Targets ]------------------------------------------------------------------
 
 all: \
-	$(BINRLS)/$(SONAME)
+	$(BINRLS)/$(SONAME) \
+	$(BINRLS)/$(PACKAGE_NAME)@LIBEXT@
 
 Release: \
-	$(BINRLS)/$(SONAME)
+	$(BINRLS)/$(SONAME) \
+	$(BINRLS)/$(PACKAGE_NAME)@LIBEXT@
 
 $(BINRLS)/$(SONAME): \
-	$(foreach SRC, $(basename $(MAIN_SOURCES)), $(OBJRLS)/$(SRC).o)
+	$(foreach SRC, $(basename $(LIBRARY_SOURCES)), $(OBJRLS)/$(SRC).o)
 
 	@$(MKDIR) $(@D)
 	@echo $< ...
@@ -149,16 +153,31 @@ $(BINRLS)/$(SONAME): \
 		$(LIBS)
 
 $(BINRLS)/libudjathttp.a: \
-	$(foreach SRC, $(basename $(MAIN_SOURCES)), $(OBJRLS)/$(SRC).o)
+	$(foreach SRC, $(basename $(LIBRARY_SOURCES)), $(OBJRLS)/$(SRC).o)
 
 	@$(MKDIR) $(@D)
 	@echo $< ...
 	@$(AR) rcs $@ $^
 
+$(BINRLS)/$(PACKAGE_NAME)@LIBEXT@: \
+	$(BINRLS)/$(SONAME) \
+	$(foreach SRC, $(basename $(MODULE_SOURCES)), $(OBJRLS)/$(SRC).o)
+
+	@$(MKDIR) $(@D)
+	@echo $< ...
+	@$(LD) \
+		-shared \
+		-o $@ \
+		$(LDFLAGS) \
+		$^ \
+		$(LIBS)
+
+
 #---[ Install Targets ]------------------------------------------------------------------
 
 install: \
 	install-@OSNAME@ \
+	install-module \
 	install-dev
 
 install-linux: \
@@ -181,6 +200,16 @@ install-windows: \
 		$(BINRLS)/@SONAME@ \
 		$(DESTDIR)$(bindir)/@SONAME@
 		
+install-module: \
+	$(BINRLS)/$(PACKAGE_NAME)@LIBEXT@
+
+	@$(MKDIR) \
+		$(DESTDIR)@MODULE_PATH@
+
+	@$(INSTALL_PROGRAM) \
+		$(BINRLS)/$(PACKAGE_NAME)@LIBEXT@ \
+		$(DESTDIR)@MODULE_PATH@/$(PACKAGE_NAME)@LIBEXT@
+
 install-dev: \
 	install-@OSNAME@-dev \
 	install-@OSNAME@-static 
@@ -261,10 +290,9 @@ Debug: \
 
 $(BINDBG)/udjat@EXEEXT@: \
 	$(BINDBG)/$(SONAME) \
+	$(BINDBG)/$(PACKAGE_NAME)@LIBEXT@ \
 	$(foreach SRC, $(basename $(TEST_SOURCES)), $(OBJDBG)/$(SRC).o)
 
-	echo $(TEST_SOURCES)
-	
 	@$(MKDIR) $(@D)
 	@echo $< ...
 	@$(LD) \
@@ -277,13 +305,27 @@ $(BINDBG)/udjat@EXEEXT@: \
 
 
 $(BINDBG)/$(SONAME): \
-	$(foreach SRC, $(basename $(MAIN_SOURCES)), $(OBJDBG)/$(SRC).o)
+	$(foreach SRC, $(basename $(LIBRARY_SOURCES)), $(OBJDBG)/$(SRC).o)
 
 	@$(MKDIR) $(@D)
 	@echo $< ...
 	@$(LD) \
 		$(DLL_LDFLAGS) \
 		-Wl,-soname,$(@F) \
+		-o $@ \
+		$(LDFLAGS) \
+		$^ \
+		$(LIBS)
+
+$(BINDBG)/$(PACKAGE_NAME)@LIBEXT@: \
+	$(BINDBG)/$(SONAME) \
+	$(foreach SRC, $(basename $(MODULE_SOURCES)), $(OBJDBG)/$(SRC).o)
+
+	@$(MKDIR) $(@D)
+	@echo $< ...
+	@$(LD) \
+		-shared \
+		-Wl,-rpath,$(BINDBG) \
 		-o $@ \
 		$(LDFLAGS) \
 		$^ \
@@ -296,14 +338,14 @@ run: \
 ifeq ($(VALGRIND),no)
 
 	@LD_LIBRARY_PATH=$(BINDBG) \
-		$(BINDBG)/udjat@EXEEXT@
+		$(BINDBG)/udjat@EXEEXT@ -f
 
 else
 	@touch valgrind.suppression
 
 	@LD_LIBRARY_PATH=$(BINDBG) \
 		$(VALGRIND) --leak-check=full --track-origins=yes --gen-suppressions=all --suppressions=valgrind.suppression \
-		$(BINDBG)/udjat@EXEEXT@
+		$(BINDBG)/udjat@EXEEXT@ -f
 endif
 
 #---[ Clean Targets ]--------------------------------------------------------------------
@@ -327,7 +369,7 @@ clean: \
 	cleanRelease
 
 
--include $(foreach SRC, $(basename $(MAIN_SOURCES)), $(OBJDBG)/$(SRC).d)
--include $(foreach SRC, $(basename $(MAIN_SOURCES)), $(OBJRLS)/$(SRC).d)
+-include $(foreach SRC, $(basename $(LIBRARY_SOURCES) $(MODULE_SOURCES) $(TEST_SOURCES)), $(OBJDBG)/$(SRC).d)
+-include $(foreach SRC, $(basename $(LIBRARY_SOURCES) $(MODULE_SOURCES) $(TEST_SOURCES)), $(OBJRLS)/$(SRC).d)
 
 
