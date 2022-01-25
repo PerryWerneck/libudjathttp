@@ -52,6 +52,8 @@ po
 scripts
 resources.rc
 app-manifest.xml
+vgcore.*
+
 
 config.h
 stamp-h1

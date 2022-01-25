@@ -18,22 +18,30 @@
  */
 
  #include <config.h>
- #include <udjat/defs.h>
- #include <system_error>
+
+ #include <udjat/tools/systemservice.h>
+ #include <udjat/tools/application.h>
+ #include <udjat/tools/url.h>
+ #include <udjat/agent.h>
+ #include <udjat/factory.h>
+ #include <udjat/module.h>
+ #include <udjat/tools/protocol.h>
  #include <iostream>
- #include <udjat/tools/http.h>
+ #include <memory>
 
  using namespace std;
  using namespace Udjat;
-
- #pragma GCC diagnostic ignored "-Wunused-parameter"
- #pragma GCC diagnostic ignored "-Wunused-function"
 
 //---[ Implement ]------------------------------------------------------------------------------------------
 
 int main(int argc, char **argv) {
 
-	cout << HTTP::Client("http://localhost").get() << endl;
+	udjat_module_init();
+
+	cout << "Response:" << endl << URL("http://localhost").get() << endl;
+
+	Udjat::Module::unload();
 
 	return 0;
+
 }
