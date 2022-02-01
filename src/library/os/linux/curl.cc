@@ -49,6 +49,10 @@
 
 		hCurl = curl_easy_init();
 
+#ifdef DEBUG
+		cout << "URL= '" << client->url << "'" << endl;
+#endif  // DEBUG
+
 		curl_easy_setopt(hCurl, CURLOPT_URL, client->url.c_str());
 		curl_easy_setopt(hCurl, CURLOPT_FOLLOWLOCATION, 1L);
 
@@ -56,9 +60,6 @@
 
 		curl_easy_setopt(hCurl, CURLOPT_HEADERDATA, (void *) this);
 		curl_easy_setopt(hCurl, CURLOPT_HEADERFUNCTION, header_callback);
-
-		curl_easy_setopt(hCurl, CURLOPT_WRITEDATA, this);
-		curl_easy_setopt(hCurl, CURLOPT_WRITEFUNCTION, write_callback);
 
 		curl_easy_setopt(hCurl, CURLOPT_OPENSOCKETDATA, this);
 		curl_easy_setopt(hCurl, CURLOPT_OPENSOCKETFUNCTION, open_socket_callback);
@@ -77,11 +78,6 @@
 			}
 		}
 
-		if(headers) {
-			throw system_error(ENOTSUP,system_category(),"Cant set HTTP headers");
-//			curl_easy_setopt(hCurl, CURLOPT_HTTPHEADER, headers);
-		}
-
 		if(!client->credentials.username.empty()) {
 			// Set credentials.
 			curl_easy_setopt(hCurl, CURLOPT_HTTPAUTH, CURLAUTH_BASIC);
@@ -93,12 +89,14 @@
 
 	HTTP::Client::Worker::~Worker() {
 
-		curl_slist_free_all((curl_slist *) headers);
 		curl_easy_cleanup(hCurl);
 
 	}
 
 	std::string HTTP::Client::Worker::perform() {
+
+		curl_easy_setopt(hCurl, CURLOPT_WRITEDATA, this);
+		curl_easy_setopt(hCurl, CURLOPT_WRITEFUNCTION, write_callback);
 
 		CURLcode res = curl_easy_perform(hCurl);
 

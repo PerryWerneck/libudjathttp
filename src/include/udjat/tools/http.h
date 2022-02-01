@@ -79,6 +79,10 @@
 			std::string get();
 			std::string post(const char *payload);
 
+			/// @brief refresh file (download it if necessary).
+			/// @param filename Full path of the file to update.
+			void get(const char *filename);
+
 		};
 
 	}

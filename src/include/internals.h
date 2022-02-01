@@ -70,7 +70,6 @@ namespace Udjat {
 #elif defined(HAVE_CURL)
 
 			CURL * hCurl;
-			curl_slist * headers = NULL;
 
 			char error[CURL_ERROR_SIZE];
 
@@ -107,6 +106,8 @@ namespace Udjat {
 			static Worker * getInstance(HTTP::Client *client);
 
 			std::string call(const char *verb, const char *payload = nullptr);
+
+			void get(const char *filename, time_t timestamp);
 
 		};
 
