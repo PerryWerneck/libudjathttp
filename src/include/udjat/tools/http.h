@@ -20,7 +20,7 @@
  #pragma once
 
  #include <udjat/defs.h>
- #include <udjat/tools/httpexception.h>
+ #include <udjat/tools/http/exception.h>
  #include <udjat/tools/method.h>
  #include <string>
  #include <vector>
