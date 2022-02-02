@@ -263,9 +263,18 @@
 		if(strncasecmp(header.c_str(),"HTTP/",5) == 0 && header.size()) {
 			unsigned int v[2];
 			unsigned int code;
-			char str[200];
+			char str[201];
+			memset(str,0,sizeof(str));
 
-			if(sscanf(header.c_str()+5,"%u.%u %d %s",&v[0],&v[1],&code,str) == 4) {
+			if(sscanf(header.c_str()+5,"%u.%u %d %200c",&v[0],&v[1],&code,str) == 4) {
+
+				for(size_t ix = 0; ix < sizeof(str);ix++) {
+					if(str[ix] < ' ') {
+						str[ix] = 0;
+						break;
+					}
+				}
+
 				worker->message = str;
 			}
 

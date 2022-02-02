@@ -86,8 +86,8 @@
 			*ptr = 0;
 		}
 		strncat(bakfile,".bak",PATH_MAX);
-		unlink(bakfile);
 
+		unlink(bakfile);
 		if(rename(filename, bakfile) != 0) {
 			throw system_error(errno,system_category(),"Cant create backup");
 		}
@@ -128,14 +128,38 @@
 		curl_easy_setopt(hCurl, CURLOPT_WRITEDATA, &data);
 		curl_easy_setopt(hCurl, CURLOPT_WRITEFUNCTION, write_file);
 
-		struct curl_slist *chunk = curl_slist_append(NULL, "Cache-Control:public, max-age=31536000");
+		struct curl_slist *chunk = NULL;
+
+		// Set headers
+		{
+			static const struct {
+				const char *name;
+				const char *value;
+			} headers[] = {
+				{ "Cache-Control", "public, max-age=31536000" }
+			};
+
+			for(size_t ix = 0; ix < (sizeof(headers)/sizeof(headers[0])); ix++) {
+				Config::Value<string> config("curl-file-get",headers[ix].name,headers[ix].value);
+				if(!config.empty()) {
+					string header = headers[ix].name;
+					header += ":";
+					header += config;
+#ifdef DEBUG
+					cout << "http\t" << header << endl;
+#endif // DEBUG
+					chunk = curl_slist_append(chunk, header.c_str());
+				}
+			}
+
+		};
 
 		if(timestamp) {
-			string hdr{"If-Modified-Since: "};
+			string hdr{"If-Modified-Since:"};
 			hdr += HTTP::TimeStamp(timestamp).to_string();
 			hdr += ";";
 #ifdef DEBUG
-			cout << hdr << endl;
+			cout << "http\t" << hdr << endl;
 #endif // DEBUG
 			chunk = curl_slist_append(chunk, hdr.c_str());
 		}
@@ -148,7 +172,7 @@
 
 		if(res != CURLE_OK) {
 #ifdef DEBUG
-			cout << "CURL-Error=" << res << endl;
+			cout << "http\tCURL-Error=" << res << endl;
 #endif // DEBUG
 			throw HTTP::Exception(this->client->url.c_str(),curl_easy_strerror(res));
 		}
