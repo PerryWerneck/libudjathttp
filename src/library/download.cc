@@ -29,9 +29,10 @@
 
  namespace Udjat {
 
-	void HTTP::Client::get(const char *filename) {
+	bool HTTP::Client::get(const char *filename) {
 
 		struct stat st;
+		bool updated = false;
 
 		if(stat(filename,&st) < 0) {
 
@@ -52,7 +53,7 @@
 
 		try {
 
-			worker->get(filename,st.st_mtime);
+			updated = worker->get(filename,st.st_mtime);
 
 		} catch(const std::exception &e) {
 
@@ -70,62 +71,7 @@
 
 		delete worker;
 
-
-		/*
-		int fd = open(filename,O_RDWR);
-
-		try {
-
-			if(fd < 0) {
-
-				//
-				// Cant open file
-				//
-				if(errno != ENOENT) {
-					throw system_error(errno,system_category(),Logger::Message("Can't access '{}'",filename));
-				}
-
-				//
-				// File not found, create a temporary one.
-				//
-				cout << "http\tDownloading '" << filename << "'" << endl;
-
-				char path[PATH_MAX];
-				strncpy(path,filename,PATH_MAX);
-
-				fd = open(dirname(path),O_TMPFILE | O_WRONLY, S_IRUSR | S_IWUSR);
-				if(fd < 0) {
-					throw system_error(errno,system_category(),Logger::Message("Can't create '{}'",filename));
-				}
-
-
-			} else {
-
-				//
-				// File is open
-				//
-				struct stat st;
-
-				if(fstat(fd,&st) < 0) {
-					::close(fd);
-					throw system_error(errno,system_category(),Logger::Message("Can't stat '{}'",filename));
-				}
-
-				cout << "Last modification time: " << HTTP::TimeStamp(st.st_mtime) << endl;
-
-			}
-
-		} catch(...) {
-
-			if(fd > 0) {
-				::close(fd);
-			}
-			throw;
-
-		}
-
-		::close(fd);
-		*/
+		return updated;
 
 	}
 

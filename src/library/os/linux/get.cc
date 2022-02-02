@@ -121,7 +121,7 @@
 
 	}
 
-	void HTTP::Client::Worker::get(const char *filename, time_t timestamp) {
+	bool HTTP::Client::Worker::get(const char *filename, time_t timestamp) {
 
 		TransferData data(filename);
 
@@ -187,7 +187,7 @@
 		} else if(response_code == 304) {
 
 			cout << "http\tUsing local '" << filename << "' (not modified)" << endl;
-			return;
+			return false;
 
 		} else if(message.empty()) {
 
@@ -212,6 +212,8 @@
 			}
 
 		}
+
+		return true;
 
 	}
 

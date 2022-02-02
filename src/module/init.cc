@@ -64,6 +64,10 @@
 				}
 			}
 
+			bool get(const Udjat::URL &url, const char *filename) const override {
+				return Udjat::HTTP::Client(url).get(filename);
+			}
+
 		};
 
 		Protocol http{"http"};

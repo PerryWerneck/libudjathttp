@@ -26,7 +26,6 @@
  #include <udjat/agent.h>
  #include <udjat/factory.h>
  #include <udjat/module.h>
- #include <udjat/tools/protocol.h>
  #include <iostream>
  #include <memory>
 
@@ -37,15 +36,21 @@
 
 int main(int argc, char **argv) {
 
-	HTTP::Client("http://127.0.0.1/~perry/test.xml").get("/tmp/localhost.html");
-
 	/*
+	if(HTTP::Client("http://127.0.0.1/~perry/test.xml").get("/tmp/localhost.html")) {
+		cout << endl << endl << "File was updated!" << endl << endl;
+	}
+	*/
+
 	udjat_module_init();
 
-	cout << "Response:" << endl << URL("http://localhost").get() << endl;
+	//cout << "Response:" << endl << URL("http://localhost").get() << endl;
+
+	if(URL("http://127.0.0.1/~perry/test.xml").get("/tmp/localhost.html")) {
+		cout << endl << endl << "File was updated!" << endl << endl;
+	}
 
 	Udjat::Module::unload();
-	*/
 
 	return 0;
 

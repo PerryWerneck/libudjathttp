@@ -111,7 +111,7 @@ namespace Udjat {
 
 			std::string call(const char *verb, const char *payload = nullptr);
 
-			void get(const char *filename, time_t timestamp);
+			bool get(const char *filename, time_t timestamp);
 
 		};
 
