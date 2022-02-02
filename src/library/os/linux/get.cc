@@ -128,7 +128,7 @@
 		curl_easy_setopt(hCurl, CURLOPT_WRITEDATA, &data);
 		curl_easy_setopt(hCurl, CURLOPT_WRITEFUNCTION, write_file);
 
-		struct curl_slist *chunk = NULL;
+		struct curl_slist *chunk = curl_slist_append(NULL, "Cache-Control:public, max-age=31536000");
 
 		if(timestamp) {
 			string hdr{"If-Modified-Since: "};
@@ -140,9 +140,7 @@
 			chunk = curl_slist_append(chunk, hdr.c_str());
 		}
 
-		if(chunk) {
-			curl_easy_setopt(hCurl, CURLOPT_HTTPHEADER, chunk);
-		}
+		curl_easy_setopt(hCurl, CURLOPT_HTTPHEADER, chunk);
 
 		CURLcode res = curl_easy_perform(hCurl);
 
@@ -159,22 +157,36 @@
 		curl_easy_getinfo(hCurl, CURLINFO_RESPONSE_CODE, &response_code);
 
 		if(response_code == 200) {
+
 			data.save();
+
+		} else if(response_code == 304) {
+
+			cout << "http\tUsing local '" << filename << "' (not modified)" << endl;
+			return;
+
 		} else if(message.empty()) {
+
 			throw HTTP::Exception((unsigned int) response_code, this->client->url.c_str());
+
 		} else {
+
 			throw HTTP::Exception((unsigned int) response_code, this->client->url.c_str(), message.c_str());
+
 		}
 
-		if(timestamp) {
+		if(this->timestamp) {
+
 			utimbuf ub;
 			ub.actime = time(0);
-			ub.modtime = time(0); // (time_t) timestamp;
+			ub.modtime = (time_t) this->timestamp;
+
 			if(utime(filename,&ub) == -1) {
 				cerr << "http\tError '" << strerror(errno) << "' setting file timestamp" << endl;
 			} else {
-				cout << "http\t" << filename << " time set to " << TimeStamp(ub.modtime) << endl;
+				cout << "http\t'" << filename << "' time set to " << this->timestamp << endl;
 			}
+
 		}
 
 	}

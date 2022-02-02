@@ -37,7 +37,7 @@
 
 int main(int argc, char **argv) {
 
-	HTTP::Client("http://localhost").get("/tmp/localhost.html");
+	HTTP::Client("http://127.0.0.1/~perry/test.xml").get("/tmp/localhost.html");
 
 	/*
 	udjat_module_init();

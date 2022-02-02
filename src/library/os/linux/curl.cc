@@ -271,17 +271,20 @@
 
 			cout << "http\t" << worker->client->url << " " << header << endl;
 
-		} else if(strncasecmp(header.c_str(),"Date:",5) == 0 && header.size()) {
+		} else if(strncasecmp(header.c_str(),"Last-Modified:",14) == 0 && header.size()) {
 
 			try {
 
-				const char *ptr = header.c_str()+5;
+				const char *ptr = header.c_str()+15;
 				while(*ptr && isspace(*ptr)) {
 					ptr++;
 				}
 
 				if(*ptr) {
 					worker->timestamp.set(ptr);
+#ifdef DEBUG
+					cout << "Server time: " << worker->timestamp << endl;
+#endif // DEBUG
 				}
 
 			} catch(const std::exception &e) {
