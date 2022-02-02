@@ -18,11 +18,9 @@
  */
 
  #include <internals.h>
+ #include <udjat/tools/http/timestamp.h>
  #include <sys/types.h>
  #include <sys/stat.h>
- #include <fcntl.h>
- #include <udjat/tools/http/timestamp.h>
- #include <libgen.h>
 
  #ifndef _WIN32
 	#include <unistd.h>

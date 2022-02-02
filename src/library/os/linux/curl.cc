@@ -21,6 +21,7 @@
  #include <cstring>
  #include <unistd.h>
  #include <cstdio>
+ #include <udjat/tools/http/timestamp.h>
 
  namespace Udjat {
  #ifdef HAVE_CURL
@@ -269,6 +270,29 @@
 			}
 
 			cout << "http\t" << worker->client->url << " " << header << endl;
+
+		} else if(strncasecmp(header.c_str(),"Date:",5) == 0 && header.size()) {
+
+			try {
+
+				const char *ptr = header.c_str()+5;
+				while(*ptr && isspace(*ptr)) {
+					ptr++;
+				}
+
+				if(*ptr) {
+					worker->timestamp.set(ptr);
+				}
+
+			} catch(const std::exception &e) {
+
+				cerr << "http\tError '" << e.what() << "' processing transfer date" << endl;
+
+			} catch(...) {
+
+				cerr << "http\tunexpected error processing transfer date" << endl;
+
+			}
 
 		}
 #ifdef DEBUG

@@ -24,6 +24,7 @@
 #include <udjat/tools/configuration.h>
 #include <udjat/tools/logger.h>
 #include <udjat/tools/http.h>
+#include <udjat/tools/http/timestamp.h>
 #include <stdexcept>
 #include <system_error>
 #include <iostream>
@@ -49,6 +50,9 @@ namespace Udjat {
 		class Client::Worker {
 		private:
 			HTTP::Client *client;
+
+			/// @brief The request timestamp.
+			HTTP::TimeStamp timestamp;
 
 #if defined(_WIN32)
 
