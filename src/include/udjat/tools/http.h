@@ -81,8 +81,9 @@
 
 			/// @brief Download/update a file.
 			/// @param filename The fullpath for the file.
+			/// @param config Name of the configuration section used to get the http headers.
 			/// @return true if the file was updated.
-			bool get(const char *filename);
+			bool get(const char *filename, const char *config = nullptr);
 
 		};
 

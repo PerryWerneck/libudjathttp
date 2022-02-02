@@ -2,6 +2,7 @@
 #---[ Library configuration ]------------------------------------------------------------
 
 PACKAGE_NAME=@PACKAGE_NAME@
+PRODUCT_NAME=@PRODUCT_NAME@
 SONAME=@SONAME@
 
 LIBRARY_SOURCES= \
@@ -189,6 +190,13 @@ install-linux: \
 	@$(INSTALL_PROGRAM) \
 		$(BINRLS)/$(SONAME) \
 		$(DESTDIR)$(libdir)/$(SONAME)
+		
+	# Install configuration
+	@$(MKDIR) $(DESTDIR)$(sysconfdir)/$(PRODUCT_NAME).conf.d
+
+	@$(INSTALL_DATA) \
+		conf.d/*.conf \
+		$(DESTDIR)$(sysconfdir)/$(PRODUCT_NAME).conf.d
 		
 install-windows: \
 	$(BINRLS)/@SONAME@

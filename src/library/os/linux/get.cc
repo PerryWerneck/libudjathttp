@@ -124,7 +124,7 @@
 
 	}
 
-	bool HTTP::Client::Worker::get(const char *filename, time_t timestamp) {
+	bool HTTP::Client::Worker::get(const char *filename, time_t timestamp, const char *config) {
 
 		TransferData data(filename);
 
@@ -134,30 +134,24 @@
 		struct curl_slist *chunk = NULL;
 
 		// Set headers
-		{
-			static const struct {
-				const char *name;
-				const char *value;
-			} headers[] = {
-				{ "Cache-Control", "public, max-age=31536000" }
-			};
-
-			for(size_t ix = 0; ix < (sizeof(headers)/sizeof(headers[0])); ix++) {
-				Config::Value<string> config("curl-file-get",headers[ix].name,headers[ix].value);
-				if(!config.empty()) {
-					string header = headers[ix].name;
-					header += ":";
-					header += config;
+		Config::for_each(
+			( (config && *config) ? config : "curl-get-file-headers"),
+			[&chunk](const char *key, const char *value) {
 #ifdef DEBUG
-					cout << "http\t" << header << endl;
+				cout << "http-header\t" << key << "='" << value << "'" << endl;
 #endif // DEBUG
-					chunk = curl_slist_append(chunk, header.c_str());
-				}
+				chunk = curl_slist_append(chunk,(string(key) + "=" + value).c_str());
+				return true;
 			}
-
-		};
+		);
 
 		if(timestamp) {
+
+			if(!chunk) {
+				clog << "http\tWarning: No headers in request for '" << filename << "', using defaults" << endl;
+				chunk = curl_slist_append(chunk, "Cache-Control:public, max-age=31536000");
+			}
+
 			string hdr{"If-Modified-Since:"};
 			hdr += HTTP::TimeStamp(timestamp).to_string();
 			hdr += ";";
@@ -167,7 +161,9 @@
 			chunk = curl_slist_append(chunk, hdr.c_str());
 		}
 
-		curl_easy_setopt(hCurl, CURLOPT_HTTPHEADER, chunk);
+		if(chunk) {
+			curl_easy_setopt(hCurl, CURLOPT_HTTPHEADER, chunk);
+		}
 
 		CURLcode res = curl_easy_perform(hCurl);
 
