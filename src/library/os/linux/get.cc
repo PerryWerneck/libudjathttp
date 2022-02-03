@@ -22,6 +22,7 @@
  #include <unistd.h>
  #include <cstdio>
  #include <udjat/tools/http/timestamp.h>
+ #include <udjat/tools/file.h>
  #include <sys/types.h>
  #include <sys/stat.h>
  #include <fcntl.h>
@@ -30,105 +31,19 @@
 
  namespace Udjat {
 
-	struct TransferData {
-		int fd = -1;
-		const char *filename;
-
-		TransferData(const char *filename);
-		~TransferData();
-
-		void save() const;
-
-	};
-
-	TransferData::TransferData(const char *f) : filename(f) {
-		char path[PATH_MAX];
-		strncpy(path,filename,PATH_MAX);
-
-		fd = open(dirname(path),O_TMPFILE | O_WRONLY, S_IRUSR | S_IWUSR);
-		if(fd < 0) {
-			throw system_error(errno,system_category(),Logger::Message("Can't create '{}'",filename));
-		}
-
-	}
-
-	TransferData::~TransferData() {
-
-		::close(fd);
-	}
-
-	void TransferData::save() const {
-
-		char tempfile[PATH_MAX];
-		snprintf(tempfile, PATH_MAX,  "/proc/self/fd/%d", fd);
-
-		struct stat st;
-		if(stat(filename, &st) == -1) {
-			if(errno != ENOENT) {
-				throw system_error(errno,system_category(),"Error getting file information");
-			}
-			memset(&st,0,sizeof(st));
-			st.st_mode = 0644;
-		}
-
-		if(linkat(AT_FDCWD, tempfile, AT_FDCWD, filename, AT_SYMLINK_FOLLOW) != 0) {
-			//
-			// Cant link file
-			//
-
-			if(errno != EEXIST) {
-				throw system_error(errno,system_category(),"Error saving file");
-			}
-
-			char bakfile[PATH_MAX];
-			strncpy(bakfile,filename,PATH_MAX);
-			char *ptr = strrchr(bakfile,'.');
-			if(ptr) {
-				*ptr = 0;
-			}
-			strncat(bakfile,".bak",PATH_MAX);
-
-			unlink(bakfile);
-			if(rename(filename, bakfile) != 0) {
-				throw system_error(errno,system_category(),"Cant create backup");
-			}
-
-			if(linkat(AT_FDCWD, tempfile, AT_FDCWD, filename, AT_SYMLINK_FOLLOW) != 0) {
-				throw system_error(errno,system_category(),"Error saving file");
-			}
-
-		}
-
-		chmod(filename,st.st_mode);
-		chown(filename,st.st_uid,st.st_gid);
-
-	}
-
-	static size_t write_file(void *contents, size_t size, size_t nmemb, TransferData *data) noexcept {
+	static size_t write_file(void *contents, size_t size, size_t nmemb, File::Temporary *tempfile) noexcept {
 
 		size_t length = size * nmemb;
-		size_t pending = length;
-		const char *ptr = (const char *) contents;
-
-		while(pending) {
-			ssize_t bytes = ::write(data->fd, ptr, pending);
-			if(bytes < 1) {
-				cerr << "http\tError '" << strerror(errno) << "' writing temporary file" << endl;
-				return 0;
-			}
-			pending -= bytes;
-			ptr += bytes;
-		}
-
+		tempfile->write(contents,length);
 		return length;
 
 	}
 
 	bool HTTP::Client::Worker::get(const char *filename, time_t timestamp, const char *config) {
 
-		TransferData data(filename);
+		File::Temporary tempfile(filename);
 
-		curl_easy_setopt(hCurl, CURLOPT_WRITEDATA, &data);
+		curl_easy_setopt(hCurl, CURLOPT_WRITEDATA, &tempfile);
 		curl_easy_setopt(hCurl, CURLOPT_WRITEFUNCTION, write_file);
 
 		struct curl_slist *chunk = NULL;
@@ -140,7 +55,7 @@
 #ifdef DEBUG
 				cout << "http-header\t" << key << "='" << value << "'" << endl;
 #endif // DEBUG
-				chunk = curl_slist_append(chunk,(string(key) + "=" + value).c_str());
+				chunk = curl_slist_append(chunk,(string(key) + ":" + value).c_str());
 				return true;
 			}
 		);
@@ -181,7 +96,7 @@
 
 		if(response_code == 200) {
 
-			data.save();
+			tempfile.link(filename);
 
 		} else if(response_code == 304) {
 
