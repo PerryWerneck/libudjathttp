@@ -27,14 +27,14 @@ namespace Udjat {
 	#define INTERNET_TEXT wchar_t * __attribute__((cleanup(wchar_t_cleanup)))
 	#define INTERNET_HANDLE HINTERNET __attribute__((cleanup(hinternet_t_cleanup)))
 
-	static void wchar_t_cleanup(wchar_t **buf) {
+	void wchar_t_cleanup(wchar_t **buf) {
 		if(*buf) {
 			free(*buf);
 			*buf = NULL;
 		}
 	}
 
-	static void hinternet_t_cleanup(HINTERNET *handle) {
+	void hinternet_t_cleanup(HINTERNET *handle) {
 		if(*handle) {
 			WinHttpCloseHandle(*handle);
 			*handle = 0;
@@ -215,9 +215,12 @@ namespace Udjat {
 
 	}
 
-	HINTERNET HTTP::Client::Worker::open(HINTERNET connection, const LPCWSTR pwszVerb) {
+	HINTERNET HTTP::Client::Worker::open(HINTERNET connection, const char *verb) {
 
 		URL_COMPONENTS urlComp;
+
+		INTERNET_TEXT pwszVerb = (wchar_t *) malloc(strlen(verb)*3);
+		mbstowcs(pwszVerb, verb, strlen(verb)+1);
 
 		INTERNET_TEXT pwszUrl = (wchar_t *) malloc(client->url.size()*3);
 		mbstowcs(pwszUrl, client->url.c_str(), client->url.size()+1);
@@ -291,11 +294,13 @@ namespace Udjat {
 
 	std::string HTTP::Client::Worker::call(const char *verb, const char *payload) {
 
+		/*
 		INTERNET_TEXT wVerb = (wchar_t *) malloc(strlen(verb)*3);
 		mbstowcs(wVerb, verb, strlen(verb)+1);
+		*/
 
 		INTERNET_HANDLE	connection = connect();
-		INTERNET_HANDLE	request = open(connection,wVerb);
+		INTERNET_HANDLE	request = open(connection,verb);
 
 		if(payload) {
 
@@ -313,33 +318,5 @@ namespace Udjat {
 		return this->wait(request);
 	}
 
-	/*
-	std::string HTTP::Client::Worker::get() {
-
-		INTERNET_HANDLE	connection = connect();
-		INTERNET_HANDLE	request = open(connection,L"GET");
-
-		send(request);
-		return wait(request);
-
-	}
-
-	std::string HTTP::Client::Worker::post() {
-
-		INTERNET_HANDLE	connection = connect();
-		INTERNET_HANDLE	request = open(connection,L"POST");
-
-		string payload;
-		this->client->getPostPayload(payload);
-
-		if(Config::Value<bool>("http","trace-payload",true).get()) {
-			cout << "http\tPosting to " << client->url << endl << payload << endl;
-		}
-
-		send(request, payload.c_str());
-		return wait(request);
-
-	}
-	*/
 
 }

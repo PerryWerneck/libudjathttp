@@ -53,12 +53,10 @@
 		<Unit filename="src/library/os/linux/get.cc" />
 		<Unit filename="src/library/os/windows/base64.cc" />
 		<Unit filename="src/library/os/windows/base64.h" />
+		<Unit filename="src/library/os/windows/get.cc" />
 		<Unit filename="src/library/os/windows/worker.cc" />
 		<Unit filename="src/module/init.cc" />
-		<Unit filename="src/os/linux/curl.cc" />
-		<Unit filename="src/os/windows/base64.cc" />
 		<Unit filename="src/os/windows/base64.h" />
-		<Unit filename="src/os/windows/worker.cc" />
 		<Unit filename="src/testprogram/testprogram.cc" />
 		<Unit filename="src/testprogram/windows/resources.rc" />
 		<Extensions />

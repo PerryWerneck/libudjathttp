@@ -45,6 +45,12 @@ using namespace std;
 
 namespace Udjat {
 
+	#define INTERNET_TEXT wchar_t * __attribute__((cleanup(wchar_t_cleanup)))
+	#define INTERNET_HANDLE HINTERNET __attribute__((cleanup(hinternet_t_cleanup)))
+
+	UDJAT_PRIVATE void wchar_t_cleanup(wchar_t **buf);
+	UDJAT_PRIVATE void hinternet_t_cleanup(HINTERNET *handle);
+
 	namespace HTTP {
 
 		class Client::Worker {
@@ -63,7 +69,7 @@ namespace Udjat {
 			HINTERNET connect();
 
 			/// @brief Open HTTP Request.
-			HINTERNET open(HINTERNET connection, const LPCWSTR pwszVerb);
+			HINTERNET open(HINTERNET connection, const char *);
 
 			/// @brief Send request.
 			void send(HINTERNET request, const char *payload = nullptr);
