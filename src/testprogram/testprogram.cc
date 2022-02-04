@@ -46,7 +46,7 @@ int main(int argc, char **argv) {
 
 	//cout << "Response:" << endl << URL("http://localhost").get() << endl;
 
-	if(URL("http://127.0.0.1/~perry/test.xml").get("/tmp/localhost.html")) {
+	if(URL("http://127.0.0.1/~perry/test.xml").get("localhost.html")) {
 		cout << endl << endl << "File was updated!" << endl << endl;
 	}
 

@@ -35,8 +35,38 @@
 
 		INTERNET_HANDLE	connection = connect();
 		INTERNET_HANDLE	request = open(connection,"GET");
+		string headers;
 
-		send(request);
+		//
+		// Create headers
+		//
+		{
+			static const struct {
+				const char *name;
+				const char *value;
+			} hlist[] = {
+				{ "Cache-Control","public, max-age=31536000" }
+			};
+
+			ostringstream hbuf;
+			for(size_t ix = 0; ix < (sizeof(hlist)/sizeof(hlist[0])); ix++) {
+				hbuf 	<< hlist[ix].name << ":"
+						<< Config::Value<string>("download-headers",hlist[ix].name,hlist[ix].value)
+						<< "\r\n";
+			}
+
+			hbuf 	<< "If-Modified-Since:"
+					<< HTTP::TimeStamp(timestamp).to_string()
+					<< "\r\n";
+
+			headers = hbuf.str();
+
+		}
+
+		//
+		// Do request
+		//
+		send(request,headers.c_str(),nullptr);
 
 		if(!WinHttpReceiveResponse(request, NULL)) {
 			throw Win32::Exception(this->client->url + ": Error receiving response");
@@ -65,7 +95,7 @@
 			cout << "The status code was " << dwStatusCode << endl;
 #endif // DEBUG
 
-		if(dwStatusCode != 304) {
+		if(dwStatusCode == 304) {
 			//
 			// Not modified
 			//

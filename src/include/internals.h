@@ -45,11 +45,15 @@ using namespace std;
 
 namespace Udjat {
 
+#ifdef _WIN32
+
 	#define INTERNET_TEXT wchar_t * __attribute__((cleanup(wchar_t_cleanup)))
 	#define INTERNET_HANDLE HINTERNET __attribute__((cleanup(hinternet_t_cleanup)))
 
 	UDJAT_PRIVATE void wchar_t_cleanup(wchar_t **buf);
 	UDJAT_PRIVATE void hinternet_t_cleanup(HINTERNET *handle);
+
+#endif // _WIN32
 
 	namespace HTTP {
 
@@ -72,7 +76,7 @@ namespace Udjat {
 			HINTERNET open(HINTERNET connection, const char *);
 
 			/// @brief Send request.
-			void send(HINTERNET request, const char *payload = nullptr);
+			void send(HINTERNET request, const char *headers, const char *payload);
 
 			/// @brief Wait for response.
 			std::string wait(HINTERNET req);

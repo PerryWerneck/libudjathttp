@@ -65,7 +65,8 @@ CFLAGS= \
 	-Isrc/include \
 	-DBUILD_DATE=`date +%Y%m%d` \
 	@UDJAT_CFLAGS@ \
-	@CURL_CFLAGS@
+	@CURL_CFLAGS@ \
+	@PUGIXML_CFLAGS@
 
 LDFLAGS=\
 	@LDFLAGS@
@@ -171,8 +172,8 @@ $(BINRLS)/$(PACKAGE_NAME)@LIBEXT@: \
 		-o $@ \
 		$(LDFLAGS) \
 		$^ \
-		$(LIBS)
-
+		$(LIBS) \
+		@PUGIXML_LIBS@
 
 #---[ Install Targets ]------------------------------------------------------------------
 
@@ -309,8 +310,8 @@ $(BINDBG)/udjat@EXEEXT@: \
 		-L$(BINDBG) \
 		-Wl,-rpath,$(BINDBG) \
 		$(LDFLAGS) \
-		$(LIBS)
-
+		$(LIBS) \
+		@PUGIXML_LIBS@
 
 $(BINDBG)/$(SONAME): \
 	$(foreach SRC, $(basename $(LIBRARY_SOURCES)), $(OBJDBG)/$(SRC).o)
@@ -337,8 +338,8 @@ $(BINDBG)/$(PACKAGE_NAME)@LIBEXT@: \
 		-o $@ \
 		$(LDFLAGS) \
 		$^ \
-		$(LIBS)
-
+		$(LIBS) \
+		@PUGIXML_LIBS@
 
 run: \
 	$(BINDBG)/udjat@EXEEXT@

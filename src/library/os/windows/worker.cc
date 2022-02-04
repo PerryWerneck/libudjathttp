@@ -24,9 +24,6 @@
 
 namespace Udjat {
 
-	#define INTERNET_TEXT wchar_t * __attribute__((cleanup(wchar_t_cleanup)))
-	#define INTERNET_HANDLE HINTERNET __attribute__((cleanup(hinternet_t_cleanup)))
-
 	void wchar_t_cleanup(wchar_t **buf) {
 		if(*buf) {
 			free(*buf);
@@ -254,11 +251,19 @@ namespace Udjat {
 
 	}
 
-	void HTTP::Client::Worker::send(HINTERNET request, const char *payload) {
+	void HTTP::Client::Worker::send(HINTERNET request, const char *headers, const char *payload) {
 
 		INTERNET_TEXT	lpszHeaders = NULL;
 		DWORD			dwHeadersLength = 0;
 
+		if(headers && *headers) {
+			size_t hlength = strlen(headers);
+			lpszHeaders = (wchar_t *) malloc(hlength*3);
+			dwHeadersLength = (DWORD) mbstowcs(lpszHeaders, headers, hlength+1);
+		}
+
+
+		/*
 		if(!client->headers.empty()) {
 
 			ostringstream headers;
@@ -273,6 +278,7 @@ namespace Udjat {
 			dwHeadersLength = (DWORD) mbstowcs(lpszHeaders, text.c_str(), text.size()+1);
 
 		}
+		*/
 
 		size_t sz = 0;
 		if(payload) {
@@ -294,26 +300,28 @@ namespace Udjat {
 
 	std::string HTTP::Client::Worker::call(const char *verb, const char *payload) {
 
-		/*
-		INTERNET_TEXT wVerb = (wchar_t *) malloc(strlen(verb)*3);
-		mbstowcs(wVerb, verb, strlen(verb)+1);
-		*/
+		string headers;
+		if(!client->headers.empty()) {
+
+			ostringstream oss;
+
+			for(auto header = client->headers.begin(); header != client->headers.end(); header++) {
+				oss << header->name << ": " << header->value << "\r\n";
+			}
+
+			headers = oss.str();
+
+		}
 
 		INTERNET_HANDLE	connection = connect();
 		INTERNET_HANDLE	request = open(connection,verb);
 
-		if(payload) {
 
-			if(Config::Value<bool>("http","trace-payload",true).get()) {
-				cout << "http\tPosting to " << client->url << endl << payload << endl;
-			}
-			send(request, payload);
-
-		} else {
-
-			send(request);
-
+		if(payload && Config::Value<bool>("http","trace-payload",true).get()) {
+			cout << "http\tPosting to " << client->url << endl << payload << endl;
 		}
+
+		send(request, headers.c_str(), payload);
 
 		return this->wait(request);
 	}
