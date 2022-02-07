@@ -111,16 +111,18 @@
 		long response_code = 0;
 		curl_easy_getinfo(hCurl, CURLINFO_RESPONSE_CODE, &response_code);
 
-		if(response_code != 200) {
-			cerr << "http\t" << this->client->url << " " << message << endl;
-			if(message.empty()) {
-				throw HTTP::Exception((unsigned int) response_code, this->client->url.c_str());
-			} else {
-				throw HTTP::Exception((unsigned int) response_code, this->client->url.c_str(), message.c_str());
-			}
+		if(response_code >= 200 && response_code <= 299) {
+			cout << "http\t" << this->client->url << " " << response_code << " " << message << endl;
+			return buffers.in.str();
 		}
 
-		return buffers.in.str();
+		cerr << "http\t" << this->client->url << " " << response_code << " " << message << endl;
+
+		if(message.empty()) {
+			throw HTTP::Exception((unsigned int) response_code, this->client->url.c_str());
+		} else {
+			throw HTTP::Exception((unsigned int) response_code, this->client->url.c_str(), message.c_str());
+		}
 
 	}
 

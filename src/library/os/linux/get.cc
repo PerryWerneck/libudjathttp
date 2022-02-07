@@ -94,21 +94,33 @@
 		long response_code = 0;
 		curl_easy_getinfo(hCurl, CURLINFO_RESPONSE_CODE, &response_code);
 
-		if(response_code == 200) {
+		if(response_code >= 200 && response_code <= 299) {
+
+			cout << "http\tServer response was '" << response_code;
+			if(!message.empty()) {
+				cout << " " << message;
+			}
+			cout << "' updating '" << filename << "'" << endl;
 
 			tempfile.link(filename);
 
 		} else if(response_code == 304) {
 
-			cout << "http\tUsing local '" << filename << "' (not modified)" << endl;
+			cout << "http\tServer response was '" << response_code;
+			if(!message.empty()) {
+				cout << " " << message;
+			}
+			cout << "' keeping '" << filename << "'" << endl;
 			return false;
 
 		} else if(message.empty()) {
 
+			cout << "http\tServer response was '" << response_code << "'" << endl;
 			throw HTTP::Exception((unsigned int) response_code, this->client->url.c_str());
 
 		} else {
 
+			cout << "http\tServer response was '" << response_code << " " << message << "'" << endl;
 			throw HTTP::Exception((unsigned int) response_code, this->client->url.c_str(), message.c_str());
 
 		}
