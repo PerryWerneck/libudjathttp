@@ -20,7 +20,7 @@
  #pragma once
 
  #include <udjat/defs.h>
- #include <udjat/tools/httpexception.h>
+ #include <udjat/tools/http/exception.h>
  #include <udjat/tools/method.h>
  #include <string>
  #include <vector>
@@ -78,6 +78,12 @@
 
 			std::string get();
 			std::string post(const char *payload);
+
+			/// @brief Download/update a file.
+			/// @param filename The fullpath for the file.
+			/// @param config Name of the configuration section used to get the http headers.
+			/// @return true if the file was updated.
+			bool get(const char *filename, const char *config = nullptr);
 
 		};
 

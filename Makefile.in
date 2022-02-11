@@ -2,6 +2,7 @@
 #---[ Library configuration ]------------------------------------------------------------
 
 PACKAGE_NAME=@PACKAGE_NAME@
+PRODUCT_NAME=@PRODUCT_NAME@
 SONAME=@SONAME@
 
 LIBRARY_SOURCES= \
@@ -64,7 +65,8 @@ CFLAGS= \
 	-Isrc/include \
 	-DBUILD_DATE=`date +%Y%m%d` \
 	@UDJAT_CFLAGS@ \
-	@CURL_CFLAGS@
+	@CURL_CFLAGS@ \
+	@PUGIXML_CFLAGS@
 
 LDFLAGS=\
 	@LDFLAGS@
@@ -160,8 +162,8 @@ $(BINRLS)/libudjathttp.a: \
 	@$(AR) rcs $@ $^
 
 $(BINRLS)/$(PACKAGE_NAME)@LIBEXT@: \
-	$(BINRLS)/$(SONAME) \
-	$(foreach SRC, $(basename $(MODULE_SOURCES)), $(OBJRLS)/$(SRC).o)
+	$(foreach SRC, $(basename $(MODULE_SOURCES)), $(OBJRLS)/$(SRC).o) \
+	$(BINRLS)/$(SONAME)
 
 	@$(MKDIR) $(@D)
 	@echo $< ...
@@ -170,8 +172,8 @@ $(BINRLS)/$(PACKAGE_NAME)@LIBEXT@: \
 		-o $@ \
 		$(LDFLAGS) \
 		$^ \
-		$(LIBS)
-
+		$(LIBS) \
+		@PUGIXML_LIBS@
 
 #---[ Install Targets ]------------------------------------------------------------------
 
@@ -189,6 +191,13 @@ install-linux: \
 	@$(INSTALL_PROGRAM) \
 		$(BINRLS)/$(SONAME) \
 		$(DESTDIR)$(libdir)/$(SONAME)
+		
+	# Install configuration
+	@$(MKDIR) $(DESTDIR)$(sysconfdir)/$(PRODUCT_NAME).conf.d
+
+	@$(INSTALL_DATA) \
+		conf.d/*.conf \
+		$(DESTDIR)$(sysconfdir)/$(PRODUCT_NAME).conf.d
 		
 install-windows: \
 	$(BINRLS)/@SONAME@
@@ -301,8 +310,8 @@ $(BINDBG)/udjat@EXEEXT@: \
 		-L$(BINDBG) \
 		-Wl,-rpath,$(BINDBG) \
 		$(LDFLAGS) \
-		$(LIBS)
-
+		$(LIBS) \
+		@PUGIXML_LIBS@
 
 $(BINDBG)/$(SONAME): \
 	$(foreach SRC, $(basename $(LIBRARY_SOURCES)), $(OBJDBG)/$(SRC).o)
@@ -318,8 +327,8 @@ $(BINDBG)/$(SONAME): \
 		$(LIBS)
 
 $(BINDBG)/$(PACKAGE_NAME)@LIBEXT@: \
-	$(BINDBG)/$(SONAME) \
-	$(foreach SRC, $(basename $(MODULE_SOURCES)), $(OBJDBG)/$(SRC).o)
+	$(foreach SRC, $(basename $(MODULE_SOURCES)), $(OBJDBG)/$(SRC).o) \
+	$(BINDBG)/$(SONAME)
 
 	@$(MKDIR) $(@D)
 	@echo $< ...
@@ -329,8 +338,8 @@ $(BINDBG)/$(PACKAGE_NAME)@LIBEXT@: \
 		-o $@ \
 		$(LDFLAGS) \
 		$^ \
-		$(LIBS)
-
+		$(LIBS) \
+		@PUGIXML_LIBS@
 
 run: \
 	$(BINDBG)/udjat@EXEEXT@

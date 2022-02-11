@@ -21,6 +21,7 @@
  #include <cstring>
  #include <unistd.h>
  #include <cstdio>
+ #include <udjat/tools/http/timestamp.h>
 
  namespace Udjat {
  #ifdef HAVE_CURL
@@ -49,6 +50,10 @@
 
 		hCurl = curl_easy_init();
 
+#ifdef DEBUG
+		cout << "URL= '" << client->url << "'" << endl;
+#endif  // DEBUG
+
 		curl_easy_setopt(hCurl, CURLOPT_URL, client->url.c_str());
 		curl_easy_setopt(hCurl, CURLOPT_FOLLOWLOCATION, 1L);
 
@@ -56,9 +61,6 @@
 
 		curl_easy_setopt(hCurl, CURLOPT_HEADERDATA, (void *) this);
 		curl_easy_setopt(hCurl, CURLOPT_HEADERFUNCTION, header_callback);
-
-		curl_easy_setopt(hCurl, CURLOPT_WRITEDATA, this);
-		curl_easy_setopt(hCurl, CURLOPT_WRITEFUNCTION, write_callback);
 
 		curl_easy_setopt(hCurl, CURLOPT_OPENSOCKETDATA, this);
 		curl_easy_setopt(hCurl, CURLOPT_OPENSOCKETFUNCTION, open_socket_callback);
@@ -77,11 +79,6 @@
 			}
 		}
 
-		if(headers) {
-			throw system_error(ENOTSUP,system_category(),"Cant set HTTP headers");
-//			curl_easy_setopt(hCurl, CURLOPT_HTTPHEADER, headers);
-		}
-
 		if(!client->credentials.username.empty()) {
 			// Set credentials.
 			curl_easy_setopt(hCurl, CURLOPT_HTTPAUTH, CURLAUTH_BASIC);
@@ -93,12 +90,14 @@
 
 	HTTP::Client::Worker::~Worker() {
 
-		curl_slist_free_all((curl_slist *) headers);
 		curl_easy_cleanup(hCurl);
 
 	}
 
 	std::string HTTP::Client::Worker::perform() {
+
+		curl_easy_setopt(hCurl, CURLOPT_WRITEDATA, this);
+		curl_easy_setopt(hCurl, CURLOPT_WRITEFUNCTION, write_callback);
 
 		CURLcode res = curl_easy_perform(hCurl);
 
@@ -112,16 +111,18 @@
 		long response_code = 0;
 		curl_easy_getinfo(hCurl, CURLINFO_RESPONSE_CODE, &response_code);
 
-		if(response_code != 200) {
-			cerr << "http\t" << this->client->url << " " << message << endl;
-			if(message.empty()) {
-				throw HTTP::Exception((unsigned int) response_code, this->client->url.c_str());
-			} else {
-				throw HTTP::Exception((unsigned int) response_code, this->client->url.c_str(), message.c_str());
-			}
+		if(response_code >= 200 && response_code <= 299) {
+			cout << "http\t" << this->client->url << " " << response_code << " " << message << endl;
+			return buffers.in.str();
 		}
 
-		return buffers.in.str();
+		cerr << "http\t" << this->client->url << " " << response_code << " " << message << endl;
+
+		if(message.empty()) {
+			throw HTTP::Exception((unsigned int) response_code, this->client->url.c_str());
+		} else {
+			throw HTTP::Exception((unsigned int) response_code, this->client->url.c_str(), message.c_str());
+		}
 
 	}
 
@@ -264,13 +265,48 @@
 		if(strncasecmp(header.c_str(),"HTTP/",5) == 0 && header.size()) {
 			unsigned int v[2];
 			unsigned int code;
-			char str[200];
+			char str[201];
+			memset(str,0,sizeof(str));
 
-			if(sscanf(header.c_str()+5,"%u.%u %d %s",&v[0],&v[1],&code,str) == 4) {
+			if(sscanf(header.c_str()+5,"%u.%u %d %200c",&v[0],&v[1],&code,str) == 4) {
+
+				for(size_t ix = 0; ix < sizeof(str);ix++) {
+					if(str[ix] < ' ') {
+						str[ix] = 0;
+						break;
+					}
+				}
+
 				worker->message = str;
 			}
 
 			cout << "http\t" << worker->client->url << " " << header << endl;
+
+		} else if(strncasecmp(header.c_str(),"Last-Modified:",14) == 0 && header.size()) {
+
+			try {
+
+				const char *ptr = header.c_str()+15;
+				while(*ptr && isspace(*ptr)) {
+					ptr++;
+				}
+
+				if(*ptr) {
+					worker->timestamp.set(ptr);
+#ifdef DEBUG
+					cout << "Server time: " << worker->timestamp << endl;
+#endif // DEBUG
+				}
+
+			} catch(const std::exception &e) {
+
+				cerr << "http\tError '" << e.what() << "' processing transfer date" << endl;
+
+			} catch(...) {
+
+				cerr << "http\tunexpected error processing transfer date" << endl;
+
+			}
 
 		}
 #ifdef DEBUG

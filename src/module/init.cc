@@ -22,6 +22,7 @@
  #include <udjat/module.h>
  #include <udjat/tools/protocol.h>
  #include <udjat/tools/http.h>
+ #include <udjat/moduleinfo.h>
 
  using namespace std;
 
@@ -29,7 +30,6 @@
  Udjat::Module * udjat_module_init() {
 
 	static const Udjat::ModuleInfo moduleinfo{
-		PACKAGE_NAME,												// The module name.
 #if defined(_WIN32)
 		"WinHTTP module for " STRINGIZE_VALUE_OF(PRODUCT_NAME), 	// The module description.
 #elif defined(HAVE_CURL)
@@ -37,9 +37,6 @@
 #else
 		"HTTP module for " STRINGIZE_VALUE_OF(PRODUCT_NAME), 		// The module description.
 #endif //
-		PACKAGE_VERSION, 											// The module version.
-		PACKAGE_URL, 												// The package URL.
-		PACKAGE_BUGREPORT 											// The bugreport address.
 	};
 
 	class Module : public Udjat::Module {
@@ -47,7 +44,7 @@
 
 		class Protocol : public Udjat::Protocol {
 		public:
-			Protocol(const char *name) : Udjat::Protocol(name,&moduleinfo) {
+			Protocol(const char *name) : Udjat::Protocol(name,moduleinfo) {
 			}
 
 			std::string call(const Udjat::URL &url, const Udjat::HTTP::Method method, const char *payload) const override {
@@ -64,6 +61,10 @@
 				}
 			}
 
+			bool get(const Udjat::URL &url, const char *filename) const override {
+				return Udjat::HTTP::Client(url).get(filename);
+			}
+
 		};
 
 		Protocol http{"http"};
@@ -71,7 +72,7 @@
 
 	public:
 
-		Module() : Udjat::Module("http",&moduleinfo) {
+		Module() : Udjat::Module("http",moduleinfo) {
 		};
 
 		virtual ~Module() {

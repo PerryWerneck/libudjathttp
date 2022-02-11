@@ -24,6 +24,7 @@
 #include <udjat/tools/configuration.h>
 #include <udjat/tools/logger.h>
 #include <udjat/tools/http.h>
+#include <udjat/tools/http/timestamp.h>
 #include <stdexcept>
 #include <system_error>
 #include <iostream>
@@ -44,11 +45,24 @@ using namespace std;
 
 namespace Udjat {
 
+#ifdef _WIN32
+
+	#define INTERNET_TEXT wchar_t * __attribute__((cleanup(wchar_t_cleanup)))
+	#define INTERNET_HANDLE HINTERNET __attribute__((cleanup(hinternet_t_cleanup)))
+
+	UDJAT_PRIVATE void wchar_t_cleanup(wchar_t **buf);
+	UDJAT_PRIVATE void hinternet_t_cleanup(HINTERNET *handle);
+
+#endif // _WIN32
+
 	namespace HTTP {
 
 		class Client::Worker {
 		private:
 			HTTP::Client *client;
+
+			/// @brief The request timestamp.
+			HTTP::TimeStamp timestamp;
 
 #if defined(_WIN32)
 
@@ -59,10 +73,10 @@ namespace Udjat {
 			HINTERNET connect();
 
 			/// @brief Open HTTP Request.
-			HINTERNET open(HINTERNET connection, const LPCWSTR pwszVerb);
+			HINTERNET open(HINTERNET connection, const char *);
 
 			/// @brief Send request.
-			void send(HINTERNET request, const char *payload = nullptr);
+			void send(HINTERNET request, const char *headers, const char *payload);
 
 			/// @brief Wait for response.
 			std::string wait(HINTERNET req);
@@ -70,7 +84,6 @@ namespace Udjat {
 #elif defined(HAVE_CURL)
 
 			CURL * hCurl;
-			curl_slist * headers = NULL;
 
 			char error[CURL_ERROR_SIZE];
 
@@ -107,6 +120,8 @@ namespace Udjat {
 			static Worker * getInstance(HTTP::Client *client);
 
 			std::string call(const char *verb, const char *payload = nullptr);
+
+			bool get(const char *filename, time_t timestamp, const char *config);
 
 		};
 

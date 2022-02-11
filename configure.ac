@@ -6,7 +6,7 @@ AC_PREREQ(2.59)
 
 dnl Initialise automake with the package name, version and
 dnl bug-reporting address.
-AC_INIT([udjat-protocol-http], [1.0], [perry.werneck@gmail.com],[udjat-protocol-http],[https://github.com/PerryWerneck/udjat-module-protocol-http])
+AC_INIT([udjat-module-http], [1.0], [perry.werneck@gmail.com],[udjat-module-http],[https://github.com/PerryWerneck/udjat-module-http])
 
 dnl Place auxilliary scripts here.
 AC_CONFIG_AUX_DIR([scripts])
@@ -179,6 +179,23 @@ PKG_CHECK_MODULES( [UDJAT], [libudjat], AC_DEFINE(HAVE_UDJAT,[],[Do we have libu
 
 AC_SUBST(UDJAT_LIBS)
 AC_SUBST(UDJAT_CFLAGS)
+
+app_cv_product=`pkg-config --variable=product_name libudjat`
+AC_DEFINE_UNQUOTED(PRODUCT_NAME, $app_cv_product, [The product name])
+AC_SUBST(PRODUCT_NAME,$app_cv_product)
+
+app_cv_module_path=`pkg-config --variable=module_path libudjat`
+AC_DEFINE_UNQUOTED(MODULE_PATH, $app_cv_module_path, [The path for module installation])
+AC_SUBST(MODULE_PATH,$app_cv_module_path)
+
+dnl ---------------------------------------------------------------------------
+dnl test for pugixml
+dnl ---------------------------------------------------------------------------
+
+PKG_CHECK_MODULES(PUGIXML, pugixml, AC_DEFINE(HAVE_PUGIXML,[],[Do we have PUGIXML?]),AC_MSG_ERROR(pugixml is required))
+
+AC_SUBST(PUGIXML_LIBS)
+AC_SUBST(PUGIXML_CFLAGS)
 
 dnl ---------------------------------------------------------------------------
 dnl Output config

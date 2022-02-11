@@ -24,17 +24,14 @@
 
 namespace Udjat {
 
-	#define INTERNET_TEXT wchar_t * __attribute__((cleanup(wchar_t_cleanup)))
-	#define INTERNET_HANDLE HINTERNET __attribute__((cleanup(hinternet_t_cleanup)))
-
-	static void wchar_t_cleanup(wchar_t **buf) {
+	void wchar_t_cleanup(wchar_t **buf) {
 		if(*buf) {
 			free(*buf);
 			*buf = NULL;
 		}
 	}
 
-	static void hinternet_t_cleanup(HINTERNET *handle) {
+	void hinternet_t_cleanup(HINTERNET *handle) {
 		if(*handle) {
 			WinHttpCloseHandle(*handle);
 			*handle = 0;
@@ -215,9 +212,12 @@ namespace Udjat {
 
 	}
 
-	HINTERNET HTTP::Client::Worker::open(HINTERNET connection, const LPCWSTR pwszVerb) {
+	HINTERNET HTTP::Client::Worker::open(HINTERNET connection, const char *verb) {
 
 		URL_COMPONENTS urlComp;
+
+		INTERNET_TEXT pwszVerb = (wchar_t *) malloc(strlen(verb)*3);
+		mbstowcs(pwszVerb, verb, strlen(verb)+1);
 
 		INTERNET_TEXT pwszUrl = (wchar_t *) malloc(client->url.size()*3);
 		mbstowcs(pwszUrl, client->url.c_str(), client->url.size()+1);
@@ -251,11 +251,19 @@ namespace Udjat {
 
 	}
 
-	void HTTP::Client::Worker::send(HINTERNET request, const char *payload) {
+	void HTTP::Client::Worker::send(HINTERNET request, const char *headers, const char *payload) {
 
 		INTERNET_TEXT	lpszHeaders = NULL;
 		DWORD			dwHeadersLength = 0;
 
+		if(headers && *headers) {
+			size_t hlength = strlen(headers);
+			lpszHeaders = (wchar_t *) malloc(hlength*3);
+			dwHeadersLength = (DWORD) mbstowcs(lpszHeaders, headers, hlength+1);
+		}
+
+
+		/*
 		if(!client->headers.empty()) {
 
 			ostringstream headers;
@@ -270,6 +278,7 @@ namespace Udjat {
 			dwHeadersLength = (DWORD) mbstowcs(lpszHeaders, text.c_str(), text.size()+1);
 
 		}
+		*/
 
 		size_t sz = 0;
 		if(payload) {
@@ -291,55 +300,31 @@ namespace Udjat {
 
 	std::string HTTP::Client::Worker::call(const char *verb, const char *payload) {
 
-		INTERNET_TEXT wVerb = (wchar_t *) malloc(strlen(verb)*3);
-		mbstowcs(wVerb, verb, strlen(verb)+1);
+		string headers;
+		if(!client->headers.empty()) {
 
-		INTERNET_HANDLE	connection = connect();
-		INTERNET_HANDLE	request = open(connection,wVerb);
+			ostringstream oss;
 
-		if(payload) {
-
-			if(Config::Value<bool>("http","trace-payload",true).get()) {
-				cout << "http\tPosting to " << client->url << endl << payload << endl;
+			for(auto header = client->headers.begin(); header != client->headers.end(); header++) {
+				oss << header->name << ": " << header->value << "\r\n";
 			}
-			send(request, payload);
 
-		} else {
-
-			send(request);
+			headers = oss.str();
 
 		}
+
+		INTERNET_HANDLE	connection = connect();
+		INTERNET_HANDLE	request = open(connection,verb);
+
+
+		if(payload && Config::Value<bool>("http","trace-payload",true).get()) {
+			cout << "http\tPosting to " << client->url << endl << payload << endl;
+		}
+
+		send(request, headers.c_str(), payload);
 
 		return this->wait(request);
 	}
 
-	/*
-	std::string HTTP::Client::Worker::get() {
-
-		INTERNET_HANDLE	connection = connect();
-		INTERNET_HANDLE	request = open(connection,L"GET");
-
-		send(request);
-		return wait(request);
-
-	}
-
-	std::string HTTP::Client::Worker::post() {
-
-		INTERNET_HANDLE	connection = connect();
-		INTERNET_HANDLE	request = open(connection,L"POST");
-
-		string payload;
-		this->client->getPostPayload(payload);
-
-		if(Config::Value<bool>("http","trace-payload",true).get()) {
-			cout << "http\tPosting to " << client->url << endl << payload << endl;
-		}
-
-		send(request, payload.c_str());
-		return wait(request);
-
-	}
-	*/
 
 }
