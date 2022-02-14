@@ -61,8 +61,8 @@
 				}
 			}
 
-			bool get(const Udjat::URL &url, const char *filename) const override {
-				return Udjat::HTTP::Client(url).get(filename);
+			bool get(const Udjat::URL &url, const char *filename, const std::function<bool(double current, double total)> &progress) const override {
+				return Udjat::HTTP::Client(url).get(filename,progress);
 			}
 
 		};

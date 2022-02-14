@@ -121,7 +121,11 @@ namespace Udjat {
 
 			std::string call(const char *verb, const char *payload = nullptr);
 
-			bool get(const char *filename, time_t timestamp, const char *config);
+			/// @brief Get File.
+			/// @param filename Timestamp sent to server to check if the file was changed (0 = no check).
+			/// @param config Section from the configuration file to get the download parameters.
+			/// @param progress Callback for file progress.
+			bool get(const char *filename, time_t timestamp, const char *config, const std::function<bool(double current, double total)> &progress);
 
 		};
 
