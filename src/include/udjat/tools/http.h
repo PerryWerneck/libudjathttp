@@ -22,6 +22,7 @@
  #include <udjat/defs.h>
  #include <udjat/tools/http/exception.h>
  #include <udjat/tools/method.h>
+ #include <udjat/tools/string.h>
  #include <string>
  #include <vector>
  #include <system_error>
@@ -77,8 +78,8 @@
 
 			Client & setCredentials(const char *username, const char *password);
 
-			std::string get();
-			std::string post(const char *payload);
+			Udjat::String get();
+			Udjat::String post(const char *payload);
 
 			/// @brief Download/update a file.
 			/// @param filename The fullpath for the file.

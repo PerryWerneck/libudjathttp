@@ -47,7 +47,7 @@
 			Protocol(const char *name) : Udjat::Protocol(name,moduleinfo) {
 			}
 
-			std::string call(const Udjat::URL &url, const Udjat::HTTP::Method method, const char *payload) const override {
+			Udjat::String call(const Udjat::URL &url, const Udjat::HTTP::Method method, const char *payload) const override {
 
 				switch(method) {
 				case Udjat::HTTP::Get:

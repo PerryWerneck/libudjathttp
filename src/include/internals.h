@@ -24,6 +24,7 @@
 #include <udjat/tools/configuration.h>
 #include <udjat/tools/logger.h>
 #include <udjat/tools/http.h>
+#include <udjat/tools/string.h>
 #include <udjat/tools/http/timestamp.h>
 #include <stdexcept>
 #include <system_error>
@@ -79,7 +80,7 @@ namespace Udjat {
 			void send(HINTERNET request, const char *headers, const char *payload);
 
 			/// @brief Wait for response.
-			std::string wait(HINTERNET req);
+			Udjat::String wait(HINTERNET req);
 
 #elif defined(HAVE_CURL)
 
@@ -101,7 +102,7 @@ namespace Udjat {
 			} buffers;
 
 			std::string message;
-			std::string perform();
+			Udjat::String perform();
 
 #else
 
@@ -119,7 +120,7 @@ namespace Udjat {
 
 			static Worker * getInstance(HTTP::Client *client);
 
-			std::string call(const char *verb, const char *payload = nullptr);
+			Udjat::String call(const char *verb, const char *payload = nullptr);
 
 			/// @brief Get File.
 			/// @param filename Timestamp sent to server to check if the file was changed (0 = no check).

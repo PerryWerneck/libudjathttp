@@ -6,6 +6,7 @@
 		<Option makefile_is_custom="1" />
 		<Option pch_mode="2" />
 		<Option compiler="gcc" />
+		<Option virtualFolders="src/include/" />
 		<Build>
 			<Target title="Debug">
 				<Option output=".bin/Debug/http" prefix_auto="1" extension_auto="1" />
@@ -38,7 +39,9 @@
 		</Compiler>
 		<Unit filename="src/include/config.h" />
 		<Unit filename="src/include/internals.h" />
-		<Unit filename="src/include/udjat/tools/http.h" />
+		<Unit filename="src/include/udjat/tools/http.h">
+			<Option virtualFolder="src/include/" />
+		</Unit>
 		<Unit filename="src/libhttp/include/config.h" />
 		<Unit filename="src/libhttp/include/http/defs.h" />
 		<Unit filename="src/libhttp/include/http/table.h" />

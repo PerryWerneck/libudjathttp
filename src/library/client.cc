@@ -31,9 +31,9 @@ namespace Udjat {
 	HTTP::Client::~Client() {
 	}
 
-	std::string HTTP::Client::get() {
+	Udjat::String HTTP::Client::get() {
 
-		string response;
+		Udjat::String response;
 		Worker * worker = Worker::getInstance(this);
 
 		try {
@@ -59,9 +59,9 @@ namespace Udjat {
 
 	}
 
-	std::string HTTP::Client::post(const char *payload) {
+	Udjat::String HTTP::Client::post(const char *payload) {
 
-		string response;
+		Udjat::String response;
 		Worker * worker = Worker::getInstance(this);
 
 		try {
