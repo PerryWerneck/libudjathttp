@@ -94,7 +94,7 @@
 
 	}
 
-	std::string HTTP::Client::Worker::perform() {
+	Udjat::String HTTP::Client::Worker::perform() {
 
 		curl_easy_setopt(hCurl, CURLOPT_WRITEDATA, this);
 		curl_easy_setopt(hCurl, CURLOPT_WRITEFUNCTION, write_callback);
@@ -113,7 +113,7 @@
 
 		if(response_code >= 200 && response_code <= 299) {
 			cout << "http\t" << this->client->url << " " << response_code << " " << message << endl;
-			return buffers.in.str();
+			return Udjat::String(buffers.in.str().c_str());
 		}
 
 		cerr << "http\t" << this->client->url << " " << response_code << " " << message << endl;
@@ -126,7 +126,7 @@
 
 	}
 
-	std::string HTTP::Client::Worker::call(const char *verb, const char *payload) {
+	Udjat::String HTTP::Client::Worker::call(const char *verb, const char *payload) {
 
 		if(!strcasecmp(verb,"post")) {
 			curl_easy_setopt(hCurl, CURLOPT_POST, 1);

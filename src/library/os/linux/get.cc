@@ -28,20 +28,50 @@
  #include <fcntl.h>
  #include <libgen.h>
  #include <utime.h>
+ #include <functional>
 
  namespace Udjat {
 
-	static size_t write_file(void *contents, size_t size, size_t nmemb, File::Temporary *tempfile) noexcept {
+ 	class Writer : public File::Temporary {
+	public:
+		const std::function<bool(double current, double total)> &progress;
+		double current = 0;
+
+		CURL *curl = nullptr;
+		double total = 0;
+
+		Writer(CURL *c, const char *filename, const std::function<bool(double, double)> &p ) : Temporary(filename), progress(p), curl(c) {
+			progress(0,0);
+		}
+
+		virtual ~Writer() {
+			progress(current,total);
+		}
+
+		void write(const void *contents, size_t length) {
+			File::Temporary::write(contents,length);
+			this->current += length;
+			progress(this->current,this->total);
+		}
+
+ 	};
+
+	static size_t write_file(void *contents, size_t size, size_t nmemb, Writer *writer) noexcept {
 
 		size_t length = size * nmemb;
-		tempfile->write(contents,length);
+
+		if(!writer->total) {
+			curl_easy_getinfo(writer->curl, CURLINFO_CONTENT_LENGTH_DOWNLOAD, &writer->total);
+		}
+
+		writer->write(contents,length);
 		return length;
 
 	}
 
-	bool HTTP::Client::Worker::get(const char *filename, time_t timestamp, const char *config) {
+	bool HTTP::Client::Worker::get(const char *filename, time_t timestamp, const char *config, const std::function<bool(double current, double total)> &progress) {
 
-		File::Temporary tempfile(filename);
+		Writer tempfile(hCurl, filename, progress);
 
 		curl_easy_setopt(hCurl, CURLOPT_WRITEDATA, &tempfile);
 		curl_easy_setopt(hCurl, CURLOPT_WRITEFUNCTION, write_file);

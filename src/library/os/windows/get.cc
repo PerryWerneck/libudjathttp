@@ -31,8 +31,13 @@
 
  namespace Udjat {
 
-	bool HTTP::Client::Worker::get(const char *filename, time_t timestamp, const char *config) {
+	bool HTTP::Client::Worker::get(const char *filename, time_t timestamp, const char *config, const std::function<bool(double current, double total)> &progress) {
 
+		progress(0,0);
+
+		//
+		// Open connection
+		//
 		INTERNET_HANDLE	connection = connect();
 		INTERNET_HANDLE	request = open(connection,"GET");
 		string headers;
@@ -129,15 +134,30 @@
 		}
 
 		//
+		// Get file length
+		//
+		double total = 0;
+		{
+			DWORD fileLength = 0;
+			DWORD size = sizeof(DWORD);
+			if( WinHttpQueryHeaders( request, WINHTTP_QUERY_CONTENT_LENGTH | WINHTTP_QUERY_FLAG_NUMBER , NULL, &fileLength, &size, NULL ) == TRUE ) {
+				total = (double) fileLength;
+			}
+		}
+
+		//
 		// Download file.
 		//
 		File::Temporary tempfile(filename);
 
 		char buffer[4096] = {0};
 		DWORD length = 0;
+		double current = 0;
 
 		while(WinHttpReadData(request, buffer, sizeof(buffer), &length) && length > 0) {
 			tempfile.write((void *) buffer,(size_t) length);
+			current += length;
+			progress(current,total);
 			length = 0;
 		}
 

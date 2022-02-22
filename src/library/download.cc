@@ -29,7 +29,7 @@
 
  namespace Udjat {
 
-	bool HTTP::Client::get(const char *filename, const char *config) {
+	bool HTTP::Client::get(const char *filename, const std::function<bool(double current, double total)> &progress, const char *config) {
 
 		struct stat st;
 		bool updated = false;
@@ -53,7 +53,7 @@
 
 		try {
 
-			updated = worker->get(filename,st.st_mtime,config);
+			updated = worker->get(filename,st.st_mtime,config,progress);
 
 		} catch(const std::exception &e) {
 

@@ -139,7 +139,7 @@ namespace Udjat {
 
 	}
 
-	std::string HTTP::Client::Worker::wait(HINTERNET request) {
+	Udjat::String HTTP::Client::Worker::wait(HINTERNET request) {
 
 #ifdef DEBUG
 		cout << "Waiting for response" << endl;
@@ -208,7 +208,7 @@ namespace Udjat {
 			length = 0;
 		}
 
-		return response.str();
+		return Udjat::String(response.str().c_str());
 
 	}
 
@@ -298,7 +298,7 @@ namespace Udjat {
 
 	}
 
-	std::string HTTP::Client::Worker::call(const char *verb, const char *payload) {
+	Udjat::String HTTP::Client::Worker::call(const char *verb, const char *payload) {
 
 		string headers;
 		if(!client->headers.empty()) {

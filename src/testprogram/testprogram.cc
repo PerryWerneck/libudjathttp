@@ -46,9 +46,16 @@ int main(int argc, char **argv) {
 
 	//cout << "Response:" << endl << URL("http://localhost").get() << endl;
 
+	/*
 	if(URL("http://127.0.0.1/~perry/test.xml").get("localhost.html")) {
 		cout << endl << endl << "File was updated!" << endl << endl;
 	}
+	*/
+
+	URL("http://localhost").get("/tmp/localhost.html",[](double current, double total){
+		cout << "Donwloading " << current << " of " << total << endl;
+		return true;
+	});
 
 	Udjat::Module::unload();
 

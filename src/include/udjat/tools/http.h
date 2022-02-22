@@ -22,9 +22,11 @@
  #include <udjat/defs.h>
  #include <udjat/tools/http/exception.h>
  #include <udjat/tools/method.h>
+ #include <udjat/tools/string.h>
  #include <string>
  #include <vector>
  #include <system_error>
+ #include <functional>
 
  namespace Udjat {
 
@@ -76,14 +78,15 @@
 
 			Client & setCredentials(const char *username, const char *password);
 
-			std::string get();
-			std::string post(const char *payload);
+			Udjat::String get();
+			Udjat::String post(const char *payload);
 
 			/// @brief Download/update a file.
 			/// @param filename The fullpath for the file.
+			/// @param progress Callback for the download progress.
 			/// @param config Name of the configuration section used to get the http headers.
 			/// @return true if the file was updated.
-			bool get(const char *filename, const char *config = nullptr);
+			bool get(const char *filename, const std::function<bool(double current, double total)> &progress, const char *config = nullptr);
 
 		};
 
