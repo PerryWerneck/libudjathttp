@@ -76,6 +76,9 @@
 		};
 
 		virtual ~Module() {
+#ifdef DEBUG 
+				cout << __FILE__ << "(" << __LINE__ << ")" << endl;
+#endif // DEBUG
 		}
 
 	};
