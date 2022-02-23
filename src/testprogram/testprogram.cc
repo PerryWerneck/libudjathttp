@@ -42,7 +42,7 @@ int main(int argc, char **argv) {
 	}
 	*/
 
-	udjat_module_init();
+	auto module = udjat_module_init();
 
 	//cout << "Response:" << endl << URL("http://localhost").get() << endl;
 
@@ -52,12 +52,22 @@ int main(int argc, char **argv) {
 	}
 	*/
 
-	URL("http://localhost").get("/tmp/localhost.html",[](double current, double total){
-		cout << "Donwloading " << current << " of " << total << endl;
-		return true;
-	});
+	try {
+
+		URL("http://localhost").get("/tmp/localhost.html",[](double current, double total){
+			cout << "Donwloading " << current << " of " << total << endl;
+			return true;
+		});
+
+	} catch(const std::exception &e) {
+
+		cerr << "**** Error '" << e.what() << "'" << endl;
+
+	}
 
 	Udjat::Module::unload();
+
+	cout << "Ending test program" << endl;
 
 	return 0;
 
