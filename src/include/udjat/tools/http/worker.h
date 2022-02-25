@@ -58,7 +58,7 @@
 			HINTERNET open(HINTERNET connection, const char *);
 
 			/// @brief Send request.
-			void send(HINTERNET request, const char *headers, const char *payload);
+			void send(HINTERNET request);
 
 			/// @brief Wait for response.
 			Udjat::String wait(HINTERNET req);

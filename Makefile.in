@@ -5,11 +5,11 @@ PACKAGE_NAME=@PACKAGE_NAME@
 PRODUCT_NAME=@PRODUCT_NAME@
 SONAME=@SONAME@
 
-#LIBRARY_SOURCES= \
-#	$(wildcard src/library/*.cc) \
-#	$(wildcard src/library/os/@OSNAME@/*.cc)
+LIBRARY_SOURCES= \
+	$(wildcard src/library/*.cc) \
+	$(wildcard src/library/os/@OSNAME@/*.cc)
 
-MAIN_SOURCES= \
+MODULE_SOURCES= \
 	$(wildcard src/module/*.cc)
 
 TEST_SOURCES= \

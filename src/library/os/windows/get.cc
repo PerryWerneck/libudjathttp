@@ -31,6 +31,7 @@
 
  namespace Udjat {
 
+	/*
 	bool HTTP::Client::Worker::get(const char *filename, time_t timestamp, const char *config, const std::function<bool(double current, double total)> &progress) {
 
 		progress(0,0);
@@ -164,7 +165,7 @@
 		tempfile.save();
 		return true;
 	}
-
+	*/
 
  }
 
