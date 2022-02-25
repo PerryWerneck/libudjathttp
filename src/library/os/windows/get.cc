@@ -23,6 +23,7 @@
  #include <cstdio>
  #include <udjat/tools/http/timestamp.h>
  #include <udjat/tools/file.h>
+ #include <udjat/tools/http/worker.h>
  #include <sys/types.h>
  #include <sys/stat.h>
  #include <fcntl.h>
@@ -31,8 +32,7 @@
 
  namespace Udjat {
 
-	/*
-	bool HTTP::Client::Worker::get(const char *filename, time_t timestamp, const char *config, const std::function<bool(double current, double total)> &progress) {
+	bool HTTP::Worker::save(const char *filename, const std::function<bool(double current, double total)> &progress)  {
 
 		progress(0,0);
 
@@ -40,42 +40,15 @@
 		// Open connection
 		//
 		INTERNET_HANDLE	connection = connect();
-		INTERNET_HANDLE	request = open(connection,"GET");
-		string headers;
-
-		//
-		// Create headers
-		//
-		{
-			static const struct {
-				const char *name;
-				const char *value;
-			} hlist[] = {
-				{ "Cache-Control","public, max-age=31536000" }
-			};
-
-			ostringstream hbuf;
-			for(size_t ix = 0; ix < (sizeof(hlist)/sizeof(hlist[0])); ix++) {
-				hbuf 	<< hlist[ix].name << ":"
-						<< Config::Value<string>("download-headers",hlist[ix].name,hlist[ix].value)
-						<< "\r\n";
-			}
-
-			hbuf 	<< "If-Modified-Since:"
-					<< HTTP::TimeStamp(timestamp).to_string()
-					<< "\r\n";
-
-			headers = hbuf.str();
-
-		}
+		INTERNET_HANDLE	request = open(connection);
 
 		//
 		// Do request
 		//
-		send(request,headers.c_str(),nullptr);
+		send(request);
 
 		if(!WinHttpReceiveResponse(request, NULL)) {
-			throw Win32::Exception(this->client->url + ": Error receiving response");
+			throw Win32::Exception(string{"Error receiving response for "} + url());
 		}
 
 		//
@@ -93,7 +66,7 @@
 					&dwSize,
 					WINHTTP_NO_HEADER_INDEX
 				)) {
-					throw Udjat::Win32::Exception("Cant get HTTP status code");
+					throw Win32::Exception(string{"Cant get HTTP status code for "} + url());
 				}
 		}
 
@@ -131,7 +104,7 @@
 			ZeroMemory(text, sizeof(text));
 			wcstombs(text, buffer, 1023);
 
-			throw Udjat::HTTP::Exception((unsigned int) dwStatusCode, this->client->url.c_str(), text);
+			throw HTTP::Exception((unsigned int) dwStatusCode, url().c_str(), text);
 		}
 
 		//
@@ -144,6 +117,7 @@
 			if( WinHttpQueryHeaders( request, WINHTTP_QUERY_CONTENT_LENGTH | WINHTTP_QUERY_FLAG_NUMBER , NULL, &fileLength, &size, NULL ) == TRUE ) {
 				total = (double) fileLength;
 			}
+			progress(0,total);
 		}
 
 		//
@@ -165,7 +139,6 @@
 		tempfile.save();
 		return true;
 	}
-	*/
 
  }
 
