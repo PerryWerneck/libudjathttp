@@ -55,13 +55,13 @@
 			HINTERNET connect();
 
 			/// @brief Open HTTP Request.
-			HINTERNET open(HINTERNET connection, const char *);
+			HINTERNET open(HINTERNET connection);
 
 			/// @brief Send request.
 			void send(HINTERNET request);
 
 			/// @brief Wait for response.
-			Udjat::String wait(HINTERNET req);
+			Udjat::String wait(HINTERNET req, const std::function<bool(double current, double total)> &progress);
 
 #elif defined(HAVE_CURL)
 

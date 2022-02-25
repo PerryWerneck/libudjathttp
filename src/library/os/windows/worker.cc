@@ -138,7 +138,7 @@ namespace Udjat {
 
 	}
 
-	Udjat::String HTTP::Worker::wait(HINTERNET request) {
+	Udjat::String HTTP::Worker::wait(HINTERNET request, const std::function<bool(double current, double total)> &progress) {
 
 #ifdef DEBUG
 		cout << "Waiting for response" << endl;
@@ -198,12 +198,28 @@ namespace Udjat {
 
 		}
 
+		//
+		// Get file length
+		//
+		double total = 0;
+		{
+			DWORD fileLength = 0;
+			DWORD size = sizeof(DWORD);
+			if( WinHttpQueryHeaders( request, WINHTTP_QUERY_CONTENT_LENGTH | WINHTTP_QUERY_FLAG_NUMBER , NULL, &fileLength, &size, NULL ) == TRUE ) {
+				total = (double) fileLength;
+			}
+			progress(0,total);
+		}
+
 		stringstream response;
 		char buffer[4096] = {0};
 		DWORD length = 0;
+		double current = 0;
 
 		while(WinHttpReadData(request, buffer, sizeof(buffer), &length) && length > 0) {
 			response.write(buffer,length);
+			current += length;
+			progress(current,total);
 			length = 0;
 		}
 
@@ -211,10 +227,11 @@ namespace Udjat {
 
 	}
 
-	HINTERNET HTTP::Worker::open(HINTERNET connection, const char *verb) {
+	HINTERNET HTTP::Worker::open(HINTERNET connection) {
 
 		URL_COMPONENTS urlComp;
 
+		const char *verb = std::to_string(method());
 		URL url = this->url();
 
 		INTERNET_TEXT pwszVerb = (wchar_t *) malloc(strlen(verb)*3);
@@ -276,6 +293,9 @@ namespace Udjat {
 		const char *payload = this->out.payload.c_str();
 		if(payload) {
 			sz = strlen(payload);
+			if(Config::Value<bool>("http","trace-payload",true).get()) {
+				cout << "http\t" << method() << " " << url() << endl << payload << endl;
+			}
 		}
 
 		if(!WinHttpSendRequest(
@@ -294,34 +314,16 @@ namespace Udjat {
 		}
 	}
 
-	/*
-	Udjat::String HTTP::Client::Worker::call(const char *verb, const char *payload) {
+	String HTTP::Worker::get(const std::function<bool(double current, double total)> &progress) {
 
-		string headers;
-		if(!client->headers.empty()) {
-
-			ostringstream oss;
-
-			for(auto header = client->headers.begin(); header != client->headers.end(); header++) {
-				oss << header->name << ": " << header->value << "\r\n";
-			}
-
-			headers = oss.str();
-
-		}
+		progress(0,0);
 
 		INTERNET_HANDLE	connection = connect();
-		INTERNET_HANDLE	request = open(connection,verb);
+		INTERNET_HANDLE	request = open(connection);
 
+		send(request);
 
-		if(payload && Config::Value<bool>("http","trace-payload",true).get()) {
-			cout << "http\tPosting to " << client->url << endl << payload << endl;
-		}
-
-		send(request, headers.c_str(), payload);
-
-		return this->wait(request);
+		return this->wait(request,progress);
 	}
-	*/
 
 }
