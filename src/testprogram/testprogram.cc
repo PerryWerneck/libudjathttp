@@ -22,7 +22,7 @@
  #include <udjat/tools/systemservice.h>
  #include <udjat/tools/application.h>
  #include <udjat/tools/url.h>
- #include <udjat/tools/http.h>
+ #include <udjat/tools/http/client.h>
  #include <udjat/agent.h>
  #include <udjat/factory.h>
  #include <udjat/module.h>
@@ -52,12 +52,37 @@ int main(int argc, char **argv) {
 	}
 	*/
 
+	/*
 	try {
 
 		URL("http://localhost").get("/tmp/localhost.html",[](double current, double total){
 			cout << "Donwloading " << current << " of " << total << endl;
 			return true;
 		});
+
+	} catch(const std::exception &e) {
+
+		cerr << "**** Error '" << e.what() << "'" << endl;
+
+	}
+	*/
+
+	try {
+
+
+		cout
+			<< "-----------------------------------" << endl;
+
+		string text = HTTP::Client("http://localhost").get();
+
+		cout
+			<< "[" << text << "]" << endl
+			<< "-----------------------------------" << endl;
+
+		HTTP::Client("http://localhost").save("localhost.html");
+
+		cout
+			<< "-----------------------------------" << endl;
 
 	} catch(const std::exception &e) {
 

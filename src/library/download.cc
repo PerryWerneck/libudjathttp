@@ -29,6 +29,7 @@
 
  namespace Udjat {
 
+	/*
 	bool HTTP::Client::get(const char *filename, const std::function<bool(double current, double total)> &progress, const char *config) {
 
 		struct stat st;
@@ -74,5 +75,6 @@
 		return updated;
 
 	}
+	*/
 
  }

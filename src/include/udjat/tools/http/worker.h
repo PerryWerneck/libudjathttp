@@ -17,19 +17,12 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#pragma once
+ #pragma once
 
-#include <config.h>
-#include <udjat/defs.h>
-#include <udjat/tools/configuration.h>
-#include <udjat/tools/logger.h>
-#include <udjat/tools/http.h>
-#include <udjat/tools/string.h>
-#include <udjat/tools/http/timestamp.h>
-#include <stdexcept>
-#include <system_error>
-#include <iostream>
-#include <sstream>
+ #include <udjat/defs.h>
+ #include <udjat/tools/protocol.h>
+ #include <udjat/tools/http/exception.h>
+ #include <sstream>
 
 #if defined(_WIN32)
 
@@ -40,31 +33,18 @@
 
 	#include <curl/curl.h>
 
+#else
+
+	#error Cant determine HTTP backend
+
 #endif
 
-using namespace std;
+ namespace Udjat {
 
-namespace Udjat {
-
-#ifdef _WIN32
-
-	#define INTERNET_TEXT wchar_t * __attribute__((cleanup(wchar_t_cleanup)))
-	#define INTERNET_HANDLE HINTERNET __attribute__((cleanup(hinternet_t_cleanup)))
-
-	UDJAT_PRIVATE void wchar_t_cleanup(wchar_t **buf);
-	UDJAT_PRIVATE void hinternet_t_cleanup(HINTERNET *handle);
-
-#endif // _WIN32
-
-	/*
 	namespace HTTP {
 
-		class Client::Worker {
+		class UDJAT_API Worker : public Protocol::Worker {
 		private:
-			HTTP::Client *client;
-
-			/// @brief The request timestamp.
-			HTTP::TimeStamp timestamp;
 
 #if defined(_WIN32)
 
@@ -86,9 +66,14 @@ namespace Udjat {
 #elif defined(HAVE_CURL)
 
 			CURL * hCurl;
-
 			char error[CURL_ERROR_SIZE];
 
+			struct {
+				const char *out = nullptr;
+				std::ostringstream in;
+			} buffers;
+
+			std::string message;
 			static size_t read_callback(char *buffer, size_t size, size_t nitems, Worker *session) noexcept;
 			static size_t write_callback(void *contents, size_t size, size_t nmemb, Worker *worker) noexcept;
 			static int trace_callback(CURL *handle, curl_infotype type, char *data, size_t size, Worker *worker) noexcept;
@@ -96,13 +81,8 @@ namespace Udjat {
 			static int sockopt_callback(Worker *worker, curl_socket_t curlfd, curlsocktype purpose) noexcept;
 			static size_t header_callback(char *buffer, size_t size, size_t nitems, Worker *worker) noexcept;
 
-			struct {
-				const char *out = nullptr;
-				std::ostringstream in;
-				std::string payload;
-			} buffers;
+			curl_slist * headers() const noexcept;
 
-			std::string message;
 			Udjat::String perform();
 
 #else
@@ -111,28 +91,26 @@ namespace Udjat {
 
 #endif // _WIN32
 
-			Worker(HTTP::Client *s);
-
 		public:
-			Worker(const Worker *s) = delete;
-			Worker(const Worker &s) = delete;
 
-			~Worker();
+			Worker(const char *url = "", const HTTP::Method method = HTTP::Get, const char *payload = "");
+			Worker(const URL &url, const HTTP::Method method = HTTP::Get, const char *payload = "") : Worker(url.c_str(),method,payload) {
+			}
 
-			static Worker * getInstance(HTTP::Client *client);
+			virtual ~Worker();
 
-			Udjat::String call(const char *verb, const char *payload = nullptr);
+			Worker & credentials(const char *user, const char *passwd) override;
+			Worker & url(const char *url) noexcept;
 
-			/// @brief Get File.
-			/// @param filename Timestamp sent to server to check if the file was changed (0 = no check).
-			/// @param config Section from the configuration file to get the download parameters.
-			/// @param progress Callback for file progress.
-			bool get(const char *filename, time_t timestamp, const char *config, const std::function<bool(double current, double total)> &progress);
+			inline const URL & url() const noexcept {
+				return Protocol::Worker::url();
+			}
+
+			String get(const std::function<bool(double current, double total)> &progress) override;
+			bool save(const char *filename, const std::function<bool(double current, double total)> &progress) override;
 
 		};
 
-
 	}
-	*/
 
-}
+ }

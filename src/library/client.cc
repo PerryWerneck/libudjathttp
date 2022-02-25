@@ -25,6 +25,7 @@
 
 namespace Udjat {
 
+	/*
 	HTTP::Client::Client(const char *u) : url(u) {
 	}
 
@@ -125,5 +126,6 @@ namespace Udjat {
 #endif // _WIN32
 		return *this;
 	}
+	*/
 
 }

@@ -21,8 +21,8 @@
  #include <udjat/defs.h>
  #include <udjat/module.h>
  #include <udjat/tools/protocol.h>
- #include <udjat/tools/http.h>
  #include <udjat/moduleinfo.h>
+ #include <udjat/tools/http/worker.h>
 
  using namespace std;
 
@@ -48,21 +48,11 @@
 			}
 
 			Udjat::String call(const Udjat::URL &url, const Udjat::HTTP::Method method, const char *payload) const override {
-
-				switch(method) {
-				case Udjat::HTTP::Get:
-					return Udjat::HTTP::Client(url).get();
-
-				case Udjat::HTTP::Post:
-					return Udjat::HTTP::Client(url).post(payload);
-
-				default:
-					throw system_error(ENOTSUP,system_category(),"Unsupported HTTP method");
-				}
+				return Udjat::HTTP::Worker(url,method,payload).Udjat::Protocol::Worker::get();
 			}
 
 			bool get(const Udjat::URL &url, const char *filename, const std::function<bool(double current, double total)> &progress) const override {
-				return Udjat::HTTP::Client(url).get(filename,progress);
+				return Udjat::HTTP::Worker(url).save(filename,progress);
 			}
 
 		};
@@ -76,7 +66,7 @@
 		};
 
 		virtual ~Module() {
-#ifdef DEBUG 
+#ifdef DEBUG
 				cout << __FILE__ << "(" << __LINE__ << ")" << endl;
 #endif // DEBUG
 		}
