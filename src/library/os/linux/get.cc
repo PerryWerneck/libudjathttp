@@ -74,6 +74,7 @@
 
 		Writer tempfile(hCurl, filename, progress);
 
+		curl_easy_setopt(hCurl, CURLOPT_URL, url().c_str());
 		curl_easy_setopt(hCurl, CURLOPT_WRITEDATA, &tempfile);
 		curl_easy_setopt(hCurl, CURLOPT_WRITEFUNCTION, write_file);
 

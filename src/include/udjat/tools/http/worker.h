@@ -100,11 +100,6 @@
 			virtual ~Worker();
 
 			Worker & credentials(const char *user, const char *passwd) override;
-			Worker & url(const char *url) noexcept;
-
-			inline const URL & url() const noexcept {
-				return Protocol::Worker::url();
-			}
 
 			String get(const std::function<bool(double current, double total)> &progress) override;
 			bool save(const char *filename, const std::function<bool(double current, double total)> &progress) override;

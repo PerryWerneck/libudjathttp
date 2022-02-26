@@ -44,10 +44,6 @@
 
 		hCurl = curl_easy_init();
 
-		if(url && *url) {
-			curl_easy_setopt(hCurl, CURLOPT_URL, url);
-		}
-
 		curl_easy_setopt(hCurl, CURLOPT_FOLLOWLOCATION, 1L);
 
 		curl_easy_setopt(hCurl, CURLOPT_ERRORBUFFER, error);
@@ -81,12 +77,6 @@
 		return *this;
 	}
 
-	HTTP::Worker & HTTP::Worker::url(const char *url) noexcept {
-		Protocol::Worker::url(url);
-		curl_easy_setopt(hCurl, CURLOPT_URL, Protocol::Worker::url().c_str());
-		return *this;
-	}
-
 	HTTP::Worker::~Worker() {
 		curl_easy_cleanup(hCurl);
 	}
@@ -101,6 +91,11 @@
 
 	Udjat::String HTTP::Worker::perform() {
 
+#ifdef DEBUG
+		cout << "curl\t*** Current URL is '" << url() << "'" << endl;
+#endif // DEBUG
+
+		curl_easy_setopt(hCurl, CURLOPT_URL, url().c_str());
 		curl_easy_setopt(hCurl, CURLOPT_WRITEDATA, this);
 		curl_easy_setopt(hCurl, CURLOPT_WRITEFUNCTION, write_callback);
 
