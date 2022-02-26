@@ -182,6 +182,43 @@ install: \
 	install-module \
 	install-dev
 
+install-debug: \
+	install-@OSNAME@-debug
+
+install-linux-debug: \
+	$(BINDBG)/$(SONAME) \
+	$(BINDBG)/$(PACKAGE_NAME)@LIBEXT@
+
+	@$(MKDIR) $(DESTDIR)$(libdir)
+
+	@$(INSTALL_PROGRAM) \
+		$(BINDBG)/$(SONAME) \
+		$(DESTDIR)$(libdir)/$(SONAME)
+
+	@$(MKDIR) \
+		$(DESTDIR)@MODULE_PATH@
+
+	@$(INSTALL_PROGRAM) \
+		$(BINDBG)/$(PACKAGE_NAME)@LIBEXT@ \
+		$(DESTDIR)@MODULE_PATH@/$(PACKAGE_NAME)@LIBEXT@
+
+install-windows-debug: \
+	$(BINDBG)/$(SONAME) \
+	$(BINDBG)/$(PACKAGE_NAME)@LIBEXT@
+
+	@$(MKDIR) $(DESTDIR)$(libdir)
+
+	@$(INSTALL_PROGRAM) \
+		$(BINDBG)/$(SONAME) \
+		$(DESTDIR)$(bindir)/$(SONAME)
+
+	@$(MKDIR) \
+		$(DESTDIR)@MODULE_PATH@
+
+	@$(INSTALL_PROGRAM) \
+		$(BINDBG)/$(PACKAGE_NAME)@LIBEXT@ \
+		$(DESTDIR)@MODULE_PATH@/$(PACKAGE_NAME)@LIBEXT@
+
 install-linux: \
 	$(BINRLS)/$(SONAME)
 
@@ -285,12 +322,11 @@ install-windows-dev:
 #---[ Uninstall Targets ]----------------------------------------------------------------
 
 uninstall: \
-	uninstall-@OSNAME@
-
-uninstall-linux:
-
 	@rm -f \
 		$(DESTDIR)@MODULE_PATH@/$(PACKAGE_NAME)@LIBEXT@
+
+	@rm -f \
+		$(DESTDIR)$(libdir)/$(SONAME)
 
 #---[ Debug Targets ]--------------------------------------------------------------------
 

@@ -52,7 +52,6 @@
 		<Unit filename="src/libhttp/os/windows/native_win32.h" />
 		<Unit filename="src/library/client.cc" />
 		<Unit filename="src/library/download.cc" />
-		<Unit filename="src/library/exception.cc" />
 		<Unit filename="src/library/os/linux/curl.cc" />
 		<Unit filename="src/library/os/linux/get.cc" />
 		<Unit filename="src/library/os/windows/base64.cc" />
