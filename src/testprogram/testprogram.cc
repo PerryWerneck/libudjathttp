@@ -70,6 +70,7 @@ int main(int argc, char **argv) {
 	try {
 
 
+		/*
 		cout
 			<< "-----------------------------------" << endl;
 
@@ -78,8 +79,9 @@ int main(int argc, char **argv) {
 		cout
 			<< "[" << text << "]" << endl
 			<< "-----------------------------------" << endl;
+		*/
 
-		HTTP::Client("http://localhost").save("localhost.html");
+		HTTP::Client("http://localhost/~perry/test.xml").save("localhost.html");
 
 		cout
 			<< "-----------------------------------" << endl;

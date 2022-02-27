@@ -23,6 +23,7 @@
  #include <udjat/tools/protocol.h>
  #include <udjat/tools/http/exception.h>
  #include <sstream>
+ #include <list>
 
 #if defined(_WIN32)
 
@@ -45,6 +46,17 @@
 
 		class UDJAT_API Worker : public Protocol::Worker {
 		private:
+
+			class UDJAT_API Header : public Protocol::Header {
+			public:
+				Header(const char *name) : Protocol::Header(name) {
+				}
+
+				Protocol::Header & assign(const Udjat::TimeStamp &value) override;
+
+			};
+
+			std::list<Header> headerlist;
 
 #if defined(_WIN32)
 
@@ -103,6 +115,8 @@
 
 			String get(const std::function<bool(double current, double total)> &progress) override;
 			bool save(const char *filename, const std::function<bool(double current, double total)> &progress) override;
+
+			Protocol::Header & header(const char *name) override;
 
 		};
 

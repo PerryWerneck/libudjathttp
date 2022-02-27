@@ -83,7 +83,7 @@
 
 	curl_slist * HTTP::Worker::headers() const noexcept {
 		struct curl_slist *chunk = NULL;
-		for(const Protocol::Header &header : Protocol::Worker::headers) {
+		for(const Header &header : headerlist) {
 			chunk = curl_slist_append(chunk,(string(header.name()) + ":" + header.value()).c_str());
 		}
 		return chunk;

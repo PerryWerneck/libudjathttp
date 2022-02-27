@@ -58,6 +58,7 @@
 		<Unit filename="src/library/os/windows/base64.h" />
 		<Unit filename="src/library/os/windows/get.cc" />
 		<Unit filename="src/library/os/windows/worker.cc" />
+		<Unit filename="src/library/worker.cc" />
 		<Unit filename="src/module/init.cc" />
 		<Unit filename="src/os/windows/base64.h" />
 		<Unit filename="src/testprogram/testprogram.cc" />
