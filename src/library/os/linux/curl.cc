@@ -301,7 +301,7 @@
 				}
 
 				if(*ptr) {
-					worker->in.modification.set(ptr);
+					worker->in.modification = HTTP::TimeStamp(ptr);
 #ifdef DEBUG
 					cout << "last-modified: " << worker->in.modification << endl;
 #endif // DEBUG
