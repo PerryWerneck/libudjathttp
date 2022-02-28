@@ -274,11 +274,11 @@ namespace Udjat {
 		INTERNET_TEXT	lpszHeaders = NULL;
 		DWORD			dwHeadersLength = 0;
 
-		if(!headers.empty()) {
+		if(!headerlist.empty()) {
 
 			ostringstream headers;
 
-			for(const Protocol::Header & header : this->headers) {
+			for(const Protocol::Header & header : headerlist) {
 				headers << header.name() << ": " << header.value() << "\r\n";
 			}
 
