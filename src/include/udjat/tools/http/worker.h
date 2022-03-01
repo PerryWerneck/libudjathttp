@@ -44,10 +44,10 @@
 
 	namespace HTTP {
 
-		class UDJAT_API Worker : public Protocol::Worker {
+		class UDJAT_PRIVATE Worker : public Protocol::Worker {
 		private:
 
-			class UDJAT_API Header : public Protocol::Header {
+			class UDJAT_PRIVATE Header : public Protocol::Header {
 			public:
 				Header(const char *name) : Protocol::Header(name) {
 				}

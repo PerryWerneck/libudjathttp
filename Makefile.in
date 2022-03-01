@@ -3,13 +3,10 @@
 
 PACKAGE_NAME=@PACKAGE_NAME@
 PRODUCT_NAME=@PRODUCT_NAME@
-SONAME=@SONAME@
-
-LIBRARY_SOURCES= \
-	$(wildcard src/library/*.cc) \
-	$(wildcard src/library/os/@OSNAME@/*.cc)
 
 MODULE_SOURCES= \
+	$(wildcard src/library/*.cc) \
+	$(wildcard src/library/os/@OSNAME@/*.cc) \
 	$(wildcard src/module/*.cc)
 
 TEST_SOURCES= \
@@ -44,14 +41,13 @@ localedir=@localedir@
 docdir=@docdir@
 sysconfdir=/etc
 
-BASEDIR=@BASEDIR@
 DLL_LDFLAGS=@DLL_LDFLAGS@
 
 OBJDIR=.obj
 OBJDBG=$(OBJDIR)/Debug
 OBJRLS=$(OBJDIR)/Release
 
-BINDIR=$(BASEDIR)/.bin
+BINDIR=.bin
 BINDBG=$(BINDIR)/Debug
 BINRLS=$(BINDIR)/Release
 
@@ -134,36 +130,13 @@ $(OBJRLS)/%.o: \
 #---[ Release Targets ]------------------------------------------------------------------
 
 all: \
-	$(BINRLS)/$(SONAME) \
 	$(BINRLS)/$(PACKAGE_NAME)@LIBEXT@
 
 Release: \
-	$(BINRLS)/$(SONAME) \
 	$(BINRLS)/$(PACKAGE_NAME)@LIBEXT@
 
-$(BINRLS)/$(SONAME): \
-	$(foreach SRC, $(basename $(LIBRARY_SOURCES)), $(OBJRLS)/$(SRC).o)
-
-	@$(MKDIR) $(@D)
-	@echo $< ...
-	@$(LD) \
-		$(DLL_LDFLAGS) \
-		-Wl,-soname,$(@F) \
-		-o $@ \
-		$(LDFLAGS) \
-		$^ \
-		$(LIBS)
-
-$(BINRLS)/libudjathttp.a: \
-	$(foreach SRC, $(basename $(LIBRARY_SOURCES)), $(OBJRLS)/$(SRC).o)
-
-	@$(MKDIR) $(@D)
-	@echo $< ...
-	@$(AR) rcs $@ $^
-
 $(BINRLS)/$(PACKAGE_NAME)@LIBEXT@: \
-	$(foreach SRC, $(basename $(MODULE_SOURCES)), $(OBJRLS)/$(SRC).o) \
-	$(BINRLS)/$(SONAME)
+	$(foreach SRC, $(basename $(MODULE_SOURCES)), $(OBJRLS)/$(SRC).o)
 
 	@$(MKDIR) $(@D)
 	@echo $< ...
@@ -179,56 +152,10 @@ $(BINRLS)/$(PACKAGE_NAME)@LIBEXT@: \
 
 install: \
 	install-@OSNAME@ \
-	install-module \
-	install-dev
+	install-module
 
-install-debug: \
-	install-@OSNAME@-debug
+install-linux:
 
-install-linux-debug: \
-	$(BINDBG)/$(SONAME) \
-	$(BINDBG)/$(PACKAGE_NAME)@LIBEXT@
-
-	@$(MKDIR) $(DESTDIR)$(libdir)
-
-	@$(INSTALL_PROGRAM) \
-		$(BINDBG)/$(SONAME) \
-		$(DESTDIR)$(libdir)/$(SONAME)
-
-	@$(MKDIR) \
-		$(DESTDIR)@MODULE_PATH@
-
-	@$(INSTALL_PROGRAM) \
-		$(BINDBG)/$(PACKAGE_NAME)@LIBEXT@ \
-		$(DESTDIR)@MODULE_PATH@/$(PACKAGE_NAME)@LIBEXT@
-
-install-windows-debug: \
-	$(BINDBG)/$(SONAME) \
-	$(BINDBG)/$(PACKAGE_NAME)@LIBEXT@
-
-	@$(MKDIR) $(DESTDIR)$(libdir)
-
-	@$(INSTALL_PROGRAM) \
-		$(BINDBG)/$(SONAME) \
-		$(DESTDIR)$(bindir)/$(SONAME)
-
-	@$(MKDIR) \
-		$(DESTDIR)@MODULE_PATH@
-
-	@$(INSTALL_PROGRAM) \
-		$(BINDBG)/$(PACKAGE_NAME)@LIBEXT@ \
-		$(DESTDIR)@MODULE_PATH@/$(PACKAGE_NAME)@LIBEXT@
-
-install-linux: \
-	$(BINRLS)/$(SONAME)
-
-	# Install library
-	@$(MKDIR) $(DESTDIR)$(libdir)
-
-	@$(INSTALL_PROGRAM) \
-		$(BINRLS)/$(SONAME) \
-		$(DESTDIR)$(libdir)/$(SONAME)
-		
 	# Install configuration
 	@$(MKDIR) $(DESTDIR)$(sysconfdir)/$(PRODUCT_NAME).conf.d
 
@@ -236,15 +163,7 @@ install-linux: \
 		conf.d/*.conf \
 		$(DESTDIR)$(sysconfdir)/$(PRODUCT_NAME).conf.d
 		
-install-windows: \
-	$(BINRLS)/@SONAME@
-
-	@$(MKDIR) \
-		$(DESTDIR)$(bindir)
-
-	@$(INSTALL_PROGRAM) \
-		$(BINRLS)/@SONAME@ \
-		$(DESTDIR)$(bindir)/@SONAME@
+install-windows:
 		
 install-module: \
 	$(BINRLS)/$(PACKAGE_NAME)@LIBEXT@
@@ -255,68 +174,6 @@ install-module: \
 	@$(INSTALL_PROGRAM) \
 		$(BINRLS)/$(PACKAGE_NAME)@LIBEXT@ \
 		$(DESTDIR)@MODULE_PATH@/$(PACKAGE_NAME)@LIBEXT@
-
-install-dev: \
-	install-@OSNAME@-dev \
-	install-@OSNAME@-static 
-	
-	@$(MKDIR) \
-		$(DESTDIR)$(includedir)/udjat/tools
-
-	@$(INSTALL_DATA) \
-		src/include/udjat/tools/*.h \
-		$(DESTDIR)$(includedir)/udjat/tools
-
-	# Install PKG-CONFIG files
-	@$(MKDIR) \
-		$(DESTDIR)$(libdir)/pkgconfig
-
-	@$(INSTALL_DATA) \
-		sdk/@OSNAME@/dynamic.pc \
-		$(DESTDIR)$(libdir)/pkgconfig/udjat-http.pc
-
-	@$(INSTALL_DATA) \
-		sdk/@OSNAME@/static.pc \
-		$(DESTDIR)$(libdir)/pkgconfig/udjat-http-static.pc
-
-install-linux-static: \
-	$(BINRLS)/libudjathttp.a
-
-	# Install static library
-	@$(MKDIR) $(DESTDIR)$(libdir)
-	@$(INSTALL_DATA) \
-		$(BINRLS)/libudjathttp.a \
-		$(DESTDIR)$(libdir)/libudjathttp.static.a
-
-install-windows-static: \
-	$(BINRLS)/libudjathttp.a
-
-	@$(MKDIR) \
-		$(DESTDIR)$(libdir)
-
-	@$(INSTALL_PROGRAM) \
-		$(BINRLS)/libudjathttp.a \
-		$(DESTDIR)$(libdir)/libudjathttp.a
-
-install-linux-dev:
-
-	# Install linux SDK
-	@$(MKDIR) \
-		$(DESTDIR)$(libdir)
-
-	@$(LN_S) \
-		$(SONAME) \
-		$(DESTDIR)$(libdir)/libudjathttp.so
-
-install-windows-dev:
-
-	@$(MKDIR) \
-		$(DESTDIR)$(libdir)
-
-	@$(DLLTOOL) \
-		--input-def $(BINRLS)/udjathttp.def \
-		--dllname @SONAME@ \
-		--output-lib $(DESTDIR)$(libdir)/libudjathttp.dll.a
 		
 	
 #---[ Uninstall Targets ]----------------------------------------------------------------
@@ -325,16 +182,12 @@ uninstall: \
 	@rm -f \
 		$(DESTDIR)@MODULE_PATH@/$(PACKAGE_NAME)@LIBEXT@
 
-	@rm -f \
-		$(DESTDIR)$(libdir)/$(SONAME)
-
 #---[ Debug Targets ]--------------------------------------------------------------------
 
 Debug: \
 	$(BINDBG)/udjat@EXEEXT@
 
 $(BINDBG)/udjat@EXEEXT@: \
-	$(BINDBG)/$(SONAME) \
 	$(BINDBG)/$(PACKAGE_NAME)@LIBEXT@ \
 	$(foreach SRC, $(basename $(TEST_SOURCES)), $(OBJDBG)/$(SRC).o)
 
@@ -349,22 +202,8 @@ $(BINDBG)/udjat@EXEEXT@: \
 		$(LIBS) \
 		@PUGIXML_LIBS@
 
-$(BINDBG)/$(SONAME): \
-	$(foreach SRC, $(basename $(LIBRARY_SOURCES)), $(OBJDBG)/$(SRC).o)
-
-	@$(MKDIR) $(@D)
-	@echo $< ...
-	@$(LD) \
-		$(DLL_LDFLAGS) \
-		-Wl,-soname,$(@F) \
-		-o $@ \
-		$(LDFLAGS) \
-		$^ \
-		$(LIBS)
-
 $(BINDBG)/$(PACKAGE_NAME)@LIBEXT@: \
-	$(foreach SRC, $(basename $(MODULE_SOURCES)), $(OBJDBG)/$(SRC).o) \
-	$(BINDBG)/$(SONAME)
+	$(foreach SRC, $(basename $(MODULE_SOURCES)), $(OBJDBG)/$(SRC).o)
 
 	@$(MKDIR) $(@D)
 	@echo $< ...
@@ -382,7 +221,7 @@ run: \
 
 ifeq ($(VALGRIND),no)
 
-	@LD_LIBRARY_PATH=$(BINDBG) \
+	@LD_LIBRARY_PATH=$(B	INDBG) \
 		$(BINDBG)/udjat@EXEEXT@ -f
 
 else
@@ -414,7 +253,7 @@ clean: \
 	cleanRelease
 
 
--include $(foreach SRC, $(basename $(LIBRARY_SOURCES) $(MODULE_SOURCES) $(TEST_SOURCES)), $(OBJDBG)/$(SRC).d)
--include $(foreach SRC, $(basename $(LIBRARY_SOURCES) $(MODULE_SOURCES) $(TEST_SOURCES)), $(OBJRLS)/$(SRC).d)
+-include $(foreach SRC, $(basename $(MODULE_SOURCES) $(TEST_SOURCES)), $(OBJDBG)/$(SRC).d)
+-include $(foreach SRC, $(basename $(MODULE_SOURCES) $(TEST_SOURCES)), $(OBJRLS)/$(SRC).d)
 
 
