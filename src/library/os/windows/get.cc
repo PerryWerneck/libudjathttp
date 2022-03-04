@@ -78,11 +78,11 @@
 			//
 			// Not modified
 			//
-			cout << "http\tUsing local '" << filename << "' (not modified)" << endl;
+			cout << "http\tHost response was " << dwStatusCode << ", keeping '" << filename << "'" << endl;
 			return false;
 		}
 
-		if(dwStatusCode != 200) {
+		if(dwStatusCode < 200 || dwStatusCode > 299 ) {
 			//
 			// Failed.
 			//
@@ -107,6 +107,8 @@
 			throw HTTP::Exception((unsigned int) dwStatusCode, url().c_str(), text);
 		}
 
+		cout << "http\tHost response was " << dwStatusCode << ", getting '" << filename << "'" << endl;
+	
 		//
 		// Get file length
 		//

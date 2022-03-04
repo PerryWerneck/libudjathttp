@@ -271,8 +271,8 @@ namespace Udjat {
 
 	void HTTP::Worker::send(HINTERNET request) {
 
-		INTERNET_TEXT	lpszHeaders = NULL;
-		DWORD			dwHeadersLength = 0;
+		wchar_t * lpszHeaders = NULL;
+		DWORD dwHeadersLength = 0;
 
 		if(!headerlist.empty()) {
 
@@ -298,20 +298,23 @@ namespace Udjat {
 			}
 		}
 
-		if(!WinHttpSendRequest(
-				request,
-				(lpszHeaders ? lpszHeaders : WINHTTP_NO_ADDITIONAL_HEADERS), dwHeadersLength,
-				(LPVOID) (payload ? payload : WINHTTP_NO_REQUEST_DATA),
-				sz,
-				sz,
-				0)
-			) {
-			throw Win32::Exception(string{"Can't send request "} + url());
-		}
-
+		auto rc = WinHttpSendRequest(
+					request,
+					(lpszHeaders ? lpszHeaders : WINHTTP_NO_ADDITIONAL_HEADERS), dwHeadersLength,
+					(LPVOID) (payload ? payload : WINHTTP_NO_REQUEST_DATA),
+					sz,
+					sz,
+					0
+				);
+				
 		if(lpszHeaders) {
 			free(lpszHeaders);
 		}
+		
+		if(!rc) {
+			throw Win32::Exception(string{"Can't send request "} + url());
+		}
+
 	}
 
 	String HTTP::Worker::get(const std::function<bool(double current, double total)> &progress) {
