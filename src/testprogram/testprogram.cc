@@ -22,7 +22,8 @@
  #include <udjat/tools/systemservice.h>
  #include <udjat/tools/application.h>
  #include <udjat/tools/url.h>
- #include <udjat/tools/http.h>
+ #include <udjat/tools/http/client.h>
+ #include <udjat/tools/configuration.h>
  #include <udjat/agent.h>
  #include <udjat/factory.h>
  #include <udjat/module.h>
@@ -52,6 +53,7 @@ int main(int argc, char **argv) {
 	}
 	*/
 
+	/*
 	try {
 
 		URL("http://localhost").get("/tmp/localhost.html",[](double current, double total){
@@ -62,6 +64,37 @@ int main(int argc, char **argv) {
 	} catch(const std::exception &e) {
 
 		cerr << "**** Error '" << e.what() << "'" << endl;
+
+	}
+	*/
+
+	{
+
+		Config::Value<string> url("http","connectivity","http://localhost/~perry/test.xml");
+		cout << "Test url is '" << url << "'" << endl;
+
+		try {
+
+			cout << "-----------------------------------" << endl;
+
+			/*
+			string text = HTTP::Client("http://localhost").get();
+
+			cout
+				<< "[" << text << "]" << endl
+				<< "-----------------------------------" << endl;
+			*/
+
+
+			HTTP::Client(url.c_str()).save("test.html");
+
+			cout << "-----------------------------------" << endl;
+
+		} catch(const std::exception &e) {
+
+			cerr << "**** Error downloading " << url << ": '" << e.what() << "'" << endl;
+
+		}
 
 	}
 

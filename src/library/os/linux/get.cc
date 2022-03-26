@@ -22,6 +22,7 @@
  #include <unistd.h>
  #include <cstdio>
  #include <udjat/tools/http/timestamp.h>
+ #include <udjat/tools/http/worker.h>
  #include <udjat/tools/file.h>
  #include <sys/types.h>
  #include <sys/stat.h>
@@ -69,43 +70,15 @@
 
 	}
 
-	bool HTTP::Client::Worker::get(const char *filename, time_t timestamp, const char *config, const std::function<bool(double current, double total)> &progress) {
+	bool HTTP::Worker::save(const char *filename, const std::function<bool(double current, double total)> &progress) {
 
 		Writer tempfile(hCurl, filename, progress);
 
+		curl_easy_setopt(hCurl, CURLOPT_URL, url().c_str());
 		curl_easy_setopt(hCurl, CURLOPT_WRITEDATA, &tempfile);
 		curl_easy_setopt(hCurl, CURLOPT_WRITEFUNCTION, write_file);
 
-		struct curl_slist *chunk = NULL;
-
-		// Set headers
-		Config::for_each(
-			( (config && *config) ? config : "curl-get-file-headers"),
-			[&chunk](const char *key, const char *value) {
-#ifdef DEBUG
-				cout << "http-header\t" << key << "='" << value << "'" << endl;
-#endif // DEBUG
-				chunk = curl_slist_append(chunk,(string(key) + ":" + value).c_str());
-				return true;
-			}
-		);
-
-		if(timestamp) {
-
-			if(!chunk) {
-				clog << "http\tWarning: No headers in request for '" << filename << "', using defaults" << endl;
-				chunk = curl_slist_append(chunk, "Cache-Control:public, max-age=31536000");
-			}
-
-			string hdr{"If-Modified-Since:"};
-			hdr += HTTP::TimeStamp(timestamp).to_string();
-			hdr += ";";
-#ifdef DEBUG
-			cout << "http\t" << hdr << endl;
-#endif // DEBUG
-			chunk = curl_slist_append(chunk, hdr.c_str());
-		}
-
+		struct curl_slist *chunk = this->headers();
 		if(chunk) {
 			curl_easy_setopt(hCurl, CURLOPT_HTTPHEADER, chunk);
 		}
@@ -118,7 +91,7 @@
 #ifdef DEBUG
 			cout << "http\tCURL-Error=" << res << endl;
 #endif // DEBUG
-			throw HTTP::Exception(this->client->url.c_str(),curl_easy_strerror(res));
+			throw HTTP::Exception(this->url().c_str(),curl_easy_strerror(res));
 		}
 
 		long response_code = 0;
@@ -146,26 +119,30 @@
 		} else if(message.empty()) {
 
 			cout << "http\tServer response was '" << response_code << "'" << endl;
-			throw HTTP::Exception((unsigned int) response_code, this->client->url.c_str());
+			throw HTTP::Exception((unsigned int) response_code, this->url().c_str());
 
 		} else {
 
 			cout << "http\tServer response was '" << response_code << " " << message << "'" << endl;
-			throw HTTP::Exception((unsigned int) response_code, this->client->url.c_str(), message.c_str());
+			throw HTTP::Exception((unsigned int) response_code, this->url().c_str(), message.c_str());
 
 		}
 
-		if(this->timestamp) {
+		if(in.modification) {
 
 			utimbuf ub;
 			ub.actime = time(0);
-			ub.modtime = (time_t) this->timestamp;
+			ub.modtime = (time_t) in.modification;
 
 			if(utime(filename,&ub) == -1) {
 				cerr << "http\tError '" << strerror(errno) << "' setting file timestamp" << endl;
 			} else {
-				cout << "http\t'" << filename << "' time set to " << this->timestamp << endl;
+				cout << "http\t'" << filename << "' time set to " << in.modification << endl;
 			}
+
+		} else {
+
+			clog << "http\tNo modification time header in response for " << this->url() << endl;
 
 		}
 
@@ -173,6 +150,4 @@
 
 	}
 
-
  }
-

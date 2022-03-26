@@ -20,6 +20,7 @@
 #include <config.h>
 #include <internals.h>
 #include <udjat/tools/url.h>
+#include <udjat/tools/http/worker.h>
 #include <udjat/tools/configuration.h>
 
 namespace Udjat {
@@ -38,19 +39,11 @@ namespace Udjat {
 		}
 	}
 
-	HTTP::Client::Worker * HTTP::Client::Worker::getInstance(HTTP::Client *client) {
-		return new Worker(client);
-	}
-
-	HTTP::Client::Worker::Worker(HTTP::Client *c) : client(c) {
-
-		if(client->url.empty()) {
-			throw runtime_error("Empty URL");
-		}
+	HTTP::Worker::Worker(const char *url, const HTTP::Method method, const char *payload) : Protocol::Worker(url,method,payload) {
 
 		// Open HTTP session
 		// https://docs.microsoft.com/en-us/windows/desktop/api/winhttp/nf-winhttp-winhttpopenrequest
-		static const char * userAgent = "udjat-winhttp/" PACKAGE_VERSION;
+		static const char * userAgent = STRINGIZE_VALUE_OF(PRODUCT_NAME) "-winhttp/" PACKAGE_VERSION;
 		wchar_t wUserAgent[256];
 		mbstowcs(wUserAgent, userAgent, strlen(userAgent)+1);
 
@@ -69,7 +62,7 @@ namespace Udjat {
 			);
 
 		if(!this->session) {
-			throw Win32::Exception(this->client->url + ": Can't open HTTP session");
+			throw Win32::Exception("Error opening HTTP session");
 		}
 
 		// Set timeouts.
@@ -84,13 +77,18 @@ namespace Udjat {
 				Config::Value<int>("http","ReceiveTimeout",timeout.get()).get()
 			)) {
 
-			throw Win32::Exception(this->client->url + ": Can't set HTTP session timeouts");
+			throw Win32::Exception("Error setting HTTP session timeouts");
 		}
 
 	}
 
-	HTTP::Client::Worker::~Worker() {
+	HTTP::Worker::~Worker() {
 		WinHttpCloseHandle(this->session);
+	}
+
+	HTTP::Worker & HTTP::Worker::credentials(const char *user, const char *passwd) {
+		throw runtime_error("Not implemented");
+		return *this;
 	}
 
 	static void CrackUrl(wchar_t *pwszUrl, URL_COMPONENTS &urlComp) {
@@ -107,12 +105,13 @@ namespace Udjat {
 		}
 	}
 
-	HINTERNET HTTP::Client::Worker::connect() {
+	HINTERNET HTTP::Worker::connect() {
 
 		URL_COMPONENTS urlComp;
+		URL url = this->url();
 
-		INTERNET_TEXT pwszUrl = (wchar_t *) malloc(client->url.size()*3);
-		mbstowcs(pwszUrl, client->url.c_str(), client->url.size()+1);
+		INTERNET_TEXT pwszUrl = (wchar_t *) malloc(url.size()*3);
+		mbstowcs(pwszUrl, url.c_str(), url.size()+1);
 
 		CrackUrl(pwszUrl, urlComp);
 		wstring hostname(urlComp.lpszHostName, urlComp.dwHostNameLength);
@@ -132,14 +131,14 @@ namespace Udjat {
 			);
 
 		if(!connection) {
-			throw Win32::Exception(this->client->url + ": Can't connect to host");
+			throw Win32::Exception(string{"Can't connect to "} + url);
 		}
 
 		return connection;
 
 	}
 
-	Udjat::String HTTP::Client::Worker::wait(HINTERNET request) {
+	Udjat::String HTTP::Worker::wait(HINTERNET request, const std::function<bool(double current, double total)> &progress) {
 
 #ifdef DEBUG
 		cout << "Waiting for response" << endl;
@@ -147,7 +146,7 @@ namespace Udjat {
 
 		// Wait for response
 		if(!WinHttpReceiveResponse(request, NULL)) {
-			throw Win32::Exception(this->client->url + ": Error receiving response");
+			throw Win32::Exception(string{"Error receiving response from "} + url());
 		}
 
 #ifdef DEBUG
@@ -167,7 +166,7 @@ namespace Udjat {
 					&dwSize,
 					WINHTTP_NO_HEADER_INDEX
 				)) {
-					throw Udjat::Win32::Exception("Cant get HTTP status code");
+					throw Win32::Exception("Cant get HTTP status code");
 				}
 
 #ifdef DEBUG
@@ -194,17 +193,33 @@ namespace Udjat {
 				ZeroMemory(text, sizeof(text));
 				wcstombs(text, buffer, 1023);
 
-				throw Udjat::HTTP::Exception((unsigned int) dwStatusCode, this->client->url.c_str(), text);
+				throw HTTP::Exception((unsigned int) dwStatusCode, url().c_str(), text);
 			}
 
+		}
+
+		//
+		// Get file length
+		//
+		double total = 0;
+		{
+			DWORD fileLength = 0;
+			DWORD size = sizeof(DWORD);
+			if( WinHttpQueryHeaders( request, WINHTTP_QUERY_CONTENT_LENGTH | WINHTTP_QUERY_FLAG_NUMBER , NULL, &fileLength, &size, NULL ) == TRUE ) {
+				total = (double) fileLength;
+			}
+			progress(0,total);
 		}
 
 		stringstream response;
 		char buffer[4096] = {0};
 		DWORD length = 0;
+		double current = 0;
 
 		while(WinHttpReadData(request, buffer, sizeof(buffer), &length) && length > 0) {
 			response.write(buffer,length);
+			current += length;
+			progress(current,total);
 			length = 0;
 		}
 
@@ -212,15 +227,18 @@ namespace Udjat {
 
 	}
 
-	HINTERNET HTTP::Client::Worker::open(HINTERNET connection, const char *verb) {
+	HINTERNET HTTP::Worker::open(HINTERNET connection) {
 
 		URL_COMPONENTS urlComp;
+
+		const char *verb = std::to_string(method());
+		URL url = this->url();
 
 		INTERNET_TEXT pwszVerb = (wchar_t *) malloc(strlen(verb)*3);
 		mbstowcs(pwszVerb, verb, strlen(verb)+1);
 
-		INTERNET_TEXT pwszUrl = (wchar_t *) malloc(client->url.size()*3);
-		mbstowcs(pwszUrl, client->url.c_str(), client->url.size()+1);
+		INTERNET_TEXT pwszUrl = (wchar_t *) malloc(url.size()*3);
+		mbstowcs(pwszUrl, url.c_str(), url.size()+1);
 
 		CrackUrl(pwszUrl, urlComp);
 
@@ -242,7 +260,7 @@ namespace Udjat {
 			);
 
 		if(!req) {
-			throw Win32::Exception(this->client->url + ": Can't create request");
+			throw Win32::Exception(string{"Can't create request for "} + url);
 		}
 
 		WinHttpSetOption(req, WINHTTP_OPTION_CLIENT_CERT_CONTEXT, WINHTTP_NO_CLIENT_CERT_CONTEXT, 0);
@@ -251,25 +269,17 @@ namespace Udjat {
 
 	}
 
-	void HTTP::Client::Worker::send(HINTERNET request, const char *headers, const char *payload) {
+	void HTTP::Worker::send(HINTERNET request) {
 
-		INTERNET_TEXT	lpszHeaders = NULL;
-		DWORD			dwHeadersLength = 0;
+		wchar_t * lpszHeaders = NULL;
+		DWORD dwHeadersLength = 0;
 
-		if(headers && *headers) {
-			size_t hlength = strlen(headers);
-			lpszHeaders = (wchar_t *) malloc(hlength*3);
-			dwHeadersLength = (DWORD) mbstowcs(lpszHeaders, headers, hlength+1);
-		}
-
-
-		/*
-		if(!client->headers.empty()) {
+		if(!headerlist.empty()) {
 
 			ostringstream headers;
 
-			for(auto header = client->headers.begin(); header != client->headers.end(); header++) {
-				headers << header->name << ": " << header->value << "\r\n";
+			for(const Protocol::Header & header : headerlist) {
+				headers << header.name() << ": " << header.value() << "\r\n";
 			}
 
 			auto text = headers.str();
@@ -278,53 +288,45 @@ namespace Udjat {
 			dwHeadersLength = (DWORD) mbstowcs(lpszHeaders, text.c_str(), text.size()+1);
 
 		}
-		*/
 
 		size_t sz = 0;
+		const char *payload = this->out.payload.c_str();
 		if(payload) {
 			sz = strlen(payload);
+			if(Config::Value<bool>("http","trace-payload",true).get()) {
+				cout << "http\t" << method() << " " << url() << endl << payload << endl;
+			}
 		}
 
-		if(!WinHttpSendRequest(
-				request,
-				(lpszHeaders ? lpszHeaders : WINHTTP_NO_ADDITIONAL_HEADERS), dwHeadersLength,
-				(LPVOID) (payload ? payload : WINHTTP_NO_REQUEST_DATA),
-				sz,
-				sz,
-				0)
-			) {
-			throw Win32::Exception(this->client->url + ": Can't send request");
+		auto rc = WinHttpSendRequest(
+					request,
+					(lpszHeaders ? lpszHeaders : WINHTTP_NO_ADDITIONAL_HEADERS), dwHeadersLength,
+					(LPVOID) (payload ? payload : WINHTTP_NO_REQUEST_DATA),
+					sz,
+					sz,
+					0
+				);
+				
+		if(lpszHeaders) {
+			free(lpszHeaders);
+		}
+		
+		if(!rc) {
+			throw Win32::Exception(string{"Can't send request "} + url());
 		}
 
 	}
 
-	Udjat::String HTTP::Client::Worker::call(const char *verb, const char *payload) {
+	String HTTP::Worker::get(const std::function<bool(double current, double total)> &progress) {
 
-		string headers;
-		if(!client->headers.empty()) {
-
-			ostringstream oss;
-
-			for(auto header = client->headers.begin(); header != client->headers.end(); header++) {
-				oss << header->name << ": " << header->value << "\r\n";
-			}
-
-			headers = oss.str();
-
-		}
+		progress(0,0);
 
 		INTERNET_HANDLE	connection = connect();
-		INTERNET_HANDLE	request = open(connection,verb);
+		INTERNET_HANDLE	request = open(connection);
 
+		send(request);
 
-		if(payload && Config::Value<bool>("http","trace-payload",true).get()) {
-			cout << "http\tPosting to " << client->url << endl << payload << endl;
-		}
-
-		send(request, headers.c_str(), payload);
-
-		return this->wait(request);
+		return this->wait(request,progress);
 	}
-
 
 }

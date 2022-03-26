@@ -42,6 +42,7 @@
 		<Unit filename="src/include/udjat/tools/http.h">
 			<Option virtualFolder="src/include/" />
 		</Unit>
+		<Unit filename="src/include/udjat/tools/http/worker.h" />
 		<Unit filename="src/libhttp/include/config.h" />
 		<Unit filename="src/libhttp/include/http/defs.h" />
 		<Unit filename="src/libhttp/include/http/table.h" />
@@ -51,13 +52,13 @@
 		<Unit filename="src/libhttp/os/windows/native_win32.h" />
 		<Unit filename="src/library/client.cc" />
 		<Unit filename="src/library/download.cc" />
-		<Unit filename="src/library/exception.cc" />
 		<Unit filename="src/library/os/linux/curl.cc" />
 		<Unit filename="src/library/os/linux/get.cc" />
 		<Unit filename="src/library/os/windows/base64.cc" />
 		<Unit filename="src/library/os/windows/base64.h" />
 		<Unit filename="src/library/os/windows/get.cc" />
 		<Unit filename="src/library/os/windows/worker.cc" />
+		<Unit filename="src/library/worker.cc" />
 		<Unit filename="src/module/init.cc" />
 		<Unit filename="src/os/windows/base64.h" />
 		<Unit filename="src/testprogram/testprogram.cc" />

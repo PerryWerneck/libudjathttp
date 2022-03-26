@@ -21,19 +21,23 @@
  #include <udjat/defs.h>
  #include <udjat/module.h>
  #include <udjat/tools/protocol.h>
- #include <udjat/tools/http.h>
  #include <udjat/moduleinfo.h>
+ #include <udjat/tools/http/worker.h>
+
+ #ifdef HAVE_CURL
+	#include <curl/curl.h>
+ #endif // HAVE_CURL
 
  using namespace std;
 
  /// @brief Register udjat module.
- Udjat::Module * udjat_module_init() {
+ UDJAT_API Udjat::Module * udjat_module_init() {
 
 	static const Udjat::ModuleInfo moduleinfo{
 #if defined(_WIN32)
 		"WinHTTP module for " STRINGIZE_VALUE_OF(PRODUCT_NAME), 	// The module description.
 #elif defined(HAVE_CURL)
-		"CURL module for " STRINGIZE_VALUE_OF(PRODUCT_NAME), 		// The module description.
+		"CURL " LIBCURL_VERSION " module for " STRINGIZE_VALUE_OF(PRODUCT_NAME), 		// The module description.
 #else
 		"HTTP module for " STRINGIZE_VALUE_OF(PRODUCT_NAME), 		// The module description.
 #endif //
@@ -47,23 +51,19 @@
 			Protocol(const char *name) : Udjat::Protocol(name,moduleinfo) {
 			}
 
+			std::shared_ptr<Worker> WorkerFactory() const override {
+				return make_shared<Udjat::HTTP::Worker>();
+			}
+
+			/*
 			Udjat::String call(const Udjat::URL &url, const Udjat::HTTP::Method method, const char *payload) const override {
-
-				switch(method) {
-				case Udjat::HTTP::Get:
-					return Udjat::HTTP::Client(url).get();
-
-				case Udjat::HTTP::Post:
-					return Udjat::HTTP::Client(url).post(payload);
-
-				default:
-					throw system_error(ENOTSUP,system_category(),"Unsupported HTTP method");
-				}
+				return Udjat::HTTP::Worker(url,method,payload).Udjat::Protocol::Worker::get();
 			}
 
 			bool get(const Udjat::URL &url, const char *filename, const std::function<bool(double current, double total)> &progress) const override {
-				return Udjat::HTTP::Client(url).get(filename,progress);
+				return Udjat::HTTP::Worker(url).save(filename,progress);
 			}
+			*/
 
 		};
 
@@ -76,7 +76,7 @@
 		};
 
 		virtual ~Module() {
-#ifdef DEBUG 
+#ifdef DEBUG
 				cout << __FILE__ << "(" << __LINE__ << ")" << endl;
 #endif // DEBUG
 		}
