@@ -358,7 +358,7 @@
 		// Connect to host.
 		//
 		if(connect(sockfd,(struct sockaddr *)(&(address->addr)),address->addrlen)) {
-			cerr << "curl\Error '" << strerror(errno) << "' connecting to " << worker->url() << endl;
+			cerr << "curl\tError '" << strerror(errno) << "' (" << errno << ") connecting to " << worker->url() << endl;
 			::close(sockfd);
 			return CURL_SOCKET_BAD;
 		}
