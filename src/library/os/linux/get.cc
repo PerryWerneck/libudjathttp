@@ -70,7 +70,7 @@
 
 	}
 
-	bool HTTP::Worker::save(const char *filename, const std::function<bool(double current, double total)> &progress) {
+	bool HTTP::Worker::save(const char *filename, const std::function<bool(double current, double total)> &progress, bool replace) {
 
 		Writer tempfile(hCurl, filename, progress);
 
@@ -105,7 +105,7 @@
 			}
 			cout << "' updating '" << filename << "'" << endl;
 
-			tempfile.link(filename);
+			tempfile.save(filename,replace);
 
 		} else if(response_code == 304) {
 

@@ -114,7 +114,7 @@
 			Worker & credentials(const char *user, const char *passwd) override;
 
 			String get(const std::function<bool(double current, double total)> &progress) override;
-			bool save(const char *filename, const std::function<bool(double current, double total)> &progress) override;
+			bool save(const char *filename, const std::function<bool(double current, double total)> &progress, bool replace) override;
 
 			Protocol::Header & header(const char *name) override;
 
