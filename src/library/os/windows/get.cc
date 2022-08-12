@@ -32,7 +32,7 @@
 
  namespace Udjat {
 
-	bool HTTP::Worker::save(const char *filename, const std::function<bool(double current, double total)> &progress)  {
+	bool HTTP::Worker::save(const char *filename, const std::function<bool(double current, double total)> &progress, bool replace)  {
 
 		progress(0,0);
 
@@ -108,7 +108,7 @@
 		}
 
 		cout << "http\tHost response was " << dwStatusCode << ", getting '" << filename << "'" << endl;
-	
+
 		//
 		// Get file length
 		//
@@ -138,7 +138,7 @@
 			length = 0;
 		}
 
-		tempfile.save();
+		tempfile.save(replace);
 		return true;
 	}
 
