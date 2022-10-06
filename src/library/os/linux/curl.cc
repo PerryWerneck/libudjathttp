@@ -25,6 +25,7 @@
  #include <udjat/tools/http/timestamp.h>
  #include <udjat/tools/configuration.h>
  #include <udjat/tools/protocol.h>
+ #include <udjat/tools/logger.h>
  #include <iostream>
 
  using namespace std;
@@ -113,12 +114,11 @@
 		long response_code = 0;
 		curl_easy_getinfo(hCurl, CURLINFO_RESPONSE_CODE, &response_code);
 
+		Logger::String{"",url().c_str()," ",response_code," ",message}.write(Logger::Trace,"http");
+
 		if(response_code >= 200 && response_code <= 299) {
-			cout << "http\t" << url() << " " << response_code << " " << message << endl;
 			return Udjat::String(buffers.in.str().c_str());
 		}
-
-		cerr << "http\t" << url() << " " << response_code << " " << message << endl;
 
 		if(message.empty()) {
 			throw HTTP::Exception((unsigned int) response_code, url().c_str());
@@ -185,9 +185,9 @@
 
 			if(!worker->buffers.out) {
 				worker->buffers.out = worker->out.payload.c_str();
-
 				if(Config::Value<bool>("http","trace-payload",false).get()) {
-					cout << "http\tPosting to " << worker->url() << endl << worker->buffers.out << endl;
+					Logger::String("Posting to ",worker->url().c_str()).write(Logger::Trace,"http");
+					Logger::String("",worker->buffers.out).write(Logger::Trace);
 				}
 			}
 
@@ -219,41 +219,43 @@
 	#pragma GCC diagnostic ignored "-Wunused-parameter"
 	int HTTP::Worker::trace_callback(CURL *handle, curl_infotype type, char *data, size_t size, Worker *worker) noexcept {
 
-		cout << "***" << endl;
+		Logger::String logger{""};
 
 		switch (type) {
 		case CURLINFO_TEXT:
-			cout << data << endl;
+			logger.append(data);
 			return 0;
 
 		case CURLINFO_HEADER_OUT:
-			cout << "=> Send header" << endl;
+			logger.append("=> Send header");
 			break;
 
 		case CURLINFO_DATA_OUT:
-			cout << "=> Send data" << endl;
+			logger.append("=> Send data");
 			break;
 
 		case CURLINFO_SSL_DATA_OUT:
-			cout << "=> Send SSL data" << endl;
+			logger.append("=> Send SSL data");
 			break;
 
 		case CURLINFO_HEADER_IN:
-			cout <<  "<= Recv header" << endl;
+			logger.append("<= Recv header");
 			break;
 
 		case CURLINFO_DATA_IN:
-			cout << "<= Recv data" << endl;
+			logger.append("<= Recv data");
 			break;
 
 		case CURLINFO_SSL_DATA_IN:
-			cout << "<= Recv SSL data" << endl;
+			logger.append("<= Recv SSL data");
 			break;
 
 		default:
 			return 0;
 
 		}
+
+		logger.write(Logger::Trace,"curl");
 
 		return 0;
 
@@ -289,7 +291,7 @@
 				worker->message = str;
 			}
 
-			cout << "http\t" << worker->url() << " " << header << endl;
+			Logger::String("",worker->url()," ",header).write(Logger::Trace,"http");
 
 		} else if(strncasecmp(header.c_str(),"Last-Modified:",14) == 0 && header.size()) {
 

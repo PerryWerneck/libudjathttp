@@ -99,31 +99,34 @@
 
 		if(response_code >= 200 && response_code <= 299) {
 
-			cout << "http\tServer response was '" << response_code;
+			Logger::String log{"Server response was ",response_code," "};
 			if(!message.empty()) {
-				cout << " " << message;
+				log.add("'",message,"'");
 			}
-			cout << "' updating '" << filename << "'" << endl;
+			log.add(" updating '",filename,"'");
+			log.write(Logger::Trace,"http");
 
 			tempfile.save(filename,replace);
 
 		} else if(response_code == 304) {
 
-			cout << "http\tServer response was '" << response_code;
+			Logger::String log{"Server response was ",response_code," "};
 			if(!message.empty()) {
-				cout << " " << message;
+				log.add("'",message,"'");
 			}
-			cout << "' keeping '" << filename << "'" << endl;
+			log.add(" keeping '",filename,"'");
+			log.write(Logger::Trace,"http");
+
 			return false;
 
 		} else if(message.empty()) {
 
-			cout << "http\tServer response was '" << response_code << "'" << endl;
+			Logger::String{"Server response was ",response_code," "}.write(Logger::Trace,"http");
 			throw HTTP::Exception((unsigned int) response_code, this->url().c_str());
 
 		} else {
 
-			cout << "http\tServer response was '" << response_code << " " << message << "'" << endl;
+			Logger::String{"Server response was ",response_code," ",message.c_str()}.write(Logger::Trace,"http");
 			throw HTTP::Exception((unsigned int) response_code, this->url().c_str(), message.c_str());
 
 		}
