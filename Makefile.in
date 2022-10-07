@@ -162,6 +162,9 @@ install-linux:
 	@$(INSTALL_DATA) \
 		conf.d/*.conf \
 		$(DESTDIR)$(sysconfdir)/$(PRODUCT_NAME).conf.d
+
+install-windows:
+	@echo No configuration file for windows
 		
 install-debug: \
 	$(BINDBG)/$(PACKAGE_NAME)@LIBEXT@
