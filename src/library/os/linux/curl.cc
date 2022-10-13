@@ -402,7 +402,7 @@
 
 				pfd.fd = sockfd;
 				pfd.revents = 0;
-				pfd.events = POLLOUT;
+				pfd.events = POLLOUT|POLLERR|POLLHUP;
 
 				auto rc = poll(&pfd,1,10);
 
@@ -412,10 +412,34 @@
 					::close(sockfd);
 					return CURL_SOCKET_BAD;
 
-				} else if(rc == 1 && pfd.revents & POLLOUT) {
+				} else if(rc == 1) {
 
-					debug("Connected to ",worker->url());
-					break;
+					if(pfd.revents & POLLERR) {
+
+						int error = EINVAL;
+						socklen_t errlen = sizeof(error);
+						if(getsockopt(sockfd, SOL_SOCKET, SO_ERROR, (void *)&error, &errlen) < 0) {
+							error = errno;
+						}
+
+						cerr << "curl\tError '" << strerror(error) << "' connecting to " << worker->url() << endl;
+						::close(sockfd);
+						return CURL_SOCKET_BAD;
+
+					}
+
+					if(pfd.revents & POLLHUP) {
+
+						cerr << "curl\tError '" << strerror(ECONNRESET) << "' connecting to " << worker->url() << endl;
+						::close(sockfd);
+						return CURL_SOCKET_BAD;
+
+					}
+
+					if(pfd.revents & POLLOUT) {
+						debug("Connected to ",worker->url());
+						break;
+					}
 
 				} else if(!mainloop) {
 
