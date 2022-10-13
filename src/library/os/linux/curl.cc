@@ -130,7 +130,7 @@
 
 	}
 
-	Udjat::String HTTP::Worker::get(const std::function<bool(double current, double total)> &progress) {
+	Udjat::String HTTP::Worker::get(const std::function<bool(double current, double total)> UDJAT_UNUSED(&progress)) {
 
 		switch(method()) {
 		case HTTP::Get:
@@ -323,8 +323,10 @@
 
 		}
 #ifdef DEBUG
-		else {
-			cout << "Header: " << header << endl;
+		else if(!header.empty()) {
+
+			Logger::String(header).write(Logger::Trace,"curl");
+
 		}
 #endif // DEBUG
 
