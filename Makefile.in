@@ -21,6 +21,9 @@ MKDIR=@MKDIR_P@
 INSTALL=@INSTALL@
 INSTALL_DATA=@INSTALL_DATA@
 INSTALL_PROGRAM=@INSTALL_PROGRAM@
+INSTALL_STRIP_PROGRAM=@INSTALL_STRIP_PROGRAM@
+XGETTEXT=@XGETTEXT@
+MSGCAT=@MSGCAT@
 XGETTEXT=@XGETTEXT@
 MSGCAT=@MSGCAT@
 WINDRES=@WINDRES@
@@ -130,7 +133,8 @@ $(OBJRLS)/%.o: \
 #---[ Release Targets ]------------------------------------------------------------------
 
 all: \
-	$(BINRLS)/$(PACKAGE_NAME)@LIBEXT@
+	$(BINRLS)/$(PACKAGE_NAME)@LIBEXT@ \
+	locale/$(PACKAGE_NAME).pot
 
 Release: \
 	$(BINRLS)/$(PACKAGE_NAME)@LIBEXT@
@@ -147,6 +151,16 @@ $(BINRLS)/$(PACKAGE_NAME)@LIBEXT@: \
 		$^ \
 		$(LIBS) \
 		@PUGIXML_LIBS@
+
+locale/$(PACKAGE_NAME).pot: \
+	$(foreach SRC, $(basename $(MAIN_SOURCES)), $(POTDIR)/$(SRC).pot)
+
+	@rm -f $@
+	@$(MKDIR) $(dir $@)
+	@$(MSGCAT) --sort-output $^ > $@
+
+locale: \
+	locale/$(PACKAGE_NAME).pot
 
 #---[ Install Targets ]------------------------------------------------------------------
 
@@ -177,8 +191,9 @@ install-debug: \
 		$(DESTDIR)@MODULE_PATH@/$(PACKAGE_NAME)@LIBEXT@
 		
 install-module: \
-	$(BINRLS)/$(PACKAGE_NAME)@LIBEXT@
-
+	$(BINRLS)/$(PACKAGE_NAME)@LIBEXT@ \
+	locale/$(PACKAGE_NAME).pot
+	
 	@$(MKDIR) \
 		$(DESTDIR)@MODULE_PATH@
 
