@@ -27,6 +27,8 @@
  #include <udjat/tools/protocol.h>
  #include <udjat/tools/logger.h>
  #include <iostream>
+ #include <fcntl.h>
+ #include <udjat/tools/mainloop.h>
 
  using namespace std;
 
@@ -329,6 +331,30 @@
 		return size*nitems;
 	}
 
+	static int non_blocking(int sock, bool on) {
+
+		int f;
+
+		if ((f = fcntl(sock, F_GETFL, 0)) == -1) {
+			cerr << "fcntl() error '" << strerror(errno) << "' when getting socket state." << endl;
+			return -1;
+		}
+
+		if (on) {
+			f |= O_NDELAY;
+		} else {
+			f &= ~O_NDELAY;
+		}
+
+		if (fcntl(sock, F_SETFL, f) < 0) {
+			cerr << "fcntl() error '" << strerror(errno) << "' when setting socket state." << endl;
+			return -1;
+		}
+
+		return 0;
+
+	}
+
 	curl_socket_t HTTP::Worker::open_socket_callback(Worker *worker, curlsocktype purpose, struct curl_sockaddr *address) noexcept {
 
 		// https://curl.se/libcurl/c/externalsocket.html
@@ -344,18 +370,84 @@
 			return CURL_SOCKET_BAD;
 		}
 
+
+		//
+		// Non blocking connect
+		//
+		{
+			MainLoop &mainloop = MainLoop::getInstance();
+
+			// Set non blocking & connect
+			if(non_blocking(sockfd,true)) {
+				::close(sockfd);
+				return CURL_SOCKET_BAD;
+			}
+
+			// Connect to host.
+			if(!connect(sockfd,(struct sockaddr *)(&(address->addr)),address->addrlen)) {
+				return (curl_socket_t) sockfd;
+			}
+
+			if(errno != EINPROGRESS) {
+				cerr << "curl\tError '" << strerror(errno) << "' (" << errno << ") connecting to " << worker->url() << endl;
+				::close(sockfd);
+				return CURL_SOCKET_BAD;
+			}
+
+			// Wait
+			struct pollfd pfd;
+			unsigned long timer{ Config::Value<unsigned long>("http","socket_cnctimeo",30) * 100 };
+			while(timer-- > 0) {
+
+				pfd.fd = sockfd;
+				pfd.revents = 0;
+				pfd.events = POLLOUT;
+
+				auto rc = poll(&pfd,1,10);
+
+				if(rc == -1) {
+
+					cerr << "curl\tError '" << strerror(errno) << "' connecting to " << worker->url() << endl;
+					::close(sockfd);
+					return CURL_SOCKET_BAD;
+
+				} else if(rc == 1 && pfd.revents & POLLOUT) {
+
+					debug("Connected to ",worker->url());
+					break;
+
+				} else if(!mainloop) {
+
+					cerr << "curl\tMainLoop disabled, aborting connect to " << worker->url() << endl;
+					::close(sockfd);
+					return CURL_SOCKET_BAD;
+
+				}
+
+			}
+
+			// Set blocking
+			if(non_blocking(sockfd,false)) {
+				::close(sockfd);
+				return CURL_SOCKET_BAD;
+			}
+		}
+
 		//
 		// Setup socket timeouts.
 		//
-		struct timeval tv;
-		memset(&tv,0,sizeof(tv));
+		{
+			struct timeval tv;
+			memset(&tv,0,sizeof(tv));
 
-		tv.tv_sec = Config::Value<unsigned int>("http","socket_rcvtimeo",30).get();
-		setsockopt(sockfd, SOL_SOCKET, SO_RCVTIMEO,(struct timeval *)&tv,sizeof(struct timeval));
+			tv.tv_sec = Config::Value<unsigned int>("http","socket_rcvtimeo",30).get();
+			setsockopt(sockfd, SOL_SOCKET, SO_RCVTIMEO,(struct timeval *)&tv,sizeof(struct timeval));
 
-		tv.tv_sec = Config::Value<unsigned int>("http","socket_sndtimeo",30).get();
-		setsockopt(sockfd, SOL_SOCKET, SO_SNDTIMEO,(struct timeval *)&tv,sizeof(struct timeval));
+			tv.tv_sec = Config::Value<unsigned int>("http","socket_sndtimeo",30).get();
+			setsockopt(sockfd, SOL_SOCKET, SO_SNDTIMEO,(struct timeval *)&tv,sizeof(struct timeval));
+		}
 
+		/*
 		//
 		// Connect to host.
 		//
@@ -364,6 +456,7 @@
 			::close(sockfd);
 			return CURL_SOCKET_BAD;
 		}
+		*/
 
 		return (curl_socket_t) sockfd;
 
