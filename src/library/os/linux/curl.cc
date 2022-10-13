@@ -358,6 +358,7 @@
 	curl_socket_t HTTP::Worker::open_socket_callback(Worker *worker, curlsocktype purpose, struct curl_sockaddr *address) noexcept {
 
 		// https://curl.se/libcurl/c/externalsocket.html
+		debug("Connecting to ",worker->url());
 
 		if(purpose != CURLSOCKTYPE_IPCXN) {
 			cerr << "curl\tInvalid type in curl_opensocket" << endl;
@@ -397,7 +398,7 @@
 			// Wait
 			struct pollfd pfd;
 			unsigned long timer{ Config::Value<unsigned long>("http","socket_cnctimeo",30) * 100 };
-			while(timer-- > 0) {
+			while(timer > 0) {
 
 				pfd.fd = sockfd;
 				pfd.revents = 0;
@@ -422,8 +423,18 @@
 					::close(sockfd);
 					return CURL_SOCKET_BAD;
 
+				} else {
+
+					timer--;
+
 				}
 
+			}
+
+			if(!timer) {
+				cerr << "curl\tTimeout connecting to " << worker->url() << endl;
+				::close(sockfd);
+				return CURL_SOCKET_BAD;
 			}
 
 			// Set blocking
