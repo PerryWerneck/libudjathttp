@@ -114,7 +114,7 @@
 			throw HTTP::Exception((unsigned int) dwStatusCode, url().c_str(), text);
 		}
 
-		log.add("updating '",filename,"'");
+		log.add(" updating '",filename,"'");
 		log.write(Logger::Trace,"winhttp");
 
 		//
