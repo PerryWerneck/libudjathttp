@@ -94,9 +94,7 @@
 
 	Udjat::String HTTP::Worker::perform() {
 
-#ifdef DEBUG
-		cout << "curl\t*** Current URL is '" << url() << "'" << endl;
-#endif // DEBUG
+		debug("Current URL is '",url(),"'");
 
 		curl_easy_setopt(hCurl, CURLOPT_URL, url().c_str());
 		curl_easy_setopt(hCurl, CURLOPT_WRITEDATA, this);
@@ -116,7 +114,7 @@
 		long response_code = 0;
 		curl_easy_getinfo(hCurl, CURLINFO_RESPONSE_CODE, &response_code);
 
-		Logger::String{"",url().c_str()," ",response_code," ",message}.write(Logger::Trace,"http");
+		Logger::String{"",url().c_str()," ",response_code," ",message}.write(Logger::Trace,"curl");
 
 		if(response_code >= 200 && response_code <= 299) {
 			return Udjat::String(buffers.in.str().c_str());
@@ -257,7 +255,7 @@
 
 		}
 
-		logger.write(Logger::Trace,"curl");
+		logger.write(Logger::Debug,"curl");
 
 		return 0;
 
@@ -325,7 +323,7 @@
 #ifdef DEBUG
 		else if(!header.empty()) {
 
-			Logger::String(header).write(Logger::Trace,"curl");
+			Logger::String{header}.write(Logger::Debug,"curl");
 
 		}
 #endif // DEBUG
@@ -338,7 +336,7 @@
 		int f;
 
 		if ((f = fcntl(sock, F_GETFL, 0)) == -1) {
-			cerr << "fcntl() error '" << strerror(errno) << "' when getting socket state." << endl;
+			cerr << "curl\tfcntl() error '" << strerror(errno) << "' when getting socket state." << endl;
 			return -1;
 		}
 
@@ -349,7 +347,7 @@
 		}
 
 		if (fcntl(sock, F_SETFL, f) < 0) {
-			cerr << "fcntl() error '" << strerror(errno) << "' when setting socket state." << endl;
+			cerr << "curl\tfcntl() error '" << strerror(errno) << "' when setting socket state." << endl;
 			return -1;
 		}
 
@@ -483,17 +481,6 @@
 			tv.tv_sec = Config::Value<unsigned int>("http","socket_sndtimeo",30).get();
 			setsockopt(sockfd, SOL_SOCKET, SO_SNDTIMEO,(struct timeval *)&tv,sizeof(struct timeval));
 		}
-
-		/*
-		//
-		// Connect to host.
-		//
-		if(connect(sockfd,(struct sockaddr *)(&(address->addr)),address->addrlen)) {
-			cerr << "curl\tError '" << strerror(errno) << "' (" << errno << ") connecting to " << worker->url() << endl;
-			::close(sockfd);
-			return CURL_SOCKET_BAD;
-		}
-		*/
 
 		return (curl_socket_t) sockfd;
 
