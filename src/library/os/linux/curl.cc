@@ -87,6 +87,7 @@
 	curl_slist * HTTP::Worker::headers() const noexcept {
 		struct curl_slist *chunk = NULL;
 		for(const Header &header : headerlist) {
+			debug(header.name(),":",header.value());
 			chunk = curl_slist_append(chunk,(string(header.name()) + ":" + header.value()).c_str());
 		}
 		return chunk;
@@ -185,7 +186,7 @@
 
 			if(!worker->buffers.out) {
 				worker->buffers.out = worker->out.payload.c_str();
-				if(Config::Value<bool>("http","trace-payload",false).get()) {
+				if(Config::Value<bool>("http","trace-payload",TRACE_DEFAULT).get()) {
 					Logger::String("Posting to ",worker->url().c_str()).write(Logger::Trace,"http");
 					Logger::String("",worker->buffers.out).write(Logger::Trace);
 				}
@@ -486,7 +487,7 @@
 		// Update worker
 		worker->set_socket(sockfd);
 
-		debug("Payload:\n",worker->out.payload);
+		debug("Payload with ",worker->out.payload.size()," bytes:\n",worker->out.payload);
 
 		return (curl_socket_t) sockfd;
 
