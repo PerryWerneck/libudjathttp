@@ -466,6 +466,7 @@
 				::close(sockfd);
 				return CURL_SOCKET_BAD;
 			}
+
 		}
 
 		//
@@ -481,6 +482,11 @@
 			tv.tv_sec = Config::Value<unsigned int>("http","socket_sndtimeo",30).get();
 			setsockopt(sockfd, SOL_SOCKET, SO_SNDTIMEO,(struct timeval *)&tv,sizeof(struct timeval));
 		}
+
+		// Update worker
+		worker->set_socket(sockfd);
+
+		debug("Payload:\n",worker->out.payload);
 
 		return (curl_socket_t) sockfd;
 

@@ -68,6 +68,22 @@ int main(int argc, char **argv) {
 	}
 	*/
 
+
+	try {
+
+		HTTP::Client("http://127.0.0.1").post(
+			"ipaddr='${ipaddr}'\n"
+			"hostip='${hostip}'\n"
+			"macaddress='${macaddress}'"
+		);
+
+	} catch(const std::exception &e) {
+
+		cout << e.what() << endl;
+
+	}
+
+	/*
 	{
 
 		Config::Value<string> url("http","connectivity","http://localhost/~perry/test.xml");
@@ -76,14 +92,6 @@ int main(int argc, char **argv) {
 		try {
 
 			cout << "-----------------------------------" << endl;
-
-			/*
-			string text = HTTP::Client("http://localhost").get();
-
-			cout
-				<< "[" << text << "]" << endl
-				<< "-----------------------------------" << endl;
-			*/
 
 
 			HTTP::Client(url.c_str()).save("test.html");
@@ -97,6 +105,7 @@ int main(int argc, char **argv) {
 		}
 
 	}
+	*/
 
 	Udjat::Module::unload();
 
