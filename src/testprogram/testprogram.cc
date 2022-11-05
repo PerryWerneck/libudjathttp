@@ -74,6 +74,7 @@ int main(int argc, char **argv) {
 		HTTP::Client("http://127.0.0.1").post(
 			"ipaddr='${ipaddr}'\n"
 			"hostip='${hostip}'\n"
+			"nic='${network-interface}'\n"
 			"macaddress='${macaddress}'"
 		);
 
