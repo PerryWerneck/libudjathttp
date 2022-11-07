@@ -134,6 +134,23 @@ namespace Udjat {
 			throw Win32::Exception(string{"Can't connect to "} + url);
 		}
 
+		// Setup socket
+		{
+			// https://docs.microsoft.com/en-us/windows/win32/api/winhttp/ns-winhttp-winhttp_connection_info
+			WINHTTP_CONNECTION_INFO ConnInfo;
+			DWORD dwConnInfoSize = sizeof(WINHTTP_CONNECTION_INFO);
+
+			if(WinHttpQueryOption(connection,WINHTTP_OPTION_CONNECTION_INFO,&ConnInfo,&dwConnInfoSize)) {
+				set_local(ConnInfo.LocalAddress);
+				set_remote(ConnInfo.RemoteAddress);
+			} else {
+				error() << Win32::Exception::format("WinHttpQueryOption(WINHTTP_OPTION_CONNECTION_INFO) has failed");
+			}
+
+			out.payload.expand(true,true);
+
+		}
+
 		return connection;
 
 	}
@@ -306,11 +323,11 @@ namespace Udjat {
 					sz,
 					0
 				);
-				
+
 		if(lpszHeaders) {
 			free(lpszHeaders);
 		}
-		
+
 		if(!rc) {
 			throw Win32::Exception(string{"Can't send request "} + url());
 		}

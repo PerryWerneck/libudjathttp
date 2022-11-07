@@ -486,6 +486,7 @@
 
 		// Update worker
 		worker->set_socket(sockfd);
+		worker->out.payload.expand(true,true);
 
 		debug("Payload with ",worker->out.payload.size()," bytes:\n",worker->out.payload);
 
