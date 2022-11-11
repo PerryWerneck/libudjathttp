@@ -17,11 +17,15 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+#include <winsock2.h>
+#include <winsock.h>
+
 #include <config.h>
 #include <internals.h>
 #include <udjat/tools/url.h>
 #include <udjat/tools/http/worker.h>
 #include <udjat/tools/configuration.h>
+#include <udjat/win32/exception.h>
 
 namespace Udjat {
 
@@ -135,21 +139,32 @@ namespace Udjat {
 		}
 
 		// Setup socket
+
+		/*
+
+		// Doesnt work just after connection.
+
 		{
 			// https://docs.microsoft.com/en-us/windows/win32/api/winhttp/ns-winhttp-winhttp_connection_info
 			WINHTTP_CONNECTION_INFO ConnInfo;
 			DWORD dwConnInfoSize = sizeof(WINHTTP_CONNECTION_INFO);
 
-			if(WinHttpQueryOption(connection,WINHTTP_OPTION_CONNECTION_INFO,&ConnInfo,&dwConnInfoSize)) {
+			SetLastError(0);
+
+
+			if(WinHttpQueryOption(this->session,WINHTTP_OPTION_CONNECTION_INFO,&ConnInfo,&dwConnInfoSize)) {
 				set_local(ConnInfo.LocalAddress);
 				set_remote(ConnInfo.RemoteAddress);
 			} else {
-				error() << Win32::Exception::format("WinHttpQueryOption(WINHTTP_OPTION_CONNECTION_INFO) has failed");
+				auto rc = GetLastError();
+				debug("GetLastError=",rc," WSAGetLastError=",WSAGetLastError());
+				error() << Win32::Exception::format("WinHttpQueryOption(WINHTTP_OPTION_CONNECTION_INFO) has failed",rc);
 			}
 
 			out.payload.expand(true,true);
 
 		}
+		*/
 
 		return connection;
 

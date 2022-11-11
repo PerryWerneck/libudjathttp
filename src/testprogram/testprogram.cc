@@ -71,7 +71,7 @@ int main(int argc, char **argv) {
 
 	try {
 
-		HTTP::Client("http://127.0.0.1").post(
+		HTTP::Client("http://localhost").post(
 			"ipaddr='${ipaddr}'\n"
 			"hostip='${hostip}'\n"
 			"nic='${network-interface}'\n"

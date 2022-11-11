@@ -59,12 +59,12 @@ dnl ---------------------------------------------------------------------------
 CFLAGS="$CFLAGS -I$ac_pwd/src/include"
 
 case "$host" in
-	*-mingw32)
+	*-mingw32|*-pc-msys)
 		CFLAGS="$CFLAGS -pthread -D_WIN32_WINNT=0x0600"
 		CXXFLAGS="$CXXFLAGS -pthread -D_WIN32_WINNT=0x0600"
 		LDFLAGS="$LDFLAGS -pthread"
 		DLL_LDFLAGS="-shared -Wl,--output-def,\$(@D)/udjathttp.def"
-		LIBS="$LIBS  -lwinhttp"
+		LIBS="$LIBS -lws2_32 -lwinhttp"
 		AC_SUBST(LIBEXT,.dll)
 		AC_SUBST(EXEEXT,.exe)
 		AC_SUBST(OSNAME,windows)
