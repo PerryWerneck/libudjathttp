@@ -74,6 +74,9 @@ case "$host" in
 		AC_CONFIG_FILES(src/testprogram/windows/resources.rc)
 		AC_CONFIG_FILES(src/testprogram/windows/app-manifest.xml)
 		
+		AC_DEFINE(HAVE_WINHTTP,[],[Do we have winhttp?])
+		AC_SUBST(ENGINE,winhttp)
+
 		;;
 
  	*)
@@ -87,8 +90,8 @@ case "$host" in
 		AC_CONFIG_FILES(sdk/linux/dynamic.pc)
 		AC_CONFIG_FILES(sdk/linux/static.pc)
 		
-		PKG_CHECK_MODULES( [CURL], [libcurl], AC_DEFINE(HAVE_CURL,[],[Do we have libcurl?]), AC_MSG_NOTICE([libcurl not present.]) )
-
+		AC_SUBST(ENGINE,curl)
+		PKG_CHECK_MODULES( [CURL], [libcurl], AC_DEFINE(HAVE_CURL,[],[Do we have libcurl?]), AC_MSG_ERROR([libcurl not present.]) )
 
 esac
 

@@ -138,34 +138,6 @@ namespace Udjat {
 			throw Win32::Exception(string{"Can't connect to "} + url);
 		}
 
-		// Setup socket
-
-		/*
-
-		// Doesnt work just after connection.
-
-		{
-			// https://docs.microsoft.com/en-us/windows/win32/api/winhttp/ns-winhttp-winhttp_connection_info
-			WINHTTP_CONNECTION_INFO ConnInfo;
-			DWORD dwConnInfoSize = sizeof(WINHTTP_CONNECTION_INFO);
-
-			SetLastError(0);
-
-
-			if(WinHttpQueryOption(this->session,WINHTTP_OPTION_CONNECTION_INFO,&ConnInfo,&dwConnInfoSize)) {
-				set_local(ConnInfo.LocalAddress);
-				set_remote(ConnInfo.RemoteAddress);
-			} else {
-				auto rc = GetLastError();
-				debug("GetLastError=",rc," WSAGetLastError=",WSAGetLastError());
-				error() << Win32::Exception::format("WinHttpQueryOption(WINHTTP_OPTION_CONNECTION_INFO) has failed",rc);
-			}
-
-			out.payload.expand(true,true);
-
-		}
-		*/
-
 		return connection;
 
 	}

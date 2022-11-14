@@ -7,6 +7,7 @@ PRODUCT_NAME=@PRODUCT_NAME@
 MODULE_SOURCES= \
 	$(wildcard src/library/*.cc) \
 	$(wildcard src/library/os/@OSNAME@/*.cc) \
+	$(wildcard src/library/engines/@ENGINE@/*.cc) \
 	$(wildcard src/module/*.cc)
 
 TEST_SOURCES= \
