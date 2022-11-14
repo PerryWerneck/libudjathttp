@@ -321,9 +321,14 @@ namespace Udjat {
 
 		}
 
+		debug("Payload:\n",this->out.payload.c_str());
+
 		size_t sz = 0;
-		const char *payload = this->out.payload.c_str();
+		const char *payload = this->get_payload(); // this->out.payload.c_str();
 		if(payload) {
+
+			debug("Payload:\n",payload);
+
 			sz = strlen(payload);
 			if(Config::Value<bool>("http","trace-payload",true).get()) {
 				cout << "http\t" << method() << " " << url() << endl << payload << endl;
