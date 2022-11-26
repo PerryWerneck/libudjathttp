@@ -24,6 +24,8 @@
  #include <udjat/tools/http/timestamp.h>
  #include <udjat/tools/file.h>
  #include <udjat/tools/http/worker.h>
+ #include <udjat/tools/logger.h>
+ #include <udjat/win32/charset.h>
  #include <sys/types.h>
  #include <sys/stat.h>
  #include <fcntl.h>
@@ -32,7 +34,7 @@
 
  namespace Udjat {
 
-	bool HTTP::Worker::save(const char *filename, const std::function<bool(double current, double total)> &progress)  {
+	bool HTTP::Worker::save(const char *filename, const std::function<bool(double current, double total)> &progress, bool replace)  {
 
 		progress(0,0);
 
@@ -70,15 +72,16 @@
 				}
 		}
 
-#ifdef DEBUG
-			cout << "The status code was " << dwStatusCode << endl;
-#endif // DEBUG
+		debug("The status code was ",dwStatusCode);
+
+		Logger::String log{"Server response was ",dwStatusCode};
 
 		if(dwStatusCode == 304) {
 			//
 			// Not modified
 			//
-			cout << "http\tHost response was " << dwStatusCode << ", keeping '" << filename << "'" << endl;
+			log.add(", keeping '",filename,"'");
+			log.write(Logger::Trace,"winhttp");
 			return false;
 		}
 
@@ -102,13 +105,18 @@
 
 			char text[1024];
 			ZeroMemory(text, sizeof(text));
+
 			wcstombs(text, buffer, 1023);
+
+			log.add(" (",text,")");
+			log.write(Logger::Trace,"winhttp");
 
 			throw HTTP::Exception((unsigned int) dwStatusCode, url().c_str(), text);
 		}
 
-		cout << "http\tHost response was " << dwStatusCode << ", getting '" << filename << "'" << endl;
-	
+		log.add(" updating '",filename,"'");
+		log.write(Logger::Trace,"winhttp");
+
 		//
 		// Get file length
 		//
@@ -138,7 +146,7 @@
 			length = 0;
 		}
 
-		tempfile.save();
+		tempfile.save(replace);
 		return true;
 	}
 

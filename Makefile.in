@@ -7,6 +7,7 @@ PRODUCT_NAME=@PRODUCT_NAME@
 MODULE_SOURCES= \
 	$(wildcard src/library/*.cc) \
 	$(wildcard src/library/os/@OSNAME@/*.cc) \
+	$(wildcard src/library/engines/@ENGINE@/*.cc) \
 	$(wildcard src/module/*.cc)
 
 TEST_SOURCES= \
@@ -21,6 +22,9 @@ MKDIR=@MKDIR_P@
 INSTALL=@INSTALL@
 INSTALL_DATA=@INSTALL_DATA@
 INSTALL_PROGRAM=@INSTALL_PROGRAM@
+INSTALL_STRIP_PROGRAM=@INSTALL_STRIP_PROGRAM@
+XGETTEXT=@XGETTEXT@
+MSGCAT=@MSGCAT@
 XGETTEXT=@XGETTEXT@
 MSGCAT=@MSGCAT@
 WINDRES=@WINDRES@
@@ -130,7 +134,8 @@ $(OBJRLS)/%.o: \
 #---[ Release Targets ]------------------------------------------------------------------
 
 all: \
-	$(BINRLS)/$(PACKAGE_NAME)@LIBEXT@
+	$(BINRLS)/$(PACKAGE_NAME)@LIBEXT@ \
+	locale/$(PACKAGE_NAME).pot
 
 Release: \
 	$(BINRLS)/$(PACKAGE_NAME)@LIBEXT@
@@ -148,6 +153,16 @@ $(BINRLS)/$(PACKAGE_NAME)@LIBEXT@: \
 		$(LIBS) \
 		@PUGIXML_LIBS@
 
+locale/$(PACKAGE_NAME).pot: \
+	$(foreach SRC, $(basename $(MAIN_SOURCES)), $(POTDIR)/$(SRC).pot)
+
+	@rm -f $@
+	@$(MKDIR) $(dir $@)
+	@$(MSGCAT) --sort-output $^ > $@
+
+locale: \
+	locale/$(PACKAGE_NAME).pot
+
 #---[ Install Targets ]------------------------------------------------------------------
 
 install: \
@@ -162,12 +177,24 @@ install-linux:
 	@$(INSTALL_DATA) \
 		conf.d/*.conf \
 		$(DESTDIR)$(sysconfdir)/$(PRODUCT_NAME).conf.d
-		
+
 install-windows:
+	@echo No configuration file for windows
+		
+install-debug: \
+	$(BINDBG)/$(PACKAGE_NAME)@LIBEXT@
+
+	@$(MKDIR) \
+		$(DESTDIR)@MODULE_PATH@
+
+	@$(INSTALL_PROGRAM) \
+		$(BINDBG)/$(PACKAGE_NAME)@LIBEXT@ \
+		$(DESTDIR)@MODULE_PATH@/$(PACKAGE_NAME)@LIBEXT@
 		
 install-module: \
-	$(BINRLS)/$(PACKAGE_NAME)@LIBEXT@
-
+	$(BINRLS)/$(PACKAGE_NAME)@LIBEXT@ \
+	locale/$(PACKAGE_NAME).pot
+	
 	@$(MKDIR) \
 		$(DESTDIR)@MODULE_PATH@
 

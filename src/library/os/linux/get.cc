@@ -70,7 +70,7 @@
 
 	}
 
-	bool HTTP::Worker::save(const char *filename, const std::function<bool(double current, double total)> &progress) {
+	bool HTTP::Worker::save(const char *filename, const std::function<bool(double current, double total)> &progress, bool replace) {
 
 		Writer tempfile(hCurl, filename, progress);
 
@@ -88,42 +88,39 @@
 		curl_slist_free_all(chunk);
 
 		if(res != CURLE_OK) {
-#ifdef DEBUG
-			cout << "http\tCURL-Error=" << res << endl;
-#endif // DEBUG
+			debug("curl\tCURL-Error=",res);
 			throw HTTP::Exception(this->url().c_str(),curl_easy_strerror(res));
 		}
 
 		long response_code = 0;
 		curl_easy_getinfo(hCurl, CURLINFO_RESPONSE_CODE, &response_code);
 
+		Logger::String log{"Server response was ",response_code};
+		if(!message.empty()) {
+			log.add(" (",message,") ");
+		}
+
 		if(response_code >= 200 && response_code <= 299) {
 
-			cout << "http\tServer response was '" << response_code;
-			if(!message.empty()) {
-				cout << " " << message;
-			}
-			cout << "' updating '" << filename << "'" << endl;
-
-			tempfile.link(filename);
+			log.add("updating '",filename,"'");
+			log.write(Logger::Trace,"curl");
+			tempfile.save(filename,replace);
 
 		} else if(response_code == 304) {
 
-			cout << "http\tServer response was '" << response_code;
-			if(!message.empty()) {
-				cout << " " << message;
-			}
-			cout << "' keeping '" << filename << "'" << endl;
+			log.add("keeping '",filename,"'");
+			log.write(Logger::Trace,"curl");
+
 			return false;
 
 		} else if(message.empty()) {
 
-			cout << "http\tServer response was '" << response_code << "'" << endl;
+			log.write(Logger::Trace,"curl");
 			throw HTTP::Exception((unsigned int) response_code, this->url().c_str());
 
 		} else {
 
-			cout << "http\tServer response was '" << response_code << " " << message << "'" << endl;
+			log.write(Logger::Trace,"curl");
 			throw HTTP::Exception((unsigned int) response_code, this->url().c_str(), message.c_str());
 
 		}

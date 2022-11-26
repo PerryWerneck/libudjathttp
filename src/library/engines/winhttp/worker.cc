@@ -17,11 +17,15 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+#include <winsock2.h>
+#include <winsock.h>
+
 #include <config.h>
 #include <internals.h>
 #include <udjat/tools/url.h>
 #include <udjat/tools/http/worker.h>
 #include <udjat/tools/configuration.h>
+#include <udjat/win32/exception.h>
 
 namespace Udjat {
 
@@ -289,9 +293,14 @@ namespace Udjat {
 
 		}
 
+		debug("Payload:\n",this->out.payload.c_str());
+
 		size_t sz = 0;
-		const char *payload = this->out.payload.c_str();
+		const char *payload = this->get_payload(); // this->out.payload.c_str();
 		if(payload) {
+
+			debug("Payload:\n",payload);
+
 			sz = strlen(payload);
 			if(Config::Value<bool>("http","trace-payload",true).get()) {
 				cout << "http\t" << method() << " " << url() << endl << payload << endl;
@@ -306,11 +315,11 @@ namespace Udjat {
 					sz,
 					0
 				);
-				
+
 		if(lpszHeaders) {
 			free(lpszHeaders);
 		}
-		
+
 		if(!rc) {
 			throw Win32::Exception(string{"Can't send request "} + url());
 		}

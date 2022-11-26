@@ -25,7 +25,10 @@
  #include <udjat/tools/http/timestamp.h>
  #include <udjat/tools/configuration.h>
  #include <udjat/tools/protocol.h>
+ #include <udjat/tools/logger.h>
  #include <iostream>
+ #include <fcntl.h>
+ #include <udjat/tools/mainloop.h>
 
  using namespace std;
 
@@ -84,6 +87,7 @@
 	curl_slist * HTTP::Worker::headers() const noexcept {
 		struct curl_slist *chunk = NULL;
 		for(const Header &header : headerlist) {
+			debug(header.name(),":",header.value());
 			chunk = curl_slist_append(chunk,(string(header.name()) + ":" + header.value()).c_str());
 		}
 		return chunk;
@@ -91,9 +95,7 @@
 
 	Udjat::String HTTP::Worker::perform() {
 
-#ifdef DEBUG
-		cout << "curl\t*** Current URL is '" << url() << "'" << endl;
-#endif // DEBUG
+		debug("Current URL is '",url(),"'");
 
 		curl_easy_setopt(hCurl, CURLOPT_URL, url().c_str());
 		curl_easy_setopt(hCurl, CURLOPT_WRITEDATA, this);
@@ -113,12 +115,11 @@
 		long response_code = 0;
 		curl_easy_getinfo(hCurl, CURLINFO_RESPONSE_CODE, &response_code);
 
+		Logger::String{"",url().c_str()," ",response_code," ",message}.write(Logger::Trace,"curl");
+
 		if(response_code >= 200 && response_code <= 299) {
-			cout << "http\t" << url() << " " << response_code << " " << message << endl;
 			return Udjat::String(buffers.in.str().c_str());
 		}
-
-		cerr << "http\t" << url() << " " << response_code << " " << message << endl;
 
 		if(message.empty()) {
 			throw HTTP::Exception((unsigned int) response_code, url().c_str());
@@ -128,7 +129,7 @@
 
 	}
 
-	Udjat::String HTTP::Worker::get(const std::function<bool(double current, double total)> &progress) {
+	Udjat::String HTTP::Worker::get(const std::function<bool(double current, double total)> UDJAT_UNUSED(&progress)) {
 
 		switch(method()) {
 		case HTTP::Get:
@@ -185,9 +186,9 @@
 
 			if(!worker->buffers.out) {
 				worker->buffers.out = worker->out.payload.c_str();
-
-				if(Config::Value<bool>("http","trace-payload",false).get()) {
-					cout << "http\tPosting to " << worker->url() << endl << worker->buffers.out << endl;
+				if(Config::Value<bool>("http","trace-payload",TRACE_DEFAULT).get()) {
+					Logger::String("Posting to ",worker->url().c_str()).write(Logger::Trace,"http");
+					Logger::String("",worker->buffers.out).write(Logger::Trace);
 				}
 			}
 
@@ -219,41 +220,43 @@
 	#pragma GCC diagnostic ignored "-Wunused-parameter"
 	int HTTP::Worker::trace_callback(CURL *handle, curl_infotype type, char *data, size_t size, Worker *worker) noexcept {
 
-		cout << "***" << endl;
+		Logger::String logger{""};
 
 		switch (type) {
 		case CURLINFO_TEXT:
-			cout << data << endl;
+			logger.append(data);
 			return 0;
 
 		case CURLINFO_HEADER_OUT:
-			cout << "=> Send header" << endl;
+			logger.append("=> Send header");
 			break;
 
 		case CURLINFO_DATA_OUT:
-			cout << "=> Send data" << endl;
+			logger.append("=> Send data");
 			break;
 
 		case CURLINFO_SSL_DATA_OUT:
-			cout << "=> Send SSL data" << endl;
+			logger.append("=> Send SSL data");
 			break;
 
 		case CURLINFO_HEADER_IN:
-			cout <<  "<= Recv header" << endl;
+			logger.append("<= Recv header");
 			break;
 
 		case CURLINFO_DATA_IN:
-			cout << "<= Recv data" << endl;
+			logger.append("<= Recv data");
 			break;
 
 		case CURLINFO_SSL_DATA_IN:
-			cout << "<= Recv SSL data" << endl;
+			logger.append("<= Recv SSL data");
 			break;
 
 		default:
 			return 0;
 
 		}
+
+		logger.write(Logger::Debug,"curl");
 
 		return 0;
 
@@ -289,7 +292,7 @@
 				worker->message = str;
 			}
 
-			cout << "http\t" << worker->url() << " " << header << endl;
+			Logger::String("",worker->url()," ",header).write(Logger::Trace,"http");
 
 		} else if(strncasecmp(header.c_str(),"Last-Modified:",14) == 0 && header.size()) {
 
@@ -319,17 +322,44 @@
 
 		}
 #ifdef DEBUG
-		else {
-			cout << "Header: " << header << endl;
+		else if(!header.empty()) {
+
+			Logger::String{header}.write(Logger::Debug,"curl");
+
 		}
 #endif // DEBUG
 
 		return size*nitems;
 	}
 
+	static int non_blocking(int sock, bool on) {
+
+		int f;
+
+		if ((f = fcntl(sock, F_GETFL, 0)) == -1) {
+			cerr << "curl\tfcntl() error '" << strerror(errno) << "' when getting socket state." << endl;
+			return -1;
+		}
+
+		if (on) {
+			f |= O_NDELAY;
+		} else {
+			f &= ~O_NDELAY;
+		}
+
+		if (fcntl(sock, F_SETFL, f) < 0) {
+			cerr << "curl\tfcntl() error '" << strerror(errno) << "' when setting socket state." << endl;
+			return -1;
+		}
+
+		return 0;
+
+	}
+
 	curl_socket_t HTTP::Worker::open_socket_callback(Worker *worker, curlsocktype purpose, struct curl_sockaddr *address) noexcept {
 
 		// https://curl.se/libcurl/c/externalsocket.html
+		debug("Connecting to ",worker->url());
 
 		if(purpose != CURLSOCKTYPE_IPCXN) {
 			cerr << "curl\tInvalid type in curl_opensocket" << endl;
@@ -342,26 +372,123 @@
 			return CURL_SOCKET_BAD;
 		}
 
+
+		//
+		// Non blocking connect
+		//
+		{
+			MainLoop &mainloop = MainLoop::getInstance();
+
+			// Set non blocking & connect
+			if(non_blocking(sockfd,true)) {
+				::close(sockfd);
+				return CURL_SOCKET_BAD;
+			}
+
+			// Connect to host.
+			if(!connect(sockfd,(struct sockaddr *)(&(address->addr)),address->addrlen)) {
+				return (curl_socket_t) sockfd;
+			}
+
+			if(errno != EINPROGRESS) {
+				cerr << "curl\tError '" << strerror(errno) << "' (" << errno << ") connecting to " << worker->url() << endl;
+				::close(sockfd);
+				return CURL_SOCKET_BAD;
+			}
+
+			// Wait
+			struct pollfd pfd;
+			unsigned long timer{ Config::Value<unsigned long>("http","socket_cnctimeo",30) * 100 };
+			while(timer > 0) {
+
+				pfd.fd = sockfd;
+				pfd.revents = 0;
+				pfd.events = POLLOUT|POLLERR|POLLHUP;
+
+				auto rc = poll(&pfd,1,10);
+
+				if(rc == -1) {
+
+					cerr << "curl\tError '" << strerror(errno) << "' connecting to " << worker->url() << endl;
+					::close(sockfd);
+					return CURL_SOCKET_BAD;
+
+				} else if(rc == 1) {
+
+					if(pfd.revents & POLLERR) {
+
+						int error = EINVAL;
+						socklen_t errlen = sizeof(error);
+						if(getsockopt(sockfd, SOL_SOCKET, SO_ERROR, (void *)&error, &errlen) < 0) {
+							error = errno;
+						}
+
+						cerr << "curl\tError '" << strerror(error) << "' connecting to " << worker->url() << endl;
+						::close(sockfd);
+						return CURL_SOCKET_BAD;
+
+					}
+
+					if(pfd.revents & POLLHUP) {
+
+						cerr << "curl\tError '" << strerror(ECONNRESET) << "' connecting to " << worker->url() << endl;
+						::close(sockfd);
+						return CURL_SOCKET_BAD;
+
+					}
+
+					if(pfd.revents & POLLOUT) {
+						debug("Connected to ",worker->url());
+						break;
+					}
+
+				} else if(!mainloop) {
+
+					cerr << "curl\tMainLoop disabled, aborting connect to " << worker->url() << endl;
+					::close(sockfd);
+					return CURL_SOCKET_BAD;
+
+				} else {
+
+					timer--;
+
+				}
+
+			}
+
+			if(!timer) {
+				cerr << "curl\tTimeout connecting to " << worker->url() << endl;
+				::close(sockfd);
+				return CURL_SOCKET_BAD;
+			}
+
+			// Set blocking
+			if(non_blocking(sockfd,false)) {
+				::close(sockfd);
+				return CURL_SOCKET_BAD;
+			}
+
+		}
+
 		//
 		// Setup socket timeouts.
 		//
-		struct timeval tv;
-		memset(&tv,0,sizeof(tv));
+		{
+			struct timeval tv;
+			memset(&tv,0,sizeof(tv));
 
-		tv.tv_sec = Config::Value<unsigned int>("http","socket_rcvtimeo",30).get();
-		setsockopt(sockfd, SOL_SOCKET, SO_RCVTIMEO,(struct timeval *)&tv,sizeof(struct timeval));
+			tv.tv_sec = Config::Value<unsigned int>("http","socket_rcvtimeo",30).get();
+			setsockopt(sockfd, SOL_SOCKET, SO_RCVTIMEO,(struct timeval *)&tv,sizeof(struct timeval));
 
-		tv.tv_sec = Config::Value<unsigned int>("http","socket_sndtimeo",30).get();
-		setsockopt(sockfd, SOL_SOCKET, SO_SNDTIMEO,(struct timeval *)&tv,sizeof(struct timeval));
-
-		//
-		// Connect to host.
-		//
-		if(connect(sockfd,(struct sockaddr *)(&(address->addr)),address->addrlen)) {
-			cerr << "curl\Error '" << strerror(errno) << "' connecting to " << worker->url() << endl;
-			::close(sockfd);
-			return CURL_SOCKET_BAD;
+			tv.tv_sec = Config::Value<unsigned int>("http","socket_sndtimeo",30).get();
+			setsockopt(sockfd, SOL_SOCKET, SO_SNDTIMEO,(struct timeval *)&tv,sizeof(struct timeval));
 		}
+
+		// Update worker
+		worker->set_socket(sockfd);
+		worker->out.payload.expand(true,true);
+
+		debug("Payload with ",worker->out.payload.size()," bytes:\n",worker->out.payload);
 
 		return (curl_socket_t) sockfd;
 

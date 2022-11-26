@@ -49,6 +49,9 @@ AC_DEFINE_UNQUOTED(PACKAGE_MINOR_VERSION, $app_vrs_minor, [The module minor vers
 AC_SUBST(PACKAGE_MAJOR_VERSION,$app_vrs_major)
 AC_SUBST(PACKAGE_MINOR_VERSION,$app_vrs_minor)
 
+AC_DEFINE_UNQUOTED(GETTEXT_PACKAGE,"udjathttp-$app_vrs_major.$app_vrs_minor",[The gettext package name.])
+AC_SUBST(GETTEXT_PACKAGE,"udjathttp-$app_vrs_major.$app_vrs_minor")
+
 dnl ---------------------------------------------------------------------------
 dnl Check for OS specifics
 dnl ---------------------------------------------------------------------------
@@ -56,12 +59,12 @@ dnl ---------------------------------------------------------------------------
 CFLAGS="$CFLAGS -I$ac_pwd/src/include"
 
 case "$host" in
-	*-mingw32)
+	*-mingw32|*-pc-msys)
 		CFLAGS="$CFLAGS -pthread -D_WIN32_WINNT=0x0600"
 		CXXFLAGS="$CXXFLAGS -pthread -D_WIN32_WINNT=0x0600"
 		LDFLAGS="$LDFLAGS -pthread"
 		DLL_LDFLAGS="-shared -Wl,--output-def,\$(@D)/udjathttp.def"
-		LIBS="$LIBS  -lwinhttp"
+		LIBS="$LIBS -lws2_32 -lwinhttp"
 		AC_SUBST(LIBEXT,.dll)
 		AC_SUBST(EXEEXT,.exe)
 		AC_SUBST(OSNAME,windows)
@@ -71,6 +74,9 @@ case "$host" in
 		AC_CONFIG_FILES(src/testprogram/windows/resources.rc)
 		AC_CONFIG_FILES(src/testprogram/windows/app-manifest.xml)
 		
+		AC_DEFINE(HAVE_WINHTTP,[],[Do we have winhttp?])
+		AC_SUBST(ENGINE,winhttp)
+
 		;;
 
  	*)
@@ -84,8 +90,8 @@ case "$host" in
 		AC_CONFIG_FILES(sdk/linux/dynamic.pc)
 		AC_CONFIG_FILES(sdk/linux/static.pc)
 		
-		PKG_CHECK_MODULES( [CURL], [libcurl], AC_DEFINE(HAVE_CURL,[],[Do we have libcurl?]), AC_MSG_NOTICE([libcurl not present.]) )
-
+		AC_SUBST(ENGINE,curl)
+		PKG_CHECK_MODULES( [CURL], [libcurl], AC_DEFINE(HAVE_CURL,[],[Do we have libcurl?]), AC_MSG_ERROR([libcurl not present.]) )
 
 esac
 
@@ -180,13 +186,25 @@ PKG_CHECK_MODULES( [UDJAT], [libudjat], AC_DEFINE(HAVE_UDJAT,[],[Do we have libu
 AC_SUBST(UDJAT_LIBS)
 AC_SUBST(UDJAT_CFLAGS)
 
-app_cv_product=`pkg-config --variable=product_name libudjat`
+app_cv_product=`$PKG_CONFIG --variable=product_name libudjat`
 AC_DEFINE_UNQUOTED(PRODUCT_NAME, $app_cv_product, [The product name])
 AC_SUBST(PRODUCT_NAME,$app_cv_product)
 
-app_cv_module_path=`pkg-config --variable=module_path libudjat`
+app_cv_module_path=`$PKG_CONFIG --variable=module_path libudjat`
 AC_DEFINE_UNQUOTED(MODULE_PATH, $app_cv_module_path, [The path for module installation])
 AC_SUBST(MODULE_PATH,$app_cv_module_path)
+
+dnl ---------------------------------------------------------------------------
+dnl Check for libintl
+dnl ---------------------------------------------------------------------------
+
+AC_PATH_TOOL([XGETTEXT], [xgettext], [true])
+AC_PATH_TOOL([MSGCAT], [msgcat], [true])
+AC_PATH_TOOL([MSGINIT], [msginit], [true])
+AC_PATH_TOOL([MSGMERGE], [msgmerge], [true])
+AC_PATH_TOOL([MSGFMT], [msgfmt], [true])
+
+AC_CHECK_HEADER(libintl.h, [AC_DEFINE(HAVE_LIBINTL, 1, [Libintl is available])], [AC_MSG_NOTICE([Can't find libintl.h])])
 
 dnl ---------------------------------------------------------------------------
 dnl test for pugixml
@@ -202,6 +220,8 @@ dnl Output config
 dnl ---------------------------------------------------------------------------
 
 AC_SUBST(BASEDIR,$ac_pwd)
+
+AC_CONFIG_FILES(locale/Makefile)
 AC_CONFIG_FILES(Makefile)
 
 dnl ---------------------------------------------------------------------------

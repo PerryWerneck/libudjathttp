@@ -25,20 +25,17 @@
  #include <sstream>
  #include <list>
 
-#if defined(_WIN32)
-
-	#include <winhttp.h>
+#ifdef _WIN32
 	#include <udjat/win32/exception.h>
+#endif // _WIN32
 
-#elif defined(HAVE_CURL)
+#ifdef HAVE_WINHTTP
+	#include <winhttp.h>
+#endif // HAVE_WINHTTP
 
+#ifdef HAVE_CURL
 	#include <curl/curl.h>
-
-#else
-
-	#error Cant determine HTTP backend
-
-#endif
+#endif // HAVE_CURL
 
  namespace Udjat {
 
@@ -58,7 +55,7 @@
 
 			std::list<Header> headerlist;
 
-#if defined(_WIN32)
+#if defined(HAVE_WINHTTP)
 
 			/// @brief WinHTTP session handle.
 			HINTERNET session;
@@ -114,7 +111,7 @@
 			Worker & credentials(const char *user, const char *passwd) override;
 
 			String get(const std::function<bool(double current, double total)> &progress) override;
-			bool save(const char *filename, const std::function<bool(double current, double total)> &progress) override;
+			bool save(const char *filename, const std::function<bool(double current, double total)> &progress, bool replace) override;
 
 			Protocol::Header & header(const char *name) override;
 
