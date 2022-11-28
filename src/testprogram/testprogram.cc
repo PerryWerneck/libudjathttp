@@ -47,6 +47,8 @@ int main(int argc, char **argv) {
 
 	//cout << "Response:" << endl << URL("http://localhost").get() << endl;
 
+	cout << "Test: " << URL("http://localhost").test() << endl;
+
 	/*
 	if(URL("http://127.0.0.1/~perry/test.xml").get("localhost.html")) {
 		cout << endl << endl << "File was updated!" << endl << endl;
@@ -69,6 +71,7 @@ int main(int argc, char **argv) {
 	*/
 
 
+	/*
 	try {
 
 		HTTP::Client("http://localhost").post(
@@ -83,6 +86,7 @@ int main(int argc, char **argv) {
 		cout << e.what() << endl;
 
 	}
+	*/
 
 	/*
 	{

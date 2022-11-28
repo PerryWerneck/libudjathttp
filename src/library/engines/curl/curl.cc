@@ -129,47 +129,6 @@
 
 	}
 
-	Udjat::String HTTP::Worker::get(const std::function<bool(double current, double total)> UDJAT_UNUSED(&progress)) {
-
-		switch(method()) {
-		case HTTP::Get:
-			break;
-
-		case HTTP::Post:
-			curl_easy_setopt(hCurl, CURLOPT_POST, 1);
-			break;
-
-		case HTTP::Put:
-			curl_easy_setopt(hCurl, CURLOPT_PUT, 1);
-			break;
-
-		case HTTP::Delete:
-			curl_easy_setopt(hCurl, CURLOPT_CUSTOMREQUEST, "DELETE");
-			break;
-
-		default:
-			throw system_error(EINVAL,system_category(),"Invalid or unsupported http verb");
-		}
-
-		if(Config::Value<bool>("http","trace",TRACE_DEFAULT).get()) {
-			curl_easy_setopt(hCurl, CURLOPT_VERBOSE, 1L);
-			curl_easy_setopt(hCurl, CURLOPT_DEBUGDATA, this);
-			curl_easy_setopt(hCurl, CURLOPT_DEBUGFUNCTION, trace_callback);
-		}
-
-		if(!out.payload.empty()) {
-
-			// https://stackoverflow.com/questions/11600130/post-data-with-libcurl
-			// https://curl.se/libcurl/c/http-post.html
-			curl_easy_setopt(hCurl, CURLOPT_READDATA, (void *) this);
-			curl_easy_setopt(hCurl, CURLOPT_READFUNCTION, read_callback);
-
-		}
-
-		return perform();
-
-	}
-
 	size_t HTTP::Worker::write_callback(void *contents, size_t size, size_t nmemb, Worker *worker) noexcept {
 
 		size_t realsize = size * nmemb;

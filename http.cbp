@@ -53,6 +53,8 @@
 		<Unit filename="src/library/client.cc" />
 		<Unit filename="src/library/download.cc" />
 		<Unit filename="src/library/engines/curl/curl.cc" />
+		<Unit filename="src/library/engines/curl/get.cc" />
+		<Unit filename="src/library/engines/curl/test.cc" />
 		<Unit filename="src/library/engines/winhttp/get.cc" />
 		<Unit filename="src/library/engines/winhttp/worker.cc" />
 		<Unit filename="src/library/os/linux/get.cc" />
