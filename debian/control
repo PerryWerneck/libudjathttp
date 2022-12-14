@@ -1,0 +1,19 @@
+Source: udjat-module-http
+Section: unknown
+Priority: optional
+Maintainer: Perry Werneck <perry.werneck@gmail.com>
+Build-Depends: debhelper (>= 7), autotools-dev, autoconf, automake, pkg-config, gettext, libudjat-dev, libcurl4-openssl-dev
+
+Package: udjat-module-http
+Architecture: any
+Section: libs
+Depends: ${misc:Depends}
+Description: ATA SMART module for udjat.
+ ATA S.M.A.R.T. Disk Health Monitoring module for udjat.
+
+Package: udjat-module-http-dbg
+Architecture: any
+Depends: libudjat (= ${binary:Version})
+Description: Debugging symbols for udjat-module-http
+ This package contains the debugging symbols for udjat-module-http.
+
