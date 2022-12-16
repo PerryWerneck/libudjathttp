@@ -49,7 +49,7 @@
 
 		switch(method()) {
 		case HTTP::Get:
-			// curl_easy_setopt(hCurl, CURLOPT_HTTPGET, 1L);
+			curl_easy_setopt(hCurl, CURLOPT_HTTPGET, 1L);
 			break;
 
 		case HTTP::Post:
@@ -90,7 +90,7 @@
 
 		curl_easy_setopt(hCurl, CURLOPT_URL, url().c_str());
 
-		// curl_easy_setopt(hCurl, CURLOPT_WRITEDATA, this);
+		curl_easy_setopt(hCurl, CURLOPT_WRITEDATA, this);
 		curl_easy_setopt(hCurl, CURLOPT_WRITEFUNCTION, dummy_write);
 
 		struct curl_slist *chunk = headers();
