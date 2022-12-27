@@ -132,9 +132,9 @@
 			ub.modtime = (time_t) in.modification;
 
 			if(utime(filename,&ub) == -1) {
-				cerr << "http\tError '" << strerror(errno) << "' setting file timestamp" << endl;
-			} else {
-				cout << "http\t'" << filename << "' time set to " << in.modification << endl;
+				cerr << "http\tError '" << strerror(errno) << "' setting '" << filename << "' timestamp" << endl;
+			} else if(Logger::enabled(Logger::Trace)) {
+				Logger::String{"Time of '",filename,"' set to ",std::to_string(in.modification).c_str()}.trace("http");
 			}
 
 		} else {
