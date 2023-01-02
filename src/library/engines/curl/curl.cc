@@ -65,7 +65,8 @@
 
 		// Set timeout
 		{
-			int timeout = Config::Value<int>("http","timeout",5).get();
+			// Maximum time the transfer is allowed to complete.
+			int timeout = Config::Value<int>("curl","timeout",0).get();
 			if(timeout) {
 				curl_easy_setopt(hCurl, CURLOPT_TIMEOUT, timeout);
 			}
