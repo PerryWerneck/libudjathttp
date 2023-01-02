@@ -88,7 +88,11 @@
 		curl_slist_free_all(chunk);
 
 		if(res != CURLE_OK) {
-			debug("curl\tCURL-Error=",res);
+
+			if(res == CURLE_OPERATION_TIMEDOUT) {
+				throw system_error(ETIMEDOUT,system_category());
+			}
+
 			throw HTTP::Exception(this->url().c_str(),curl_easy_strerror(res));
 		}
 
