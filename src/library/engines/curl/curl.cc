@@ -96,7 +96,7 @@
 
 	Udjat::String HTTP::Worker::perform() {
 
-		debug("Current URL is '",url(),"'");
+		debug("Current URL is '",(std::string &) url(),"'");
 
 		curl_easy_setopt(hCurl, CURLOPT_URL, url().c_str());
 		curl_easy_setopt(hCurl, CURLOPT_WRITEDATA, this);
@@ -252,7 +252,7 @@
 				worker->message = str;
 			}
 
-			Logger::String("",worker->url()," ",header).write(Logger::Trace,"http");
+			Logger::String("",(std::string &) worker->url()," ",header).write(Logger::Trace,"http");
 
 		} else if(strncasecmp(header.c_str(),"Last-Modified:",14) == 0 && header.size()) {
 
@@ -319,7 +319,7 @@
 	curl_socket_t HTTP::Worker::open_socket_callback(Worker *worker, curlsocktype purpose, struct curl_sockaddr *address) noexcept {
 
 		// https://curl.se/libcurl/c/externalsocket.html
-		debug("Connecting to ",worker->url());
+		debug("Connecting to ",(std::string &) worker->url());
 
 		if(purpose != CURLSOCKTYPE_IPCXN) {
 			cerr << "curl\tInvalid type in curl_opensocket" << endl;
@@ -398,7 +398,7 @@
 					}
 
 					if(pfd.revents & POLLOUT) {
-						debug("Connected to ",worker->url());
+						debug("Connected to ",(std::string &) worker->url());
 						break;
 					}
 
