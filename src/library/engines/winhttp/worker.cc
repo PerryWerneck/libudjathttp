@@ -231,11 +231,10 @@ namespace Udjat {
 
 	}
 
-	HINTERNET HTTP::Worker::open(HINTERNET connection) {
+	HINTERNET HTTP::Worker::open(HINTERNET connection, const char *verb) {
 
 		URL_COMPONENTS urlComp;
 
-		const char *verb = std::to_string(method());
 		URL url = this->url();
 
 		INTERNET_TEXT pwszVerb = (wchar_t *) malloc(strlen(verb)*3);

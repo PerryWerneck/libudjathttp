@@ -47,7 +47,8 @@ int main(int argc, char **argv) {
 
 	//cout << "Response:" << endl << URL("http://localhost").get() << endl;
 
-	cout << "Test: " << URL("http://localhost").test() << endl;
+	auto response = URL("http://localhost").test();
+	cout << "-----------------> Test: " << response << endl;
 
 	/*
 	if(URL("http://127.0.0.1/~perry/test.xml").get("localhost.html")) {

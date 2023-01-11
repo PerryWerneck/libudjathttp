@@ -64,7 +64,11 @@
 			HINTERNET connect();
 
 			/// @brief Open HTTP Request.
-			HINTERNET open(HINTERNET connection);
+			HINTERNET open(HINTERNET connection, const char *verb);
+
+			inline HINTERNET open(HINTERNET connection) {
+				return open(connection,std::to_string(method()));
+			}
 
 			/// @brief Send request.
 			void send(HINTERNET request);

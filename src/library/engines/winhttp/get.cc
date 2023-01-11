@@ -80,7 +80,7 @@
 			//
 			// Not modified
 			//
-			log.add(", keeping '",filename,"'");
+			log.append(", keeping '",filename,"'");
 			log.write(Logger::Trace,"winhttp");
 			return false;
 		}
@@ -108,13 +108,13 @@
 
 			wcstombs(text, buffer, 1023);
 
-			log.add(" (",text,")");
+			log.append(" (",text,")");
 			log.write(Logger::Trace,"winhttp");
 
 			throw HTTP::Exception((unsigned int) dwStatusCode, url().c_str(), text);
 		}
 
-		log.add(" updating '",filename,"'");
+		log.append(" updating '",filename,"'");
 		log.write(Logger::Trace,"winhttp");
 
 		//
