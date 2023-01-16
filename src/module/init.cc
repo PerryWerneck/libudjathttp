@@ -48,27 +48,25 @@
 
 		class Protocol : public Udjat::Protocol {
 		public:
-			Protocol(const char *name) : Udjat::Protocol(name,moduleinfo) {
+			Protocol(const char *name, bool def) : Udjat::Protocol(name,moduleinfo) {
+				if(def) {
+					setDefault();
+				}
 			}
 
 			std::shared_ptr<Worker> WorkerFactory() const override {
 				return make_shared<Udjat::HTTP::Worker>();
 			}
 
-			/*
-			Udjat::String call(const Udjat::URL &url, const Udjat::HTTP::Method method, const char *payload) const override {
-				return Udjat::HTTP::Worker(url,method,payload).Udjat::Protocol::Worker::get();
-			}
-
-			bool get(const Udjat::URL &url, const char *filename, const std::function<bool(double current, double total)> &progress) const override {
-				return Udjat::HTTP::Worker(url).save(filename,progress);
-			}
-			*/
-
 		};
 
-		Protocol http{"http"};
-		Protocol https{"https"};
+#ifdef HAVE_CURL
+		Protocol http{"http",true};
+#else
+		Protocol http{"http",false};
+#endif // HAVE_CURL
+
+		Protocol https{"https",false};
 
 	public:
 

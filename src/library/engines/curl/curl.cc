@@ -65,7 +65,8 @@
 
 		// Set timeout
 		{
-			int timeout = Config::Value<int>("http","timeout",5).get();
+			// Maximum time the transfer is allowed to complete.
+			int timeout = Config::Value<int>("curl","timeout",0).get();
 			if(timeout) {
 				curl_easy_setopt(hCurl, CURLOPT_TIMEOUT, timeout);
 			}
@@ -95,7 +96,7 @@
 
 	Udjat::String HTTP::Worker::perform() {
 
-		debug("Current URL is '",url(),"'");
+		debug("Current URL is '",(std::string &) url(),"'");
 
 		curl_easy_setopt(hCurl, CURLOPT_URL, url().c_str());
 		curl_easy_setopt(hCurl, CURLOPT_WRITEDATA, this);
@@ -126,47 +127,6 @@
 		} else {
 			throw HTTP::Exception((unsigned int) response_code, url().c_str(), message.c_str());
 		}
-
-	}
-
-	Udjat::String HTTP::Worker::get(const std::function<bool(double current, double total)> UDJAT_UNUSED(&progress)) {
-
-		switch(method()) {
-		case HTTP::Get:
-			break;
-
-		case HTTP::Post:
-			curl_easy_setopt(hCurl, CURLOPT_POST, 1);
-			break;
-
-		case HTTP::Put:
-			curl_easy_setopt(hCurl, CURLOPT_PUT, 1);
-			break;
-
-		case HTTP::Delete:
-			curl_easy_setopt(hCurl, CURLOPT_CUSTOMREQUEST, "DELETE");
-			break;
-
-		default:
-			throw system_error(EINVAL,system_category(),"Invalid or unsupported http verb");
-		}
-
-		if(Config::Value<bool>("http","trace",TRACE_DEFAULT).get()) {
-			curl_easy_setopt(hCurl, CURLOPT_VERBOSE, 1L);
-			curl_easy_setopt(hCurl, CURLOPT_DEBUGDATA, this);
-			curl_easy_setopt(hCurl, CURLOPT_DEBUGFUNCTION, trace_callback);
-		}
-
-		if(!out.payload.empty()) {
-
-			// https://stackoverflow.com/questions/11600130/post-data-with-libcurl
-			// https://curl.se/libcurl/c/http-post.html
-			curl_easy_setopt(hCurl, CURLOPT_READDATA, (void *) this);
-			curl_easy_setopt(hCurl, CURLOPT_READFUNCTION, read_callback);
-
-		}
-
-		return perform();
 
 	}
 
@@ -292,7 +252,7 @@
 				worker->message = str;
 			}
 
-			Logger::String("",worker->url()," ",header).write(Logger::Trace,"http");
+			Logger::String("",(std::string &) worker->url()," ",header).write(Logger::Trace,"http");
 
 		} else if(strncasecmp(header.c_str(),"Last-Modified:",14) == 0 && header.size()) {
 
@@ -359,7 +319,7 @@
 	curl_socket_t HTTP::Worker::open_socket_callback(Worker *worker, curlsocktype purpose, struct curl_sockaddr *address) noexcept {
 
 		// https://curl.se/libcurl/c/externalsocket.html
-		debug("Connecting to ",worker->url());
+		debug("Connecting to ",(std::string &) worker->url());
 
 		if(purpose != CURLSOCKTYPE_IPCXN) {
 			cerr << "curl\tInvalid type in curl_opensocket" << endl;
@@ -438,7 +398,7 @@
 					}
 
 					if(pfd.revents & POLLOUT) {
-						debug("Connected to ",worker->url());
+						debug("Connected to ",(std::string &) worker->url());
 						break;
 					}
 

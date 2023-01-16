@@ -64,7 +64,11 @@
 			HINTERNET connect();
 
 			/// @brief Open HTTP Request.
-			HINTERNET open(HINTERNET connection);
+			HINTERNET open(HINTERNET connection, const char *verb);
+
+			inline HINTERNET open(HINTERNET connection) {
+				return open(connection,std::to_string(method()));
+			}
 
 			/// @brief Send request.
 			void send(HINTERNET request);
@@ -111,6 +115,8 @@
 			Worker & credentials(const char *user, const char *passwd) override;
 
 			String get(const std::function<bool(double current, double total)> &progress) override;
+			int test(const std::function<bool(double current, double total)> &progress) noexcept override;
+
 			bool save(const char *filename, const std::function<bool(double current, double total)> &progress, bool replace) override;
 
 			Protocol::Header & header(const char *name) override;

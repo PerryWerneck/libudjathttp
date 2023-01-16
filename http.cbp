@@ -50,10 +50,11 @@
 		<Unit filename="src/libhttp/include/internals.h" />
 		<Unit filename="src/libhttp/os/linux/private.h" />
 		<Unit filename="src/libhttp/os/windows/native_win32.h" />
-		<Unit filename="src/library/client.cc" />
-		<Unit filename="src/library/download.cc" />
 		<Unit filename="src/library/engines/curl/curl.cc" />
+		<Unit filename="src/library/engines/curl/get.cc" />
+		<Unit filename="src/library/engines/curl/test.cc" />
 		<Unit filename="src/library/engines/winhttp/get.cc" />
+		<Unit filename="src/library/engines/winhttp/test.cc" />
 		<Unit filename="src/library/engines/winhttp/worker.cc" />
 		<Unit filename="src/library/os/linux/get.cc" />
 		<Unit filename="src/library/os/windows/base64.cc" />
