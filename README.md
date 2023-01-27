@@ -18,3 +18,15 @@
 	<< endl;
 ```
 
+### Post with variable parsing
+
+This post expands ${} values with network info extracted from the active connection.
+
+```C++
+                HTTP::Client("http://localhost").post(
+                        "ipaddr='${ipaddr}'\n"
+                        "hostip='${hostip}'\n"
+                        "nic='${network-interface}'\n"
+                        "macaddress='${macaddress}'"
+                );
+```
