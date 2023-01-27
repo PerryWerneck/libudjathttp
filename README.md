@@ -6,13 +6,15 @@
 
 # Sample use
 
-## Authenticated get
+## As a library
+
+### Authenticated get
 
 ```C++
 	cout    <<
-			HTTP::Client("http://localhost/sample")
-				.setCredentials("userid","passwd")
-				.get()
-			<< endl;
+		HTTP::Client("http://localhost/sample")
+			.setCredentials("userid","passwd")
+			.get()
+	<< endl;
 ```
 
