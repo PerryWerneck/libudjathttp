@@ -1,4 +1,4 @@
-# HTTP Client library and protocol for UDJAT.
+# HTTP Client library for UDJAT.
 
 Windows/Linux http client library module for libudjat based applications.
 
