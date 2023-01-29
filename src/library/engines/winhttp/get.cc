@@ -50,7 +50,7 @@
 		send(request);
 
 		if(!WinHttpReceiveResponse(request, NULL)) {
-			throw Win32::Exception(string{"Error receiving response for "} + url());
+			throw Win32::Exception("Error receiving response");
 		}
 
 		//
@@ -68,7 +68,7 @@
 					&dwSize,
 					WINHTTP_NO_HEADER_INDEX
 				)) {
-					throw Win32::Exception(string{"Cant get HTTP status code for "} + url());
+					throw Win32::Exception("Cant get HTTP status code");
 				}
 		}
 
