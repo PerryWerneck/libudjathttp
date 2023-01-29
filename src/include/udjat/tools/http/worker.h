@@ -78,7 +78,10 @@
 
 #elif defined(HAVE_CURL)
 
+			/// @brief Handle to curl.
 			CURL * hCurl;
+
+			/// @brief Error message.
 			char error[CURL_ERROR_SIZE];
 
 			struct {

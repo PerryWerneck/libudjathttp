@@ -106,11 +106,14 @@
 		if(chunk) {
 			curl_easy_setopt(hCurl, CURLOPT_HTTPHEADER, chunk);
 		}
+
+		this->error[0] = 0;
 		CURLcode res = curl_easy_perform(hCurl);
 		curl_slist_free_all(chunk);
 
 		if(res != CURLE_OK) {
-			throw HTTP::Exception(url().c_str(),curl_easy_strerror(res));
+			debug("Error='",this->error,"'");
+			throw HTTP::Exception(url().c_str(),(this->error[0] ? this->error : curl_easy_strerror(res)));
 		}
 
 		long response_code = 0;
@@ -351,7 +354,8 @@
 			}
 
 			if(errno != EINPROGRESS) {
-				cerr << "curl\tError '" << strerror(errno) << "' (" << errno << ") connecting to " << worker->url() << endl;
+				strncpy(worker->error,strerror(errno),sizeof(worker->error));
+				cerr << "curl\tError '" << worker->error << "' (" << errno << ") connecting to " << worker->url() << endl;
 				::close(sockfd);
 				return CURL_SOCKET_BAD;
 			}
@@ -368,8 +372,8 @@
 				auto rc = poll(&pfd,1,10);
 
 				if(rc == -1) {
-
-					cerr << "curl\tError '" << strerror(errno) << "' connecting to " << worker->url() << endl;
+					strncpy(worker->error,strerror(errno),sizeof(worker->error));
+					cerr << "curl\tError '" << worker->error << "' (" << errno << ") connecting to " << worker->url() << endl;
 					::close(sockfd);
 					return CURL_SOCKET_BAD;
 
@@ -383,7 +387,8 @@
 							error = errno;
 						}
 
-						cerr << "curl\tError '" << strerror(error) << "' connecting to " << worker->url() << endl;
+						strncpy(worker->error,strerror(errno),sizeof(worker->error));
+						cerr << "curl\tError '" << worker->error << "' (" << errno << ") connecting to " << worker->url() << endl;
 						::close(sockfd);
 						return CURL_SOCKET_BAD;
 
@@ -391,7 +396,8 @@
 
 					if(pfd.revents & POLLHUP) {
 
-						cerr << "curl\tError '" << strerror(ECONNRESET) << "' connecting to " << worker->url() << endl;
+						strncpy(worker->error,strerror(ECONNRESET),sizeof(worker->error));
+						cerr << "curl\tError '" << worker->error << "' (" << errno << ") connecting to " << worker->url() << endl;
 						::close(sockfd);
 						return CURL_SOCKET_BAD;
 
@@ -417,7 +423,8 @@
 			}
 
 			if(!timer) {
-				cerr << "curl\tTimeout connecting to " << worker->url() << endl;
+				strncpy(worker->error,strerror(ETIMEDOUT),sizeof(worker->error));
+				cerr << "curl\tError '" << worker->error << "' (" << errno << ") connecting to " << worker->url() << endl;
 				::close(sockfd);
 				return CURL_SOCKET_BAD;
 			}
