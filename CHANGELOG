@@ -1,0 +1,19 @@
+-------------------------------------------------------------------
+Tue Nov 08 13:13:37 UTC 2022 - perry.werneck@gmail.com
+
+- Update to version 1.0+git20221106:
+  * Fixing payload expansion.
+  * Debugging payload expansion.
+  * Implementing payload expansion.
+  * Expanding payload.
+  * Better use of log trace/debug options.
+  * Fixing message log.
+  * Adding base for translation.
+  * Small fixes.
+  * Better error messages on connection failed.
+  * Fixing connect timeout.
+
+-------------------------------------------------------------------
+Mon Jan  3 14:25:30 UTC 2022 - Perry Werneck <perry.werneck@gmail.com>
+
+- First build on OBS. 

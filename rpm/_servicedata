@@ -1,0 +1,4 @@
+<servicedata>
+<service name="tar_scm">
+                <param name="url">https://github.com/PerryWerneck/udjat-module-http.git</param>
+              <param name="changesrevision">4d918c743fd9d7fa0b4d9befb5b6c37b63f8fa82</param></service></servicedata>
