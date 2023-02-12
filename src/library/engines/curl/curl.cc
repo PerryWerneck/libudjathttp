@@ -29,6 +29,7 @@
  #include <iostream>
  #include <fcntl.h>
  #include <udjat/tools/mainloop.h>
+ #include <poll.h>
 
  using namespace std;
 

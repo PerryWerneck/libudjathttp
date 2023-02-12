@@ -45,7 +45,7 @@ int main(int argc, char **argv) {
 
 	auto module = udjat_module_init();
 
-	cout << "Response:" << endl << URL("http://10.24.80.1").get() << endl;
+	cout << "Response:" << endl << URL("http://localhost").get() << endl;
 
 	// auto response = URL("http://localhost").test();
 	//cout << "-----------------> Test: " << response << endl;
