@@ -23,9 +23,9 @@ cd ${myDIR}
 # Build LIBUDJAT
 #
 echo "Building libudjat"
-mkdir -p  ./.build/libubjdat
+mkdir -p  ./.build/libudjat
 git clone https://github.com/PerryWerneck/libudjat.git ${myDIR}/.build/libudjat > $LOGFILE 2>&1 || die "clone libudjat failure"
-pushd ${myDIR}/.build/libubjdat
+pushd ${myDIR}/.build/libudjat
 ./autogen.sh > $LOGFILE 2>&1 || die "Autogen failure"
 ./configure > $LOGFILE 2>&1 || die "Configure failure"
 make clean > $LOGFILE 2>&1 || die "Make clean failure"
