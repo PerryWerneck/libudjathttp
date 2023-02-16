@@ -45,10 +45,10 @@ int main(int argc, char **argv) {
 
 	auto module = udjat_module_init();
 
-	//cout << "Response:" << endl << URL("http://localhost").get() << endl;
+	cout << "Response:" << endl << URL("http://localhost").get() << endl;
 
-	auto response = URL("http://localhost").test();
-	cout << "-----------------> Test: " << response << endl;
+	// auto response = URL("http://localhost").test();
+	//cout << "-----------------> Test: " << response << endl;
 
 	/*
 	if(URL("http://127.0.0.1/~perry/test.xml").get("localhost.html")) {

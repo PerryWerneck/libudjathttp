@@ -150,7 +150,7 @@ namespace Udjat {
 
 		// Wait for response
 		if(!WinHttpReceiveResponse(request, NULL)) {
-			throw Win32::Exception(string{"Error receiving response from "} + url());
+			throw Win32::Exception("Error receiving response");
 		}
 
 #ifdef DEBUG
@@ -263,7 +263,7 @@ namespace Udjat {
 			);
 
 		if(!req) {
-			throw Win32::Exception(string{"Can't create request for "} + url);
+			throw Win32::Exception("Can't create HTTP request");
 		}
 
 		WinHttpSetOption(req, WINHTTP_OPTION_CLIENT_CERT_CONTEXT, WINHTTP_NO_CLIENT_CERT_CONTEXT, 0);
@@ -320,7 +320,7 @@ namespace Udjat {
 		}
 
 		if(!rc) {
-			throw Win32::Exception(string{"Can't send request "} + url());
+			throw Win32::Exception("Can't send request");
 		}
 
 	}
