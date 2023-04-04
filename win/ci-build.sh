@@ -16,30 +16,18 @@ die ( ) {
 	exit -1
 }
 
-myDIR=$(dirname $(dirname $(readlink -f ${0})))
-cd ${myDIR}
+cd $(dirname $(dirname $(readlink -f ${0})))
 
 #
-# Build LIBUDJAT
+# Install pre-reqs
 #
-echo "Building libudjat"
-mkdir -p  ./.build/libudjat
-git clone https://github.com/PerryWerneck/libudjat.git ${myDIR}/.build/libudjat > $LOGFILE 2>&1 || die "clone libudjat failure"
-pushd ${myDIR}/.build/libudjat
-./autogen.sh > $LOGFILE 2>&1 || die "Autogen failure"
-./configure > $LOGFILE 2>&1 || die "Configure failure"
-make clean > $LOGFILE 2>&1 || die "Make clean failure"
-make all  > $LOGFILE 2>&1 || die "Make failure"
-make install  > $LOGFILE 2>&1 || die "Install failure"
-popd
+pacman -U --noconfirm *.pkg.tar.zst > $LOGFILE 2>&1 || die "pacman failure"
 
 #
 # Build
 #
-./autogen.sh > $LOGFILE 2>&1 || die "Autogen failure"
-./configure > $LOGFILE 2>&1 || die "Configure failure"
-make clean > $LOGFILE 2>&1 || die "Make clean failure"
-make all  > $LOGFILE 2>&1 || die "Make failure"
+dos2unix PKGBUILD.mingw
+makepkg BUILDDIR=/tmp/pkg -p PKGBUILD.mingw > $LOGFILE 2>&1 || die "makepkg failure"
 
 echo "Build complete"
 
