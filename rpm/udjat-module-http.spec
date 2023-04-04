@@ -16,7 +16,10 @@
 # Please submit bugfixes or comments via http://bugs.opensuse.org/
 #
 
-Summary:		UDJat http client library 
+%define product_name %(pkg-config --variable=product_name libudjat)
+%define module_path %(pkg-config --variable=module_path libudjat)
+
+Summary:		%{product_name} http client library 
 Name:			udjat-module-http
 Version:		1.0
 Release:		0
@@ -44,7 +47,7 @@ BuildRequires:	pkgconfig(libcurl)
 Provides:		udjat-protocol-http
 
 %description
-HTTP client module and library for udjat
+HTTP client module and library for %{product_name}
 
 #---[ Build & Install ]-----------------------------------------------------------------------------------------------
 
@@ -63,8 +66,8 @@ make all
 %makeinstall
 
 %files
-%{_libdir}/udjat-modules/*/*.so
-%config(noreplace) %{_sysconfdir}/udjat.conf.d/*.conf
+%{module_path}/*.so
+%config(noreplace) %{_sysconfdir}/%{product_name}.conf.d/*.conf
 
 %changelog
 
