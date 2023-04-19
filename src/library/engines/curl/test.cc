@@ -69,7 +69,7 @@
 			break;
 
 		default:
-			cerr << "Invalid or unsupported http verb" << endl;
+			cerr << "curl\tInvalid or unsupported http verb" << endl;
 			return EINVAL;
 		}
 
