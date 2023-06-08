@@ -30,6 +30,7 @@
  #include <fcntl.h>
  #include <udjat/tools/mainloop.h>
  #include <poll.h>
+ #include <udjat/tools/string.h>
 
  using namespace std;
 
@@ -236,7 +237,7 @@
 
 	size_t HTTP::Worker::header_callback(char *buffer, size_t size, size_t nitems, Worker *worker) noexcept {
 
-		string header(buffer,size*nitems);
+		Udjat::String header{(const char *) buffer,(size_t) (size*nitems)};
 
 		if(strncasecmp(header.c_str(),"HTTP/",5) == 0 && header.size()) {
 			unsigned int v[2];
@@ -285,13 +286,22 @@
 			}
 
 		}
-#ifdef DEBUG
-		else if(!header.empty()) {
+		else if(!header.strip().empty()) {
 
-			Logger::String{header}.write(Logger::Debug,"curl");
+			const char *from = header.c_str();
+			const char *delimiter = strchr(from,':');
+			if(delimiter) {
+
+				String name{from,(size_t) (delimiter-from)};
+				String value{delimiter+1};
+
+				name.strip();
+				value.strip();
+
+				worker->header(name.c_str()) = value;
+			}
 
 		}
-#endif // DEBUG
 
 		return size*nitems;
 	}

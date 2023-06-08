@@ -33,68 +33,113 @@
 
  namespace Udjat {
 
- 	class Writer : public File::Temporary {
+	class Writer {
+	private:
+
+		static size_t do_write(void *contents, size_t size, size_t nmemb, Writer *writer) noexcept {
+
+			size_t length = size * nmemb;
+
+			if(!writer->total) {
+				double total;
+				curl_easy_getinfo(writer->hCurl, CURLINFO_CONTENT_LENGTH_DOWNLOAD, &total);
+				writer->total = (unsigned long long) total;
+			}
+
+			writer->write(contents,length);
+			return length;
+
+		}
+
 	public:
-		const std::function<bool(double current, double total)> &progress;
-		double current = 0;
+		CURL *hCurl = nullptr;
 
-		CURL *curl = nullptr;
-		double total = 0;
+		unsigned long long current = 0;
+		unsigned long long total = 0;
 
-		Writer(CURL *c, const char *filename, const std::function<bool(double, double)> &p ) : Temporary(filename), progress(p), curl(c) {
-			progress(0,0);
+		constexpr Writer(CURL *c) : hCurl{c} {
+		};
+
+		void get(const HTTP::Worker &worker, curl_slist *chunk) {
+
+			curl_easy_setopt(hCurl, CURLOPT_URL, worker.url().c_str());
+			curl_easy_setopt(hCurl, CURLOPT_WRITEDATA, this);
+			curl_easy_setopt(hCurl, CURLOPT_WRITEFUNCTION, do_write);
+
+			if(chunk) {
+				curl_easy_setopt(hCurl, CURLOPT_HTTPHEADER, chunk);
+			}
+
+			CURLcode res = curl_easy_perform(hCurl);
+
+			curl_slist_free_all(chunk);
+
+			if(res != CURLE_OK) {
+				if(res == CURLE_OPERATION_TIMEDOUT) {
+					throw system_error(ETIMEDOUT,system_category(),worker.url().c_str());
+				}
+				throw HTTP::Exception(worker.url().c_str(),curl_easy_strerror(res));
+			}
+
 		}
 
-		virtual ~Writer() {
-			progress(current,total);
-		}
+		virtual void write(const void *contents, size_t length) = 0;
 
-		void write(const void *contents, size_t length) {
-			File::Temporary::write(contents,length);
-			this->current += length;
-			progress(this->current,this->total);
-		}
+	};
 
- 	};
+	void HTTP::Worker::save(const std::function<bool(unsigned long long current, unsigned long long total, const void *buf, size_t length)> &call) {
 
-	static size_t write_file(void *contents, size_t size, size_t nmemb, Writer *writer) noexcept {
+		class CustomWriter : public Writer {
+		private:
+			const std::function<bool(unsigned long long current, unsigned long long total, const void *buf, size_t length)> &call;
 
-		size_t length = size * nmemb;
+		public:
+			constexpr CustomWriter(CURL *c, const std::function<bool(unsigned long long current, unsigned long long total, const void *buf, size_t length)> &w) : Writer{c}, call{w} {
+			}
 
-		if(!writer->total) {
-			curl_easy_getinfo(writer->curl, CURLINFO_CONTENT_LENGTH_DOWNLOAD, &writer->total);
-		}
+			void write(const void *contents, size_t length) override {
+				call(current,total,contents,length);
+				current += length;
+			}
 
-		writer->write(contents,length);
-		return length;
+		};
+
+		CustomWriter{hCurl,call}.get(*this,headers());
 
 	}
 
 	bool HTTP::Worker::save(const char *filename, const std::function<bool(double current, double total)> &progress, bool replace) {
 
-		Writer tempfile(hCurl, filename, progress);
+		class FileWriter : public Writer, public File::Temporary {
+		public:
+			const std::function<bool(double current, double total)> &progress;
 
-		curl_easy_setopt(hCurl, CURLOPT_URL, url().c_str());
-		curl_easy_setopt(hCurl, CURLOPT_WRITEDATA, &tempfile);
-		curl_easy_setopt(hCurl, CURLOPT_WRITEFUNCTION, write_file);
-
-		struct curl_slist *chunk = this->headers();
-		if(chunk) {
-			curl_easy_setopt(hCurl, CURLOPT_HTTPHEADER, chunk);
-		}
-
-		CURLcode res = curl_easy_perform(hCurl);
-
-		curl_slist_free_all(chunk);
-
-		if(res != CURLE_OK) {
-
-			if(res == CURLE_OPERATION_TIMEDOUT) {
-				throw system_error(ETIMEDOUT,system_category());
+			FileWriter(CURL *c, const char *filename, const std::function<bool(double current, double total)> &p) : Writer{c}, File::Temporary{filename}, progress{p} {
+				progress(0,0);
 			}
 
-			throw HTTP::Exception(this->url().c_str(),curl_easy_strerror(res));
+			virtual ~FileWriter() {
+				progress(current,total);
+			}
+
+			void write(const void *contents, size_t length) override {
+				File::Temporary::write(contents,length);
+				this->current += length;
+				progress(this->current,this->total);
+			}
+
+		};
+
+		debug("---------------------- Filename: ",filename);
+
+		struct stat st;
+		if(stat(filename,&st) == 0) {
+			header("If-Modified-Since").assign(HTTP::TimeStamp{st.st_mtime}.to_string());
 		}
+
+		FileWriter file{hCurl,filename,progress};
+
+		file.get(*this,headers());
 
 		long response_code = 0;
 		curl_easy_getinfo(hCurl, CURLINFO_RESPONSE_CODE, &response_code);
@@ -108,7 +153,7 @@
 
 			log.append(" updating '",filename,"'");
 			log.write(Logger::Trace,"curl");
-			tempfile.save(filename,replace);
+			file.save(filename,replace);
 
 		} else if(response_code == 304) {
 

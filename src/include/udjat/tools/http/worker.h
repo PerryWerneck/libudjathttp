@@ -120,6 +120,7 @@
 			String get(const std::function<bool(double current, double total)> &progress) override;
 			int test(const std::function<bool(double current, double total)> &progress) noexcept override;
 
+			void save(const std::function<bool(unsigned long long current, unsigned long long total, const void *buf, size_t length)> &writer) override;
 			bool save(const char *filename, const std::function<bool(double current, double total)> &progress, bool replace) override;
 
 			Protocol::Header & header(const char *name) override;

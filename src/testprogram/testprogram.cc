@@ -27,6 +27,7 @@
  #include <udjat/agent.h>
  #include <udjat/factory.h>
  #include <udjat/module.h>
+ #include <udjat/tools/protocol.h>
  #include <iostream>
  #include <memory>
 
@@ -37,6 +38,12 @@
 
 int main(int argc, char **argv) {
 
+	Udjat::Quark::init();
+	Udjat::Logger::redirect();
+	Udjat::Logger::enable(Udjat::Logger::Trace);
+	Udjat::Logger::enable(Udjat::Logger::Debug);
+	Udjat::Logger::console(true);
+
 	/*
 	if(HTTP::Client("http://127.0.0.1/~perry/test.xml").get("/tmp/localhost.html")) {
 		cout << endl << endl << "File was updated!" << endl << endl;
@@ -45,7 +52,7 @@ int main(int argc, char **argv) {
 
 	auto module = udjat_module_init();
 
-	cout << "Response:" << endl << URL("http://localhost").get() << endl;
+	// cout << "Response:" << endl << URL("http://127.0.0.1").get() << endl;
 
 	// auto response = URL("http://localhost").test();
 	//cout << "-----------------> Test: " << response << endl;
@@ -59,8 +66,8 @@ int main(int argc, char **argv) {
 	/*
 	try {
 
-		URL("http://localhost").get("/tmp/localhost.html",[](double current, double total){
-			cout << "Donwloading " << current << " of " << total << endl;
+		URL("http://127.0.0.1").get("/tmp/localhost.html",[](double current, double total){
+			cout << "Donwloading " << ((unsigned long) current) << " of " << ((unsigned long) total) << endl;
 			return true;
 		});
 
@@ -70,6 +77,19 @@ int main(int argc, char **argv) {
 
 	}
 	*/
+
+	try {
+
+		Protocol::WorkerFactory("http://127.0.0.1/~perry/update.dud")->save("/tmp/update.dud",[](double current, double total){
+			cout << "Donwloading " << ((unsigned long) current) << " of " << ((unsigned long) total) << endl;
+			return true;
+		},true);
+
+	} catch(const std::exception &e) {
+
+		cerr << "**** Error '" << e.what() << "'" << endl;
+
+	}
 
 
 	/*
