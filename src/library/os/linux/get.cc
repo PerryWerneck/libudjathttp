@@ -26,10 +26,14 @@
  #include <udjat/tools/file.h>
  #include <sys/types.h>
  #include <sys/stat.h>
- #include <fcntl.h>
  #include <libgen.h>
  #include <utime.h>
  #include <functional>
+
+ #ifndef _GNU_SOURCE
+	#define _GNU_SOURCE
+ #endif // _GNU_SOURCE
+ #include <fcntl.h>
 
  namespace Udjat {
 
@@ -40,13 +44,26 @@
 
 			size_t length = size * nmemb;
 
-			if(!writer->total) {
-				double total;
-				curl_easy_getinfo(writer->hCurl, CURLINFO_CONTENT_LENGTH_DOWNLOAD, &total);
-				writer->total = (unsigned long long) total;
+			try {
+
+				if(!writer->total) {
+					double total;
+					curl_easy_getinfo(writer->hCurl, CURLINFO_CONTENT_LENGTH_DOWNLOAD, &total);
+					writer->total = (unsigned long long) total;
+					if(writer->total) {
+						writer->allocate(writer->total);
+					}
+				}
+
+				writer->write(contents,length);
+
+			} catch(const std::exception &e) {
+
+				cerr << "curl\t" << e.what() << endl;
+				return 0;
+
 			}
 
-			writer->write(contents,length);
 			return length;
 
 		}
@@ -83,6 +100,7 @@
 
 		}
 
+		virtual void allocate(unsigned long long length) = 0;
 		virtual void write(const void *contents, size_t length) = 0;
 
 	};
@@ -100,6 +118,9 @@
 			void write(const void *contents, size_t length) override {
 				call(current,total,contents,length);
 				current += length;
+			}
+
+			void allocate(unsigned long long) override {
 			}
 
 		};
@@ -126,6 +147,12 @@
 				File::Temporary::write(contents,length);
 				this->current += length;
 				progress(this->current,this->total);
+			}
+
+			void allocate(unsigned long long length) override {
+				if(fallocate(this->fd,0,0,length) < 0) {
+					throw system_error(errno,system_category());
+				}
 			}
 
 		};
