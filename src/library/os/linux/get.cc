@@ -130,11 +130,13 @@
 
 		};
 
-		debug("---------------------- Filename: ",filename);
-
 		struct stat st;
-		if(stat(filename,&st) == 0) {
+		if(stat(filename,&st) == 0 && st.st_blocks) {
+
+			// Got stat and the file is not empty, send modification time to host.
+			Logger::String{filename," was updated on ",TimeStamp{st.st_mtime}.to_string()}.trace("curl");
 			header("If-Modified-Since").assign(HTTP::TimeStamp{st.st_mtime}.to_string());
+
 		}
 
 		FileWriter file{hCurl,filename,progress};
