@@ -277,11 +277,11 @@
 
 			} catch(const std::exception &e) {
 
-				cerr << "http\tError '" << e.what() << "' processing transfer date" << endl;
+				Logger::String{"Unable to process '",header.c_str(),"': ",e.what()}.warning("curl");
 
 			} catch(...) {
 
-				cerr << "http\tunexpected error processing transfer date" << endl;
+				Logger::String{"Unexpected error processing '",header.c_str(),"'"}.warning("curl");
 
 			}
 
