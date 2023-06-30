@@ -240,6 +240,7 @@
 		Udjat::String header{(const char *) buffer,(size_t) (size*nitems)};
 
 		if(strncasecmp(header.c_str(),"HTTP/",5) == 0 && header.size()) {
+
 			unsigned int v[2];
 			unsigned int code;
 			char str[201];
@@ -257,7 +258,14 @@
 				worker->message = str;
 			}
 
-			Logger::String("",(std::string &) worker->url()," ",header).write(Logger::Trace,"http");
+			Logger::String{worker->url().c_str()," ",header}.write(Logger::Debug,"curl");
+
+
+		} else if(strncasecmp(header.c_str(),"Content-Length:",15) == 0 && header.size()) {
+
+				char *end = nullptr;
+				worker->content_length = strtoull(header.c_str()+16,&end,10);
+				Logger::String{worker->url().c_str()," has ",String{}.set_byte(worker->content_length)," bytes"}.write(Logger::Debug,"curl");
 
 		} else if(strncasecmp(header.c_str(),"Last-Modified:",14) == 0 && header.size()) {
 
@@ -270,9 +278,7 @@
 
 				if(*ptr) {
 					worker->in.modification = HTTP::TimeStamp(ptr);
-#ifdef DEBUG
-					cout << "last-modified (from server): " << worker->in.modification << endl;
-#endif // DEBUG
+					Logger::String{"last-modified (from server): ",worker->in.modification.to_string()}.write(Logger::Debug,"curl");
 				}
 
 			} catch(const std::exception &e) {
@@ -285,8 +291,7 @@
 
 			}
 
-		}
-		else if(!header.strip().empty()) {
+		} else if(!header.strip().empty()) {
 
 			const char *from = header.c_str();
 			const char *delimiter = strchr(from,':');

@@ -80,7 +80,7 @@ int main(int argc, char **argv) {
 
 	try {
 
-		Protocol::WorkerFactory("http://127.0.0.1/~perry/update.dud")->save("/tmp/update.dud",[](double current, double total){
+		Protocol::WorkerFactory("http://127.0.0.1/repo-sle15sp4/sistema/tmf-ag.dud")->save("/tmp/update.dud",[](double current, double total){
 			cout << "Donwloading " << ((unsigned long) current) << " of " << ((unsigned long) total) << endl;
 			return true;
 		},true);

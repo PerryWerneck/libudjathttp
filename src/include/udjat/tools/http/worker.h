@@ -107,6 +107,8 @@
 
 #endif // _WIN32
 
+			unsigned long long content_length = 0LL;
+
 		public:
 
 			Worker(const char *url = "", const HTTP::Method method = HTTP::Get, const char *payload = "");
@@ -124,6 +126,10 @@
 			bool save(const char *filename, const std::function<bool(double current, double total)> &progress, bool replace) override;
 
 			Protocol::Header & header(const char *name) override;
+
+			inline unsigned long long size() const noexcept {
+				return content_length;
+			}
 
 		};
 

@@ -50,11 +50,9 @@
 			try {
 
 				if(!writer->total && length) {
-					double total;
-					curl_easy_getinfo(writer->hCurl, CURLINFO_CONTENT_LENGTH_DOWNLOAD, &total);
-					writer->total = (unsigned long long) total;
+					writer->total = writer->worker.size();
 					if(writer->total) {
-						Logger::String{"Preallocating ",String{}.set_byte(writer->total)}.trace("curl");
+						Logger::String{"Preallocating ",String{}.set_byte(writer->total)}.write(Logger::Debug,"curl");
 						writer->allocate(writer->total);
 					}
 				}
@@ -86,14 +84,15 @@
 
 	public:
 		CURL *hCurl = nullptr;
+		const HTTP::Worker &worker;
 
 		unsigned long long current = 0;
 		unsigned long long total = 0;
 
-		Writer(CURL *c) : hCurl{c} {
+		Writer(const HTTP::Worker &w, CURL *c) : hCurl{c}, worker{w} {
 		};
 
-		void get(const HTTP::Worker &worker, curl_slist *chunk) {
+		void get(curl_slist *chunk) {
 
 			curl_easy_setopt(hCurl, CURLOPT_URL, worker.url().c_str());
 			curl_easy_setopt(hCurl, CURLOPT_WRITEDATA, this);
@@ -133,7 +132,7 @@
 			const std::function<bool(unsigned long long current, unsigned long long total, const void *buf, size_t length)> &call;
 
 		public:
-			CustomWriter(CURL *c, const std::function<bool(unsigned long long current, unsigned long long total, const void *buf, size_t length)> &w) : Writer{c}, call{w} {
+			CustomWriter(const Worker &worker, CURL *c, const std::function<bool(unsigned long long current, unsigned long long total, const void *buf, size_t length)> &w) : Writer{worker,c}, call{w} {
 			}
 
 			void write(const void *contents, size_t length) override {
@@ -146,7 +145,7 @@
 
 		};
 
-		CustomWriter{hCurl,call}.get(*this,headers());
+		CustomWriter{*this,hCurl,call}.get(headers());
 
 	}
 
@@ -156,7 +155,7 @@
 		public:
 			const std::function<bool(double current, double total)> &progress;
 
-			FileWriter(CURL *c, const char *filename, const std::function<bool(double current, double total)> &p) : Writer{c}, File::Temporary{filename}, progress{p} {
+			FileWriter(const Worker &worker, CURL *c, const char *filename, const std::function<bool(double current, double total)> &p) : Writer{worker,c}, File::Temporary{filename}, progress{p} {
 				progress(0,0);
 			}
 
@@ -187,9 +186,9 @@
 
 		}
 
-		FileWriter file{hCurl,filename,progress};
+		FileWriter file{*this,hCurl,filename,progress};
 
-		file.get(*this,headers());
+		file.get(headers());
 
 		long response_code = 0;
 		curl_easy_getinfo(hCurl, CURLINFO_RESPONSE_CODE, &response_code);
