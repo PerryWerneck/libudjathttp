@@ -18,6 +18,7 @@
  */
 
  #include <internals.h>
+ #include <private/writer.h>
  #include <cstring>
  #include <unistd.h>
  #include <cstdio>
@@ -38,98 +39,9 @@
 
  namespace Udjat {
 
-	class Writer {
-	private:
-
-		std::string error_message;
-
-		static size_t do_write(void *contents, size_t size, size_t nmemb, Writer *writer) noexcept {
-
-			size_t length = size * nmemb;
-
-			try {
-
-				if(!writer->total && length) {
-					writer->total = writer->worker.size();
-					if(writer->total) {
-						Logger::String{"Preallocating ",String{}.set_byte(writer->total)}.write(Logger::Debug,"curl");
-						writer->allocate(writer->total);
-					}
-				}
-
-				writer->write(contents,length);
-
-			} catch(const std::system_error &e) {
-
-				writer->error_message = e.what();
-				cerr << "curl\t" << writer->error_message << endl;
-				errno = e.code().value();
-				return 0;
-
-			} catch(const std::exception &e) {
-
-				writer->error_message = e.what();
-				cerr << "curl\t" << writer->error_message << endl;
-				return 0;
-
-			} catch(...) {
-
-				writer->error_message = "Unexpected error";
-
-			}
-
-			return length;
-
-		}
-
-	public:
-		CURL *hCurl = nullptr;
-		const HTTP::Worker &worker;
-
-		unsigned long long current = 0;
-		unsigned long long total = 0;
-
-		Writer(const HTTP::Worker &w, CURL *c) : hCurl{c}, worker{w} {
-		};
-
-		void get(curl_slist *chunk) {
-
-			debug("writer::",__FUNCTION__);
-
-			curl_easy_setopt(hCurl, CURLOPT_URL, worker.url().c_str());
-			curl_easy_setopt(hCurl, CURLOPT_WRITEDATA, this);
-			curl_easy_setopt(hCurl, CURLOPT_WRITEFUNCTION, do_write);
-
-			if(chunk) {
-				curl_easy_setopt(hCurl, CURLOPT_HTTPHEADER, chunk);
-			}
-
-			CURLcode res = curl_easy_perform(hCurl);
-
-			curl_slist_free_all(chunk);
-
-			if(!error_message.empty()) {
-				Logger::String{curl_easy_strerror(res)," (",res,")"}.error("curl");
-				throw runtime_error(error_message);
-			}
-
-			if(res != CURLE_OK) {
-				if(res == CURLE_OPERATION_TIMEDOUT) {
-					throw system_error(ETIMEDOUT,system_category(),worker.url().c_str());
-				}
-				throw HTTP::Exception(worker.url().c_str(),curl_easy_strerror(res));
-			}
-
-		}
-
-		virtual void allocate(unsigned long long length) = 0;
-		virtual void write(const void *contents, size_t length) = 0;
-
-	};
-
 	void HTTP::Worker::save(const std::function<bool(unsigned long long current, unsigned long long total, const void *buf, size_t length)> &call) {
 
-		class CustomWriter : public Writer {
+		class CustomWriter : public HTTP::Writer {
 		private:
 			const std::function<bool(unsigned long long current, unsigned long long total, const void *buf, size_t length)> &call;
 
@@ -164,7 +76,7 @@
 
 	bool HTTP::Worker::save(const char *filename, const std::function<bool(double current, double total)> &progress, bool replace) {
 
-		class FileWriter : public Writer, public File::Temporary {
+		class FileWriter : public HTTP::Writer, public File::Temporary {
 		public:
 			const std::function<bool(double current, double total)> &progress;
 

@@ -39,6 +39,7 @@
 		</Compiler>
 		<Unit filename="src/include/config.h" />
 		<Unit filename="src/include/internals.h" />
+		<Unit filename="src/include/private/writer.h" />
 		<Unit filename="src/include/udjat/tools/http.h">
 			<Option virtualFolder="src/include/" />
 		</Unit>
@@ -52,6 +53,7 @@
 		<Unit filename="src/library/engines/winhttp/test.cc" />
 		<Unit filename="src/library/engines/winhttp/worker.cc" />
 		<Unit filename="src/library/os/linux/get.cc" />
+		<Unit filename="src/library/os/linux/writer.cc" />
 		<Unit filename="src/library/os/windows/base64.cc" />
 		<Unit filename="src/library/os/windows/base64.h" />
 		<Unit filename="src/library/worker.cc" />
