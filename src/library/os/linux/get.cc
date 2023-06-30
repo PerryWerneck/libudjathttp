@@ -94,6 +94,8 @@
 
 		void get(curl_slist *chunk) {
 
+			debug("writer::",__FUNCTION__);
+
 			curl_easy_setopt(hCurl, CURLOPT_URL, worker.url().c_str());
 			curl_easy_setopt(hCurl, CURLOPT_WRITEDATA, this);
 			curl_easy_setopt(hCurl, CURLOPT_WRITEFUNCTION, do_write);
@@ -146,6 +148,17 @@
 		};
 
 		CustomWriter{*this,hCurl,call}.get(headers());
+
+		long response_code = 0;
+		curl_easy_getinfo(hCurl, CURLINFO_RESPONSE_CODE, &response_code);
+
+		if(response_code >= 200 && response_code <= 299) {
+			Logger::String{"HTTP response for '", this->url().c_str(), "' was ",response_code}.write(Logger::Debug,"curl");
+			return;
+		}
+
+		Logger::String{"HTTP response for '", this->url().c_str(), "' was ",response_code}.error("curl");
+		throw HTTP::Exception((unsigned int) response_code, this->url().c_str());
 
 	}
 
