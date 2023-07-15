@@ -23,7 +23,7 @@
 #include <config.h>
 #include <internals.h>
 #include <udjat/tools/url.h>
-#include <udjat/tools/http/worker.h>
+#include <private/worker.h>
 #include <udjat/tools/configuration.h>
 #include <udjat/win32/exception.h>
 
@@ -90,7 +90,7 @@ namespace Udjat {
 		WinHttpCloseHandle(this->session);
 	}
 
-	HTTP::Worker & HTTP::Worker::credentials(const char *user, const char *passwd) {
+	HTTP::Worker & HTTP::Worker::credentials(const char *, const char *) {
 		throw runtime_error("Not implemented");
 		return *this;
 	}

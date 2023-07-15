@@ -18,7 +18,7 @@
  */
 
  #include <config.h>
- #include <udjat/tools/http/worker.h>
+ #include <private/worker.h>
  #include <cstring>
  #include <unistd.h>
  #include <cstdio>

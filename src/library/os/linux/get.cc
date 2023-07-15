@@ -23,7 +23,7 @@
  #include <unistd.h>
  #include <cstdio>
  #include <udjat/tools/http/timestamp.h>
- #include <udjat/tools/http/worker.h>
+ #include <private/worker.h>
  #include <udjat/tools/file.h>
  #include <udjat/tools/string.h>
  #include <sys/types.h>
@@ -59,10 +59,11 @@
 
 		};
 
-		CustomWriter{*this,hCurl,call}.get(headers());
+		CustomWriter writer{*this,hCurl,call};
 
-		long response_code = 0;
-		curl_easy_getinfo(hCurl, CURLINFO_RESPONSE_CODE, &response_code);
+		writer.get(headers());
+
+		int response_code = writer.response_code();
 
 		if(response_code >= 200 && response_code <= 299) {
 			Logger::String{"HTTP response for '", this->url().c_str(), "' was ",response_code}.write(Logger::Debug,"curl");
@@ -115,8 +116,7 @@
 
 		file.get(headers());
 
-		long response_code = 0;
-		curl_easy_getinfo(hCurl, CURLINFO_RESPONSE_CODE, &response_code);
+		int response_code = file.response_code();
 
 		Logger::String log{"Server response was ",response_code};
 		if(!message.empty()) {

@@ -39,6 +39,7 @@
 		</Compiler>
 		<Unit filename="src/include/config.h" />
 		<Unit filename="src/include/internals.h" />
+		<Unit filename="src/include/private/worker.h" />
 		<Unit filename="src/include/private/writer.h" />
 		<Unit filename="src/include/udjat/tools/http.h">
 			<Option virtualFolder="src/include/" />
@@ -58,7 +59,6 @@
 		<Unit filename="src/library/os/windows/base64.h" />
 		<Unit filename="src/library/worker.cc" />
 		<Unit filename="src/module/init.cc" />
-		<Unit filename="src/os/windows/base64.h" />
 		<Unit filename="src/testprogram/testprogram.cc" />
 		<Unit filename="src/testprogram/windows/resources.rc" />
 		<Extensions />

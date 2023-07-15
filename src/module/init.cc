@@ -22,7 +22,7 @@
  #include <udjat/module.h>
  #include <udjat/tools/protocol.h>
  #include <udjat/moduleinfo.h>
- #include <udjat/tools/http/worker.h>
+ #include <private/worker.h>
 
  #ifdef HAVE_CURL
 	#include <curl/curl.h>

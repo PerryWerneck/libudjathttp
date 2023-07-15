@@ -23,7 +23,7 @@
  #include <cstdio>
  #include <udjat/tools/http/timestamp.h>
  #include <udjat/tools/file.h>
- #include <udjat/tools/http/worker.h>
+ #include <private/worker.h>
  #include <udjat/tools/logger.h>
  #include <udjat/win32/charset.h>
  #include <sys/types.h>

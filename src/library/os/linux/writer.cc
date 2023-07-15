@@ -101,4 +101,10 @@
 
 	}
 
+	int HTTP::Writer::response_code() {
+		long rc = 0;
+		curl_easy_getinfo(hCurl, CURLINFO_RESPONSE_CODE, &rc);
+		return (int) rc;
+	}
+
  }

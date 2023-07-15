@@ -25,7 +25,7 @@
  #include <config.h>
  #include <udjat/defs.h>
  #include <string>
- #include <udjat/tools/http/worker.h>
+ #include <private/worker.h>
 
 #ifdef HAVE_WINHTTP
 	#include <winhttp.h>
@@ -72,6 +72,8 @@
 			void get(curl_slist *chunk);
 
 #endif // HAVE_CURL
+
+			int response_code();
 
 			virtual void allocate(unsigned long long length) = 0;
 			virtual void write(const void *contents, size_t length) = 0;

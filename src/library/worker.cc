@@ -18,7 +18,7 @@
  */
 
  #include <config.h>
- #include <udjat/tools/http/worker.h>
+ #include <private/worker.h>
  #include <udjat/tools/http/timestamp.h>
  #include <iostream>
 
