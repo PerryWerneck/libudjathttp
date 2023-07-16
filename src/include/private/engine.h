@@ -25,6 +25,8 @@
  #include <config.h>
  #include <udjat/defs.h>
  #include <udjat/tools/url.h>
+ #include <udjat/tools/string.h>
+ #include <udjat/tools/http/timestamp.h>
 
 #if defined(HAVE_WINHTTP)
 
@@ -73,7 +75,12 @@
 
 			/// @brief Handle to curl.
 			CURL * hCurl;
+
+			/// @brief Curl error.
 			char error[CURL_ERROR_SIZE+1];
+
+			/// @brief HTTP response message.
+			std::string message;
 
 			/// @brief Set the connected socket.
 			virtual void socket(int sock);
@@ -94,8 +101,16 @@
 
 			int response_code();
 
-			virtual void allocate(unsigned long long length) = 0;
 			virtual void write(const void *contents, size_t length) = 0;
+
+			/// @brief Set content-length from server.
+			virtual void content_length(unsigned long long length);
+
+			/// @brief Set URL timestamp from server.
+			virtual void last_modified(const HTTP::TimeStamp &timestamp);
+
+			/// @brief Set response header.
+			virtual void header(const String &name, const String &value);
 
 		};
 

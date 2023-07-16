@@ -45,6 +45,7 @@
 		</Unit>
 		<Unit filename="src/libhttp/os/linux/private.h" />
 		<Unit filename="src/libhttp/os/windows/native_win32.h" />
+		<Unit filename="src/library/engine.cc" />
 		<Unit filename="src/library/engines/curl/curl.cc" />
 		<Unit filename="src/library/engines/curl/get.cc" />
 		<Unit filename="src/library/engines/curl/test.cc" />

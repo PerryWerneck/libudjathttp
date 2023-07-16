@@ -1,7 +1,7 @@
 /* SPDX-License-Identifier: LGPL-3.0-or-later */
 
 /*
- * Copyright (C) 2021 Perry Werneck <perry.werneck@gmail.com>
+ * Copyright (C) 2023 Perry Werneck <perry.werneck@gmail.com>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
@@ -175,7 +175,7 @@
 		debug("Connecting to host");
 
 		if(purpose != CURLSOCKTYPE_IPCXN) {
-			Logger::String{"Invalid type '",purpose,"' in curl_opensocket"}.error("curl");
+			Logger::String{"Invalid purpose '",purpose,"' in curl_opensocket"}.error("curl");
 			return CURL_SOCKET_BAD;
 		}
 
@@ -322,6 +322,89 @@
 
 	}
 
+	size_t HTTP::Engine::header_callback(char *buffer, size_t size, size_t nitems, Engine *engine) noexcept {
+
+		Udjat::String header{(const char *) buffer,(size_t) (size*nitems)};
+
+		try {
+
+			if(strncasecmp(header.c_str(),"HTTP/",5) == 0 && header.size()) {
+
+				unsigned int v[2];
+				unsigned int code;
+				char str[201];
+				memset(str,0,sizeof(str));
+
+				if(sscanf(header.c_str()+5,"%u.%u %d %200c",&v[0],&v[1],&code,str) == 4) {
+
+					for(size_t ix = 0; ix < sizeof(str);ix++) {
+						if(str[ix] < ' ') {
+							str[ix] = 0;
+							break;
+						}
+					}
+
+					engine->message = str;
+				}
+
+
+			} else if(strncasecmp(header.c_str(),"Content-Length:",15) == 0 && header.size()) {
+
+					char *end = nullptr;
+					engine->content_length(strtoull(header.c_str()+16,&end,10));
+
+			} else if(strncasecmp(header.c_str(),"Last-Modified:",14) == 0 && header.size()) {
+
+				const char *ptr = header.c_str()+15;
+				while(*ptr && isspace(*ptr)) {
+					ptr++;
+				}
+
+				if(*ptr) {
+					engine->last_modified(HTTP::TimeStamp{ptr});
+				}
+
+			} else if(!header.strip().empty()) {
+
+				const char *from = header.c_str();
+				const char *delimiter = strchr(from,':');
+				if(delimiter) {
+
+					String name{from,(size_t) (delimiter-from)};
+					String value{delimiter+1};
+
+					name.strip();
+					value.strip();
+
+					debug(name,"=",value);
+					engine->header(name,value);
+
+				}
+
+			}
+
+			return size*nitems;
+
+		} catch(const std::exception &e) {
+
+			Logger::String{e.what()}.error("curl");
+			strncpy(engine->error,e.what(),CURL_ERROR_SIZE);
+
+		} catch(...) {
+
+			Logger::String{"Unexpected error processing http header"}.error("curl");
+
+		}
+
+		// TODO: Abort on error.
+		return size*nitems;
+
+	}
+
+	int HTTP::Engine::sockopt_callback(Engine *, curl_socket_t, curlsocktype) noexcept {
+		return CURL_SOCKOPT_ALREADY_CONNECTED;
+	}
+
  }
 
 
@@ -459,88 +542,6 @@
 	}
 
 
-	#pragma GCC diagnostic push
-	#pragma GCC diagnostic ignored "-Wunused-parameter"
-	int HTTP::Worker::sockopt_callback(Worker *worker, curl_socket_t curlfd, curlsocktype purpose) noexcept {
-		return CURL_SOCKOPT_ALREADY_CONNECTED;
-	}
-	#pragma GCC diagnostic pop
-
-	size_t HTTP::Worker::header_callback(char *buffer, size_t size, size_t nitems, Worker *worker) noexcept {
-
-		Udjat::String header{(const char *) buffer,(size_t) (size*nitems)};
-
-		if(strncasecmp(header.c_str(),"HTTP/",5) == 0 && header.size()) {
-
-			unsigned int v[2];
-			unsigned int code;
-			char str[201];
-			memset(str,0,sizeof(str));
-
-			if(sscanf(header.c_str()+5,"%u.%u %d %200c",&v[0],&v[1],&code,str) == 4) {
-
-				for(size_t ix = 0; ix < sizeof(str);ix++) {
-					if(str[ix] < ' ') {
-						str[ix] = 0;
-						break;
-					}
-				}
-
-				worker->message = str;
-			}
-
-			Logger::String{worker->url().c_str()," ",header}.write(Logger::Debug,"curl");
-
-
-		} else if(strncasecmp(header.c_str(),"Content-Length:",15) == 0 && header.size()) {
-
-				char *end = nullptr;
-				worker->content_length = strtoull(header.c_str()+16,&end,10);
-				Logger::String{worker->url().c_str()," has ",String{}.set_byte(worker->content_length)," bytes"}.write(Logger::Debug,"curl");
-
-		} else if(strncasecmp(header.c_str(),"Last-Modified:",14) == 0 && header.size()) {
-
-			try {
-
-				const char *ptr = header.c_str()+15;
-				while(*ptr && isspace(*ptr)) {
-					ptr++;
-				}
-
-				if(*ptr) {
-					worker->in.modification = HTTP::TimeStamp(ptr);
-					Logger::String{"last-modified (from server): ",worker->in.modification.to_string()}.write(Logger::Debug,"curl");
-				}
-
-			} catch(const std::exception &e) {
-
-				Logger::String{"Unable to process '",header.c_str(),"': ",e.what()}.warning("curl");
-
-			} catch(...) {
-
-				Logger::String{"Unexpected error processing '",header.c_str(),"'"}.warning("curl");
-
-			}
-
-		} else if(!header.strip().empty()) {
-
-			const char *from = header.c_str();
-			const char *delimiter = strchr(from,':');
-			if(delimiter) {
-
-				String name{from,(size_t) (delimiter-from)};
-				String value{delimiter+1};
-
-				name.strip();
-				value.strip();
-
-				worker->header(name.c_str()) = value;
-			}
-
-		}
-
-		return size*nitems;
-	}
 
 
  #endif // HAVE_CURL
