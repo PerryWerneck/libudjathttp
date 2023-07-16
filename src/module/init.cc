@@ -30,8 +30,10 @@
 
  using namespace std;
 
+ /*
  /// @brief Register udjat module.
  UDJAT_API Udjat::Module * udjat_module_init() {
+
 
 	static const Udjat::ModuleInfo moduleinfo{
 #if defined(_WIN32)
@@ -83,4 +85,5 @@
 
 	return new Module();
  }
+ */
 

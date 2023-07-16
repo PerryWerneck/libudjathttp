@@ -21,6 +21,7 @@
   * @brief Brief description of this source.
   */
 
+  /*
  #include <config.h>
  #include <udjat/defs.h>
  #include <private/writer.h>
@@ -108,3 +109,5 @@
 	}
 
  }
+
+ */

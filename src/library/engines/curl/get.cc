@@ -17,6 +17,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+ /*
  #include <config.h>
  #include <private/worker.h>
  #include <cstring>
@@ -84,3 +85,4 @@
 
  #endif // HAVE_CURL
  }
+ */

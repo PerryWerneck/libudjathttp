@@ -56,60 +56,6 @@
 
 			std::list<Header> headerlist;
 
-#if defined(HAVE_WINHTTP)
-
-			/// @brief WinHTTP session handle.
-			HINTERNET session;
-
-			/// @brief Connect to HTTP host.
-			HINTERNET connect();
-
-			/// @brief Open HTTP Request.
-			HINTERNET open(HINTERNET connection, const char *verb);
-
-			inline HINTERNET open(HINTERNET connection) {
-				return open(connection,std::to_string(method()));
-			}
-
-			/// @brief Send request.
-			void send(HINTERNET request);
-
-			/// @brief Wait for response.
-			Udjat::String wait(HINTERNET req, const std::function<bool(double current, double total)> &progress);
-
-#elif defined(HAVE_CURL)
-
-			/// @brief Handle to curl.
-			CURL * hCurl;
-
-			/// @brief Error message.
-			char error[CURL_ERROR_SIZE];
-
-			struct {
-				const char *out = nullptr;
-				std::ostringstream in;
-			} buffers;
-
-			std::string message;
-			static size_t read_callback(char *buffer, size_t size, size_t nitems, Worker *session) noexcept;
-			static size_t write_callback(void *contents, size_t size, size_t nmemb, Worker *worker) noexcept;
-			static int trace_callback(CURL *handle, curl_infotype type, char *data, size_t size, Worker *worker) noexcept;
-			static curl_socket_t open_socket_callback(Worker *worker, curlsocktype purpose, struct curl_sockaddr *address) noexcept;
-			static int sockopt_callback(Worker *worker, curl_socket_t curlfd, curlsocktype purpose) noexcept;
-			static size_t header_callback(char *buffer, size_t size, size_t nitems, Worker *worker) noexcept;
-
-			curl_slist * headers() const noexcept;
-
-			Udjat::String perform();
-
-#else
-
-			#error Cant determine HTTP engine
-
-#endif // _WIN32
-
-			unsigned long long content_length = 0LL;
-
 		public:
 
 			Worker(const char *url = "", const HTTP::Method method = HTTP::Get, const char *payload = "");
@@ -127,10 +73,6 @@
 			bool save(const char *filename, const std::function<bool(double current, double total)> &progress, bool replace) override;
 
 			Protocol::Header & header(const char *name) override;
-
-			inline unsigned long long size() const noexcept {
-				return content_length;
-			}
 
 		};
 
