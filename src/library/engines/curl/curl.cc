@@ -38,7 +38,7 @@
 
  namespace Udjat {
 
-	void HTTP::Engine::perform() {
+	int HTTP::Engine::perform(bool except) {
 
 		outptr = nullptr;
 		this->error[0] = 0;
@@ -48,9 +48,21 @@
 			throw runtime_error(this->error[0] ? this->error : curl_easy_strerror(res));
 		}
 
+		long response_code = 0;
+		curl_easy_getinfo(hCurl, CURLINFO_RESPONSE_CODE, &response_code);
+
+		if(except && (response_code < 200 || response_code > 299)) {
+			if(message.empty()) {
+				throw HTTP::Exception((unsigned int) response_code, worker.url().c_str());
+			} else {
+				throw HTTP::Exception((unsigned int) response_code, worker.url().c_str(), message.c_str());
+			}
+		}
+
+		return (int) response_code;
 	}
 
-	HTTP::Engine::Engine(HTTP::Worker &w, time_t timeout) : hCurl{curl_easy_init()}, worker{w} {
+	HTTP::Engine::Engine(HTTP::Worker &w, const HTTP::Method method, time_t timeout) : hCurl{curl_easy_init()}, worker{w} {
 
 		curl_easy_setopt(hCurl, CURLOPT_FOLLOWLOCATION, 1L);
 
@@ -78,8 +90,12 @@
 		curl_easy_setopt(hCurl, CURLOPT_WRITEDATA, this);
 		curl_easy_setopt(hCurl, CURLOPT_WRITEFUNCTION, write_callback);
 
-		switch(worker.method()) {
+		switch(method) {
 		case HTTP::Get:
+			break;
+
+		case HTTP::Head:
+			curl_easy_setopt(hCurl, CURLOPT_CUSTOMREQUEST, "HEAD");
 			break;
 
 		case HTTP::Post:
@@ -151,15 +167,13 @@
 		return CURL_WRITEFUNC_ERROR;
 	}
 
-	#pragma GCC diagnostic push
-	#pragma GCC diagnostic ignored "-Wunused-parameter"
-	int HTTP::Engine::trace_callback(CURL *handle, curl_infotype type, char *data, size_t size, Engine *engine) noexcept {
+	int HTTP::Engine::trace_callback(CURL *, curl_infotype type, char *data, size_t size, Engine *) noexcept {
 
 		Logger::String logger{""};
 
 		switch (type) {
 		case CURLINFO_TEXT:
-			logger.append(data);
+			logger.append(data,size);
 			return 0;
 
 		case CURLINFO_HEADER_OUT:
@@ -196,7 +210,6 @@
 		return 0;
 
 	}
-	#pragma GCC diagnostic pop
 
 	static int non_blocking(int sock, bool on) {
 
@@ -506,7 +519,7 @@
 
  /*
  #include <config.h>
- #include <private/worker.h>
+ #include <udjat/tools/http/worker.h>
  #include <cstring>
  #include <unistd.h>
  #include <cstdio>

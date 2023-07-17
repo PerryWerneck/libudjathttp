@@ -23,7 +23,7 @@
 
  #pragma once
  #include <config.h>
- #include <private/worker.h>
+ #include <udjat/tools/http/worker.h>
  #include <udjat/defs.h>
  #include <udjat/tools/protocol.h>
  #include <udjat/tools/url.h>
@@ -100,13 +100,19 @@
 			HTTP::Worker &worker;
 
 		public:
-			Engine(HTTP::Worker &worker, time_t timeout = 0);
+			Engine(HTTP::Worker &worker, const HTTP::Method method, time_t timeout = 0);
+
+			Engine(HTTP::Worker &worker, time_t timeout = 0) : Engine(worker,worker.method(),timeout) {
+			}
+
 			~Engine();
 
 			int response_code();
 
 			/// @brief Perform.
-			void perform();
+			/// @param except If true launch exception if http response is not 200-299.
+			/// @return HTTP status code.
+			int perform(bool except = true);
 
 			/// @brief Write to output file.
 			virtual void write(const void *contents, size_t length) = 0;

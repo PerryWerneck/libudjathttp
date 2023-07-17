@@ -24,28 +24,15 @@
  #include <udjat/tools/protocol.h>
  #include <udjat/tools/http/exception.h>
  #include <udjat/tools/file/handler.h>
- #include <sstream>
  #include <list>
-
-#ifdef _WIN32
-	#include <udjat/win32/exception.h>
-#endif // _WIN32
-
-#ifdef HAVE_WINHTTP
-	#include <winhttp.h>
-#endif // HAVE_WINHTTP
-
-#ifdef HAVE_CURL
-	#include <curl/curl.h>
-#endif // HAVE_CURL
 
  namespace Udjat {
 
 	namespace HTTP {
 
-		class UDJAT_PRIVATE Worker : public Protocol::Worker {
+		class UDJAT_API Worker : public Protocol::Worker {
 		public:
-			class UDJAT_PRIVATE Header : public Protocol::Header {
+			class Header : public Protocol::Header {
 			public:
 				Header(const char *name) : Protocol::Header(name) {
 				}
@@ -60,22 +47,20 @@
 
 		public:
 
-			Worker(const char *url = "", const HTTP::Method method = HTTP::Get, const char *payload = "") : Protocol::Worker{url,method,payload} {
+			Worker(const char *url, const HTTP::Method method = HTTP::Get, const char *payload = "") : Protocol::Worker{url,method,payload} {
 			}
-
-			Worker(const URL &url, const HTTP::Method method = HTTP::Get, const char *payload = "") : Worker(url.c_str(),method,payload) {
-			}
-
-			virtual ~Worker();
 
 			inline void socket(int sock) {
 				Protocol::Worker::set_socket(sock);
 			}
 
+			String get(const std::function<bool(double current, double total)> &progress) override;
+
+			int test(const std::function<bool(double current, double total)> &progress) noexcept override;
+
 			/*
 			Worker & credentials(const char *user, const char *passwd) override;
 
-			String get(const std::function<bool(double current, double total)> &progress) override;
 			int test(const std::function<bool(double current, double total)> &progress) noexcept override;
 
 			void save(const std::function<bool(unsigned long long current, unsigned long long total, const void *buf, size_t length)> &writer) override;

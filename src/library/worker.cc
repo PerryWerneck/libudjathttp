@@ -18,13 +18,95 @@
  */
 
  #include <config.h>
- #include <private/worker.h>
+ #include <udjat/tools/http/worker.h>
  #include <udjat/tools/http/timestamp.h>
+ #include <private/engine.h>
+ #include <udjat/tools/logger.h>
  #include <iostream>
+ #include <sstream>
 
  using namespace std;
 
  namespace Udjat {
+
+	String HTTP::Worker::get(const std::function<bool(double current, double total)> &progress) {
+
+		class Engine : public Udjat::HTTP::Engine, public stringstream {
+		private:
+			const std::function<bool(double current, double total)> &progress;
+			double current = 0;
+			double total = 0;
+
+		public:
+			Engine(HTTP::Worker &worker, const std::function<bool(double current, double total)> &p)
+				: Udjat::HTTP::Engine{worker}, progress{p} {
+				progress(0.0,0.0);
+			}
+
+			void content_length(unsigned long long length) override {
+				total = (double) length;
+				progress(current,total);
+			}
+
+			void write(const void *contents, size_t length) override {
+				stringstream::write((const char *) contents, length);
+				current += length;
+				progress(current,total);
+			}
+
+			Engine & perform() {
+				Udjat::HTTP::Engine::perform(true);
+				return *this;
+			}
+
+		};
+
+		return Engine{*this,progress}.perform().str();
+
+	}
+
+	int HTTP::Worker::test(const std::function<bool(double current, double total)> &progress) noexcept {
+
+		class Engine : public Udjat::HTTP::Engine {
+		private:
+			const std::function<bool(double current, double total)> &progress;
+			double current = 0;
+			double total = 0;
+
+		public:
+			Engine(HTTP::Worker &worker, const std::function<bool(double current, double total)> &p)
+				: Udjat::HTTP::Engine{worker,HTTP::Head}, progress{p} {
+				progress(0.0,0.0);
+			}
+
+			void content_length(unsigned long long length) override {
+				total = (double) length;
+				progress(current,total);
+			}
+
+			void write(const void *contents, size_t length) override {
+				current += length;
+				progress(current,total);
+			}
+
+		};
+
+		try {
+
+			return Engine{*this,progress}.perform(false);
+
+		} catch(const std::exception &e) {
+
+			Logger::String{e.what()}.error("http");
+
+		} catch(...) {
+
+			Logger::String{"Unexpected error"}.error("http");
+		}
+
+		return -1;
+
+	}
 
 	/*
 	Protocol::Header & HTTP::Worker::Header::assign(const Udjat::TimeStamp &value) {

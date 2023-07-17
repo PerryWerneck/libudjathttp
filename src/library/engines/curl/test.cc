@@ -19,7 +19,7 @@
 
  /*
  #include <config.h>
- #include <private/worker.h>
+ #include <udjat/tools/http/worker.h>
  #include <cstring>
  #include <unistd.h>
  #include <cstdio>

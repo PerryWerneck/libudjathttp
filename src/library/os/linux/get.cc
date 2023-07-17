@@ -24,7 +24,7 @@
  #include <unistd.h>
  #include <cstdio>
  #include <udjat/tools/http/timestamp.h>
- #include <private/worker.h>
+ #include <udjat/tools/http/worker.h>
  #include <udjat/tools/file.h>
  #include <udjat/tools/string.h>
  #include <sys/types.h>

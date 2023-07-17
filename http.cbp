@@ -39,10 +39,10 @@
 		</Compiler>
 		<Unit filename="src/include/config.h" />
 		<Unit filename="src/include/private/engine.h" />
-		<Unit filename="src/include/private/worker.h" />
 		<Unit filename="src/include/udjat/tools/http.h">
 			<Option virtualFolder="src/include/" />
 		</Unit>
+		<Unit filename="src/include/udjat/tools/http/worker.h" />
 		<Unit filename="src/libhttp/os/linux/private.h" />
 		<Unit filename="src/libhttp/os/windows/native_win32.h" />
 		<Unit filename="src/library/engine.cc" />

@@ -23,7 +23,7 @@
 #include <config.h>
 #include <internals.h>
 #include <udjat/tools/url.h>
-#include <private/worker.h>
+#include <udjat/tools/http/worker.h>
 #include <udjat/tools/configuration.h>
 #include <udjat/win32/exception.h>
 

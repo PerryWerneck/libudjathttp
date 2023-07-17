@@ -30,10 +30,10 @@
 
  namespace Udjat {
 
-	void HTTP::Engine::content_length(unsigned long long length) {
+	void HTTP::Engine::content_length(unsigned long long) {
 	}
 
-	void HTTP::Engine::last_modified(const HTTP::TimeStamp &timestamp) {
+	void HTTP::Engine::last_modified(const HTTP::TimeStamp &) {
 	}
 
 	void HTTP::Engine::header(const String &, const String &) {

@@ -27,7 +27,7 @@
  #include <udjat/agent.h>
  #include <udjat/factory.h>
  #include <udjat/module.h>
- #include <udjat/tools/protocol.h>
+ #include <udjat/tools/http/worker.h>
  #include <iostream>
  #include <memory>
 
@@ -44,7 +44,7 @@ int main(int argc, char **argv) {
 	Udjat::Logger::enable(Udjat::Logger::Debug);
 	Udjat::Logger::console(true);
 
-
+	cout << HTTP::Worker{"http://localhost"}.get([](double, double){ return true; });
 
 	Udjat::Module::unload();
 
