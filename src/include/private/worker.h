@@ -23,6 +23,7 @@
  #include <udjat/defs.h>
  #include <udjat/tools/protocol.h>
  #include <udjat/tools/http/exception.h>
+ #include <udjat/tools/file/handler.h>
  #include <sstream>
  #include <list>
 
@@ -43,8 +44,7 @@
 	namespace HTTP {
 
 		class UDJAT_PRIVATE Worker : public Protocol::Worker {
-		private:
-
+		public:
 			class UDJAT_PRIVATE Header : public Protocol::Header {
 			public:
 				Header(const char *name) : Protocol::Header(name) {
@@ -54,16 +54,25 @@
 
 			};
 
+		private:
+
 			std::list<Header> headerlist;
 
 		public:
 
-			Worker(const char *url = "", const HTTP::Method method = HTTP::Get, const char *payload = "");
+			Worker(const char *url = "", const HTTP::Method method = HTTP::Get, const char *payload = "") : Protocol::Worker{url,method,payload} {
+			}
+
 			Worker(const URL &url, const HTTP::Method method = HTTP::Get, const char *payload = "") : Worker(url.c_str(),method,payload) {
 			}
 
 			virtual ~Worker();
 
+			inline void socket(int sock) {
+				Protocol::Worker::set_socket(sock);
+			}
+
+			/*
 			Worker & credentials(const char *user, const char *passwd) override;
 
 			String get(const std::function<bool(double current, double total)> &progress) override;
@@ -73,6 +82,8 @@
 			bool save(const char *filename, const std::function<bool(double current, double total)> &progress, bool replace) override;
 
 			Protocol::Header & header(const char *name) override;
+			*/
+
 
 		};
 

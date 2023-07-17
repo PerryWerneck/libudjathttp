@@ -28,11 +28,29 @@
  #include <poll.h>
  #include <udjat/tools/configuration.h>
 
+ #ifdef DEBUG
+	#define TRACE_DEFAULT true
+ #else
+	#define TRACE_DEFAULT false
+ #endif  // DEBUG
+
  using namespace std;
 
  namespace Udjat {
 
-	HTTP::Engine::Engine(const char *url, int timeout) : hCurl{curl_easy_init()} {
+	void HTTP::Engine::perform() {
+
+		outptr = nullptr;
+		this->error[0] = 0;
+		CURLcode res = curl_easy_perform(hCurl);
+
+		if(res != CURLE_OK) {
+			throw runtime_error(this->error[0] ? this->error : curl_easy_strerror(res));
+		}
+
+	}
+
+	HTTP::Engine::Engine(HTTP::Worker &w, time_t timeout) : hCurl{curl_easy_init()}, worker{w} {
 
 		curl_easy_setopt(hCurl, CURLOPT_FOLLOWLOCATION, 1L);
 
@@ -56,13 +74,51 @@
 			curl_easy_setopt(hCurl, CURLOPT_TIMEOUT, timeout);
 		}
 
-		curl_easy_setopt(hCurl, CURLOPT_URL, url);
+		curl_easy_setopt(hCurl, CURLOPT_URL, worker.url().c_str());
 		curl_easy_setopt(hCurl, CURLOPT_WRITEDATA, this);
 		curl_easy_setopt(hCurl, CURLOPT_WRITEFUNCTION, write_callback);
+
+		switch(worker.method()) {
+		case HTTP::Get:
+			break;
+
+		case HTTP::Post:
+			curl_easy_setopt(hCurl, CURLOPT_POST, 1);
+			break;
+
+		case HTTP::Put:
+			curl_easy_setopt(hCurl, CURLOPT_PUT, 1);
+			break;
+
+		case HTTP::Delete:
+			curl_easy_setopt(hCurl, CURLOPT_CUSTOMREQUEST, "DELETE");
+			break;
+
+		default:
+			throw system_error(EINVAL,system_category(),"Invalid or unsupported http verb");
+		}
+
+		if(Logger::enabled(Logger::Debug) && Config::Value<bool>("http","trace",TRACE_DEFAULT).get()) {
+			curl_easy_setopt(hCurl, CURLOPT_VERBOSE, 1L);
+			curl_easy_setopt(hCurl, CURLOPT_DEBUGDATA, this);
+			curl_easy_setopt(hCurl, CURLOPT_DEBUGFUNCTION, trace_callback);
+		}
+
+		if(*worker.payload()) {
+
+			// https://stackoverflow.com/questions/11600130/post-data-with-libcurl
+			// https://curl.se/libcurl/c/http-post.html
+			curl_easy_setopt(hCurl, CURLOPT_READDATA, (void *) this);
+			curl_easy_setopt(hCurl, CURLOPT_READFUNCTION, read_callback);
+
+		}
 
 	}
 
 	HTTP::Engine::~Engine() {
+		if(headers) {
+			curl_slist_free_all(headers);
+		}
 		curl_easy_cleanup(hCurl);
 	}
 
@@ -141,9 +197,6 @@
 
 	}
 	#pragma GCC diagnostic pop
-
-	void HTTP::Engine::socket(int) {
-	}
 
 	static int non_blocking(int sock, bool on) {
 
@@ -303,7 +356,7 @@
 		// Update worker
 		try {
 
-			engine->socket(sockfd);
+			engine->worker.socket(sockfd);
 			return (curl_socket_t) sockfd;
 
 		} catch(const std::exception &e) {
@@ -405,6 +458,49 @@
 		return CURL_SOCKOPT_ALREADY_CONNECTED;
 	}
 
+	size_t HTTP::Engine::read_callback(char *outbuffer, size_t size, size_t nitems, Engine *engine) noexcept {
+
+		size_t length = 0;
+
+		try {
+
+			if(!engine->outptr) {
+
+				// Get payload.
+				engine->outptr = engine->worker.payload();
+				if(*engine->outptr && Logger::enabled(Logger::Trace) && Config::Value<bool>("http","trace-payload",TRACE_DEFAULT).get()) {
+					Logger::String{"Payload\n",engine->outptr}.trace("curl");
+				}
+
+			}
+
+			if(*engine->outptr) {
+				size_t szpayload = strlen(engine->outptr);
+
+				length = (size*nitems);
+				if(szpayload < length) {
+					length = szpayload;
+				}
+
+				memcpy(outbuffer,engine->outptr,length);
+				engine->outptr += length;
+			}
+
+		} catch(const std::exception &e) {
+
+			cerr << "curl\tError '" << e.what() << "' getting post payload" << endl;
+			return CURL_READFUNC_ABORT;
+
+		} catch(...) {
+
+			cerr << "curl\tUnexpected error getting post payload" << endl;
+			return CURL_READFUNC_ABORT;
+
+		}
+
+		return length;
+	}
+
  }
 
 
@@ -429,11 +525,6 @@
  namespace Udjat {
  #ifdef HAVE_CURL
 
-	#ifdef DEBUG
-		#define TRACE_DEFAULT true
-	#else
-		#define TRACE_DEFAULT false
-	#endif  // DEBUG
 
 	HTTP::Worker::Worker(const char *url, const HTTP::Method method, const char *payload) : Protocol::Worker(url,method,payload) {
 
@@ -503,43 +594,6 @@
 
 	}
 
-	size_t HTTP::Worker::read_callback(char *outbuffer, size_t size, size_t nitems, Worker *worker) noexcept {
-
-		size_t length = 0;
-
-		try {
-
-			if(!worker->buffers.out) {
-				worker->buffers.out = worker->out.payload.c_str();
-				if(Config::Value<bool>("http","trace-payload",TRACE_DEFAULT).get()) {
-					Logger::String("Posting to ",worker->url().c_str()).write(Logger::Trace,"http");
-					Logger::String("",worker->buffers.out).write(Logger::Trace);
-				}
-			}
-
-			if(!*worker->buffers.out) {
-				return 0;
-			}
-
-			length = std::min((size * nitems), strlen(worker->buffers.out));
-
-			memcpy(outbuffer,worker->buffers.out,length);
-			worker->buffers.out += length;
-
-		} catch(const std::exception &e) {
-
-			cerr << "curl\tError '" << e.what() << "' getting post payload" << endl;
-			return CURL_READFUNC_ABORT;
-
-		} catch(...) {
-
-			cerr << "curl\tUnexpected error getting post payload" << endl;
-			return CURL_READFUNC_ABORT;
-
-		}
-
-		return length;
-	}
 
 
 

@@ -23,7 +23,9 @@
 
  #pragma once
  #include <config.h>
+ #include <private/worker.h>
  #include <udjat/defs.h>
+ #include <udjat/tools/protocol.h>
  #include <udjat/tools/url.h>
  #include <udjat/tools/string.h>
  #include <udjat/tools/http/timestamp.h>
@@ -82,9 +84,6 @@
 			/// @brief HTTP response message.
 			std::string message;
 
-			/// @brief Set the connected socket.
-			virtual void socket(int sock);
-
 			static size_t do_write(void *contents, size_t size, size_t nmemb, Engine *engine) noexcept;
 			static size_t read_callback(char *buffer, size_t size, size_t nitems, Engine *engine) noexcept;
 			static size_t write_callback(void *contents, size_t size, size_t nmemb, Engine *engine) noexcept;
@@ -93,14 +92,23 @@
 			static int sockopt_callback(Engine *engine, curl_socket_t curlfd, curlsocktype purpose) noexcept;
 			static size_t header_callback(char *buffer, size_t size, size_t nitems, Engine *engine) noexcept;
 
+			struct curl_slist *headers = NULL;
+			const char *outptr = nullptr;
+
 #endif // HAVE_WINHTTP
 
+			HTTP::Worker &worker;
+
 		public:
-			Engine(const char *url, int timeout = 0);
+			Engine(HTTP::Worker &worker, time_t timeout = 0);
 			~Engine();
 
 			int response_code();
 
+			/// @brief Perform.
+			void perform();
+
+			/// @brief Write to output file.
 			virtual void write(const void *contents, size_t length) = 0;
 
 			/// @brief Set content-length from server.

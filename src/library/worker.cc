@@ -26,6 +26,7 @@
 
  namespace Udjat {
 
+	/*
 	Protocol::Header & HTTP::Worker::Header::assign(const Udjat::TimeStamp &value) {
 		std::string::assign(HTTP::TimeStamp((time_t) value).to_string());
 		return *this;
@@ -43,6 +44,7 @@
 		return headerlist.back();
 
 	}
+	*/
 
  }
 
