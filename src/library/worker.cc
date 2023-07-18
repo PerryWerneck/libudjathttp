@@ -1,7 +1,7 @@
 /* SPDX-License-Identifier: LGPL-3.0-or-later */
 
 /*
- * Copyright (C) 2021 Perry Werneck <perry.werneck@gmail.com>
+ * Copyright (C) 2023 Perry Werneck <perry.werneck@gmail.com>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
@@ -81,10 +81,11 @@
 
 			void content_length(unsigned long long length) override {
 				total = (double) length;
+				debug(__FUNCTION__,"(",length,")");
 				progress(current,total);
 			}
 
-			void write(const void *contents, size_t length) override {
+			void write(const void *, size_t length) override {
 				current += length;
 				progress(current,total);
 			}
@@ -106,6 +107,47 @@
 
 		return -1;
 
+	}
+
+	bool HTTP::Worker::save(File::Handler &file, const std::function<bool(double current, double total)> &progress) {
+
+		class Engine : public Udjat::HTTP::Engine {
+		private:
+			const std::function<bool(double current, double total)> &progress;
+			File::Handler &file;
+			double current = 0;
+			double total = 0;
+
+		public:
+			Engine(HTTP::Worker &worker, File::Handler &f, const std::function<bool(double current, double total)> &p)
+				: Udjat::HTTP::Engine{worker}, progress{p}, file{f} {
+				progress(0.0,0.0);
+			}
+
+			void content_length(unsigned long long length) override {
+				total = (double) length;
+				debug(__FUNCTION__,"(",length,")");
+				progress(current,total);
+			}
+
+			void write(const void *contents, size_t length) override {
+				file.write(contents,length);
+				current += length;
+				debug("Saving ",current,"/",total);
+				progress(current,total);
+			}
+
+		};
+
+		debug("Saving file");
+		int rc = Engine{*this, file, progress}.perform(true);
+		debug("rc=",rc);
+
+		if(rc >= 200 && rc <= 299) {
+			return true;
+		}
+
+		return false;
 	}
 
 	/*

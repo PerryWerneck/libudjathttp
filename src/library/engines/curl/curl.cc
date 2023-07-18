@@ -86,16 +86,16 @@
 			curl_easy_setopt(hCurl, CURLOPT_TIMEOUT, timeout);
 		}
 
+		debug("URL='",worker.url().c_str());
 		curl_easy_setopt(hCurl, CURLOPT_URL, worker.url().c_str());
-		curl_easy_setopt(hCurl, CURLOPT_WRITEDATA, this);
-		curl_easy_setopt(hCurl, CURLOPT_WRITEFUNCTION, write_callback);
 
 		switch(method) {
 		case HTTP::Get:
+			curl_easy_setopt(hCurl, CURLOPT_HTTPGET, 1L);
 			break;
 
 		case HTTP::Head:
-			curl_easy_setopt(hCurl, CURLOPT_CUSTOMREQUEST, "HEAD");
+			curl_easy_setopt(hCurl, CURLOPT_NOBODY, 1L);
 			break;
 
 		case HTTP::Post:
@@ -115,6 +115,7 @@
 		}
 
 		if(Logger::enabled(Logger::Debug) && Config::Value<bool>("http","trace",TRACE_DEFAULT).get()) {
+			debug("Trace is enabled");
 			curl_easy_setopt(hCurl, CURLOPT_VERBOSE, 1L);
 			curl_easy_setopt(hCurl, CURLOPT_DEBUGDATA, this);
 			curl_easy_setopt(hCurl, CURLOPT_DEBUGFUNCTION, trace_callback);
@@ -124,10 +125,14 @@
 
 			// https://stackoverflow.com/questions/11600130/post-data-with-libcurl
 			// https://curl.se/libcurl/c/http-post.html
+			debug("Has payload, enabling it");
 			curl_easy_setopt(hCurl, CURLOPT_READDATA, (void *) this);
 			curl_easy_setopt(hCurl, CURLOPT_READFUNCTION, read_callback);
 
 		}
+
+		curl_easy_setopt(hCurl, CURLOPT_WRITEDATA, this);
+		curl_easy_setopt(hCurl, CURLOPT_WRITEFUNCTION, write_callback);
 
 	}
 
@@ -147,6 +152,8 @@
 	size_t HTTP::Engine::write_callback(void *contents, size_t size, size_t nmemb, Engine *engine) noexcept {
 
 		size_t realsize = size * nmemb;
+
+		debug("realsize=",realsize);
 
 		try {
 
@@ -189,11 +196,11 @@
 			break;
 
 		case CURLINFO_HEADER_IN:
-			logger.append("<= Recv header");
+			logger.append("<= Recv header (",size," bytes)");
 			break;
 
 		case CURLINFO_DATA_IN:
-			logger.append("<= Recv data");
+			logger.append("<= Recv data (",size," bytes)");
 			break;
 
 		case CURLINFO_SSL_DATA_IN:
@@ -201,6 +208,7 @@
 			break;
 
 		default:
+			debug("Unexpected type '",type,"'");
 			return 0;
 
 		}

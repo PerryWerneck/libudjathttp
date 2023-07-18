@@ -44,7 +44,10 @@ int main(int argc, char **argv) {
 	Udjat::Logger::enable(Udjat::Logger::Debug);
 	Udjat::Logger::console(true);
 
-	cout << HTTP::Worker{"http://localhost"}.get([](double, double){ return true; });
+	// cout << HTTP::Worker{"http://127.0.0.1/~perry/libudjat.xml"}.get([](double, double){ return true; }) << endl;
+
+	std::shared_ptr<Protocol::Worker> worker = make_shared<HTTP::Worker>("http://127.0.0.1/~perry/libudjat.xml");
+	worker->save("/tmp/test.html");
 
 	Udjat::Module::unload();
 
