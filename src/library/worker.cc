@@ -211,20 +211,13 @@
 
 		};
 
+		// Check timestamp of last file modification.
 		{
-			struct stat st;
-			if(fstat((int) file,&st)) {
-				if(errno != ENOENT) {
-					throw system_error(errno,system_category());
-				}
-				memset(&st,0,sizeof(st));
-			}
-
-			if(st.st_size && st.st_mtime) {
-				request("If-Modified-Since") = HTTP::TimeStamp(st.st_mtime);
+			time_t mtime = file.mtime();
+			if(mtime) {
+				request("If-Modified-Since") = HTTP::TimeStamp(mtime).to_string();
 				debug("modified-time=",request("If-Modified-Since").c_str());
 			}
-
 		}
 
 		debug("Saving file");

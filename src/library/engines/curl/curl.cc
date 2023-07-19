@@ -51,12 +51,24 @@
 		long response_code = 0;
 		curl_easy_getinfo(hCurl, CURLINFO_RESPONSE_CODE, &response_code);
 
-		if(except && (response_code < 200 || response_code > 299)) {
-			if(message.empty()) {
-				throw HTTP::Exception((unsigned int) response_code, worker.url().c_str());
-			} else {
-				throw HTTP::Exception((unsigned int) response_code, worker.url().c_str(), message.c_str());
+		if(except) {
+
+			switch(response_code) {
+			case 304:	// Not modified.
+				Logger::String{worker.url().c_str()," was not modified"}.trace("curl");
+				return 304;
+
+			default:
+				if(response_code < 200 || response_code > 299) {
+					if(message.empty()) {
+						throw HTTP::Exception((unsigned int) response_code, worker.url().c_str());
+					} else {
+						throw HTTP::Exception((unsigned int) response_code, worker.url().c_str(), message.c_str());
+					}
+				}
+
 			}
+
 		}
 
 		return (int) response_code;
@@ -144,6 +156,15 @@
 				curl_easy_setopt(hCurl, CURLOPT_PASSWORD, passwd);
 			}
 
+		}
+
+		for(auto &header : worker.requests()) {
+			debug(header.name(),": ",header.value());
+			headers = curl_slist_append(headers,String{header.name(),":",header.value()}.c_str());
+		}
+
+		if(headers) {
+			curl_easy_setopt(hCurl, CURLOPT_HTTPHEADER, headers);
 		}
 
 	}
