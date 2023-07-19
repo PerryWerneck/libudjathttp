@@ -59,7 +59,6 @@
 			}
 
 			void response(const char *name, const char *value) override {
-				debug(name,"=",value);
 				worker.response(name,value);
 			}
 
@@ -100,7 +99,6 @@
 			}
 
 			void response(const char *name, const char *value) override {
-				debug(name,"=",value);
 				worker.response(name,value);
 			}
 
@@ -192,24 +190,42 @@
 			}
 
 			void response(const char *name, const char *value) override {
-				debug(name,"=",value);
 				worker.response(name,value);
 			}
 
 			void content_length(unsigned long long length) override {
+				debug("Setting file size to ",length," bytes");
 				total = (double) length;
-				debug(__FUNCTION__,"(",length,")");
+				if(length) {
+					file.allocate(length);
+				}
 				progress(current,total);
 			}
 
 			void write(const void *contents, size_t length) override {
-				file.write(contents,length);
+				file.write(current,contents,length);
 				current += length;
 				debug("Saving ",current,"/",total);
 				progress(current,total);
 			}
 
 		};
+
+		{
+			struct stat st;
+			if(fstat((int) file,&st)) {
+				if(errno != ENOENT) {
+					throw system_error(errno,system_category());
+				}
+				memset(&st,0,sizeof(st));
+			}
+
+			if(st.st_size && st.st_mtime) {
+				request("If-Modified-Since") = HTTP::TimeStamp(st.st_mtime);
+				debug("modified-time=",request("If-Modified-Since").c_str());
+			}
+
+		}
 
 		debug("Saving file");
 		int rc = Engine{*this, file, progress}.perform(true);
@@ -224,19 +240,7 @@
 
 	bool HTTP::Worker::save(const char *filename, const std::function<bool(double current, double total)> &progress, bool replace) {
 
-		struct stat st;
-		if(stat(filename,&st)) {
-			if(errno != ENOENT) {
-				throw system_error(errno,system_category(),Logger::Message("Can't stat '{}'",filename));
-			}
-			memset(&st,0,sizeof(st));
-		}
-
-		if(st.st_size && st.st_mtime) {
-			request("If-Modified-Since") = HTTP::TimeStamp(st.st_mtime);
-			debug(filename, " modified-time=",request("If-Modified-Since").c_str());
-		}
-
+		// Get file to temporary; rename if got contents return false if not.
 		{
 			File::Temporary handler{filename};
 			if(!save(handler,progress)) {
@@ -246,7 +250,7 @@
 			handler.save(replace);
 		}
 
-		// Set file modification time according to the response.
+		// Set file modification time according to the host's modification time.
 		HTTP::TimeStamp timestamp{response("Last-Modified").value()};
 		debug("timestamp=",timestamp.to_string());
 		if(timestamp) {
