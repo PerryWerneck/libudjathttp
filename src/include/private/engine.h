@@ -123,7 +123,7 @@
 			virtual void content_length(unsigned long long length);
 
 			/// @brief Set response header.
-			virtual void header(const String &name, const String &value) = 0;
+			virtual void response(const char *name, const char *value) = 0;
 
 		};
 

@@ -134,6 +134,18 @@
 		curl_easy_setopt(hCurl, CURLOPT_WRITEDATA, this);
 		curl_easy_setopt(hCurl, CURLOPT_WRITEFUNCTION, write_callback);
 
+		{
+			const char *user = worker.user();
+			const char *passwd = worker.passwd();
+
+			if(user && *user && passwd && *passwd) {
+				curl_easy_setopt(hCurl, CURLOPT_HTTPAUTH, CURLAUTH_BASIC);
+				curl_easy_setopt(hCurl, CURLOPT_USERNAME, user);
+				curl_easy_setopt(hCurl, CURLOPT_PASSWORD, passwd);
+			}
+
+		}
+
 	}
 
 	HTTP::Engine::~Engine() {
@@ -424,24 +436,19 @@
 
 			} else if(strncasecmp(header.c_str(),"Content-Length:",15) == 0 && header.size()) {
 
-					char *end = nullptr;
-					engine->content_length(strtoull(header.c_str()+16,&end,10));
+				char *end = nullptr;
+				engine->content_length(strtoull(header.c_str()+16,&end,10));
 
 			} else if(!header.strip().empty()) {
 
 				const char *from = header.c_str();
 				const char *delimiter = strchr(from,':');
+
 				if(delimiter) {
-
-					String name{from,(size_t) (delimiter-from)};
-					String value{delimiter+1};
-
-					name.strip();
-					value.strip();
-
-					debug(name,"=",value);
-					engine->header(name,value);
-
+					engine->response(
+						String{from,(size_t) (delimiter-from)}.strip().c_str(),
+						String{delimiter+1}.strip().c_str()
+					);
 				}
 
 			}
@@ -545,12 +552,6 @@
 
 	}
 
-	HTTP::Worker & HTTP::Worker::credentials(const char *user, const char *passwd) {
-		curl_easy_setopt(hCurl, CURLOPT_HTTPAUTH, CURLAUTH_BASIC);
-		curl_easy_setopt(hCurl, CURLOPT_USERNAME, user);
-		curl_easy_setopt(hCurl, CURLOPT_PASSWORD, passwd);
-		return *this;
-	}
 
 	HTTP::Worker::~Worker() {
 		curl_easy_cleanup(hCurl);

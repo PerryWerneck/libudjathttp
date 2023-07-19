@@ -38,6 +38,12 @@
 
  namespace Udjat {
 
+	HTTP::Worker & HTTP::Worker::credentials(const char *user, const char *passwd) {
+		auth.user = user;
+		auth.passwd = passwd;
+		return *this;
+	}
+
 	String HTTP::Worker::get(const std::function<bool(double current, double total)> &progress) {
 
 		class Engine : public Udjat::HTTP::Engine, public stringstream {
@@ -52,8 +58,9 @@
 				progress(0.0,0.0);
 			}
 
-			void header(const String &name, const String &value) override {
-				worker.header(name.c_str(),value.c_str());
+			void response(const char *name, const char *value) override {
+				debug(name,"=",value);
+				worker.response(name,value);
 			}
 
 			void content_length(unsigned long long length) override {
@@ -92,8 +99,9 @@
 				progress(0.0,0.0);
 			}
 
-			void header(const String &name, const String &value) override {
-				worker.header(name.c_str(),value.c_str());
+			void response(const char *name, const char *value) override {
+				debug(name,"=",value);
+				worker.response(name,value);
 			}
 
 			void content_length(unsigned long long length) override {
@@ -183,8 +191,9 @@
 				progress(0.0,0.0);
 			}
 
-			void header(const String &name, const String &value) override {
-				worker.header(name.c_str(),value.c_str());
+			void response(const char *name, const char *value) override {
+				debug(name,"=",value);
+				worker.response(name,value);
 			}
 
 			void content_length(unsigned long long length) override {
@@ -239,6 +248,7 @@
 
 		// Set file modification time according to the response.
 		HTTP::TimeStamp timestamp{response("Last-Modified").value()};
+		debug("timestamp=",timestamp.to_string());
 		if(timestamp) {
 			Logger::String{"Timestamp of ",filename," set to ",timestamp.to_string()}.trace("http");
 			File::mtime(filename,(time_t) timestamp);
