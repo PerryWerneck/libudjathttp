@@ -97,6 +97,8 @@
 
 #endif // HAVE_WINHTTP
 
+		protected:
+
 			HTTP::Worker &worker;
 
 		public:
@@ -120,11 +122,8 @@
 			/// @brief Set content-length from server.
 			virtual void content_length(unsigned long long length);
 
-			/// @brief Set URL timestamp from server.
-			virtual void last_modified(const HTTP::TimeStamp &timestamp);
-
 			/// @brief Set response header.
-			virtual void header(const String &name, const String &value);
+			virtual void header(const String &name, const String &value) = 0;
 
 		};
 

@@ -32,19 +32,14 @@
 	namespace HTTP {
 
 		class UDJAT_API Worker : public Protocol::Worker {
-		public:
-			class Header : public Protocol::Header {
-			public:
-				Header(const char *name) : Protocol::Header(name) {
-				}
-
-				Protocol::Header & assign(const Udjat::TimeStamp &value) override;
-
-			};
-
 		private:
 
-			std::list<Header> headerlist;
+			struct {
+				std::list<Protocol::Header> request;
+				std::list<Protocol::Header> response;
+			} headers;
+
+			void response(const char *name, const char *value);
 
 		public:
 
@@ -61,14 +56,24 @@
 
 			bool save(File::Handler &file, const std::function<bool(double current, double total)> &progress) override;
 
+			inline const std::list<Protocol::Header> requests() const {
+				return headers.request;
+			}
+
+			inline const std::list<Protocol::Header> responses() const {
+				return headers.response;
+			}
+
+			Protocol::Header & request(const char *name) override;
+			const Protocol::Header & response(const char *name) override;
+
+			bool save(const char *filename, const std::function<bool(double current, double total)> &progress, bool replace) override;
 
 			/*
 			Worker & credentials(const char *user, const char *passwd) override;
 
 			void save(const std::function<bool(unsigned long long current, unsigned long long total, const void *buf, size_t length)> &writer) override;
-			bool save(const char *filename, const std::function<bool(double current, double total)> &progress, bool replace) override;
 
-			Protocol::Header & header(const char *name) override;
 			*/
 
 

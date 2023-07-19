@@ -22,8 +22,17 @@
  #include <udjat/tools/http/timestamp.h>
  #include <private/engine.h>
  #include <udjat/tools/logger.h>
+ #include <udjat/tools/file.h>
+ #include <udjat/tools/file/temporary.h>
  #include <iostream>
  #include <sstream>
+
+ #include <sys/types.h>
+ #include <sys/stat.h>
+
+ #ifdef HAVE_UNISTD_H
+	#include <unistd.h>
+ #endif // HAVE_UNISTD_H
 
  using namespace std;
 
@@ -41,6 +50,10 @@
 			Engine(HTTP::Worker &worker, const std::function<bool(double current, double total)> &p)
 				: Udjat::HTTP::Engine{worker}, progress{p} {
 				progress(0.0,0.0);
+			}
+
+			void header(const String &name, const String &value) override {
+				worker.header(name.c_str(),value.c_str());
 			}
 
 			void content_length(unsigned long long length) override {
@@ -79,6 +92,10 @@
 				progress(0.0,0.0);
 			}
 
+			void header(const String &name, const String &value) override {
+				worker.header(name.c_str(),value.c_str());
+			}
+
 			void content_length(unsigned long long length) override {
 				total = (double) length;
 				debug(__FUNCTION__,"(",length,")");
@@ -109,6 +126,48 @@
 
 	}
 
+	void HTTP::Worker::response(const char *name, const char *value) {
+
+		debug(name,"=",value);
+
+		for(auto &header : headers.response) {
+			if(header == name) {
+				header.Protocol::Header::assign(value);
+				return;
+			}
+		}
+
+		headers.response.emplace_back(name);
+		headers.response.back().Protocol::Header::assign(value);
+
+	}
+
+	Protocol::Header & HTTP::Worker::request(const char *name) {
+
+		for(auto &header : headers.request) {
+			if(header == name) {
+				return header;
+			}
+		}
+
+		headers.request.emplace_back(name);
+		return headers.request.back();
+
+	}
+
+	const Protocol::Header & HTTP::Worker::response(const char *name) {
+
+		for(auto &header : headers.response) {
+			if(header == name) {
+				return header;
+			}
+		}
+
+		headers.response.emplace_back(name);
+		return headers.response.back();
+
+	}
+
 	bool HTTP::Worker::save(File::Handler &file, const std::function<bool(double current, double total)> &progress) {
 
 		class Engine : public Udjat::HTTP::Engine {
@@ -122,6 +181,10 @@
 			Engine(HTTP::Worker &worker, File::Handler &f, const std::function<bool(double current, double total)> &p)
 				: Udjat::HTTP::Engine{worker}, progress{p}, file{f} {
 				progress(0.0,0.0);
+			}
+
+			void header(const String &name, const String &value) override {
+				worker.header(name.c_str(),value.c_str());
 			}
 
 			void content_length(unsigned long long length) override {
@@ -150,25 +213,40 @@
 		return false;
 	}
 
-	/*
-	Protocol::Header & HTTP::Worker::Header::assign(const Udjat::TimeStamp &value) {
-		std::string::assign(HTTP::TimeStamp((time_t) value).to_string());
-		return *this;
-	}
+	bool HTTP::Worker::save(const char *filename, const std::function<bool(double current, double total)> &progress, bool replace) {
 
-	Protocol::Header & HTTP::Worker::header(const char *name) {
-
-		for(Header &header : headerlist) {
-			if(header == name) {
-				return header;
+		struct stat st;
+		if(stat(filename,&st)) {
+			if(errno != ENOENT) {
+				throw system_error(errno,system_category(),Logger::Message("Can't stat '{}'",filename));
 			}
+			memset(&st,0,sizeof(st));
 		}
 
-		headerlist.emplace_back(name);
-		return headerlist.back();
+		if(st.st_size && st.st_mtime) {
+			request("If-Modified-Since") = HTTP::TimeStamp(st.st_mtime);
+			debug(filename, " modified-time=",request("If-Modified-Since").c_str());
+		}
+
+		{
+			File::Temporary handler{filename};
+			if(!save(handler,progress)) {
+				return false;
+			}
+			Logger::String{"Updating ",filename}.trace("http");
+			handler.save(replace);
+		}
+
+		// Set file modification time according to the response.
+		HTTP::TimeStamp timestamp{response("Last-Modified").value()};
+		if(timestamp) {
+			Logger::String{"Timestamp of ",filename," set to ",timestamp.to_string()}.trace("http");
+			File::mtime(filename,(time_t) timestamp);
+		}
+
+		return true;
 
 	}
-	*/
 
  }
 

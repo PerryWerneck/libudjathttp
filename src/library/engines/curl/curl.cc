@@ -427,17 +427,6 @@
 					char *end = nullptr;
 					engine->content_length(strtoull(header.c_str()+16,&end,10));
 
-			} else if(strncasecmp(header.c_str(),"Last-Modified:",14) == 0 && header.size()) {
-
-				const char *ptr = header.c_str()+15;
-				while(*ptr && isspace(*ptr)) {
-					ptr++;
-				}
-
-				if(*ptr) {
-					engine->last_modified(HTTP::TimeStamp{ptr});
-				}
-
 			} else if(!header.strip().empty()) {
 
 				const char *from = header.c_str();
