@@ -33,6 +33,7 @@
 #if defined(HAVE_WINHTTP)
 
 	#include <winhttp.h>
+	#include <udjat/win32/exception.h>
 
 #elif defined(HAVE_CURL)
 
@@ -58,6 +59,9 @@
 		public:
 
 			Handle(T ptr) : sysptr{ptr} {
+				if(!sysptr) {
+					throw Win32::Exception();
+				}
 			}
 
 			~Handle() {
@@ -132,6 +136,7 @@
 			/// @brief Perform.
 			/// @param except If true launch exception if http response is not 200-299.
 			/// @return HTTP status code.
+			/// @retval -1 Unexpected exception.
 			int perform(bool except = true);
 
 			/// @brief Write to output file.
