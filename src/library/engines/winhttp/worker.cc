@@ -17,6 +17,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+ /*
 #include <winsock2.h>
 #include <winsock.h>
 
@@ -338,3 +339,4 @@ namespace Udjat {
 	}
 
 }
+*/

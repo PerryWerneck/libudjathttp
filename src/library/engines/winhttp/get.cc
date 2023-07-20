@@ -17,6 +17,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+ /*
  #include <internals.h>
  #include <cstring>
  #include <unistd.h>
@@ -151,4 +152,5 @@
 	}
 
  }
+ */
 

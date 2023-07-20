@@ -48,6 +48,34 @@
 
  	namespace HTTP {
 
+#ifdef _WIN32
+
+		template <typename T>
+		class UDJAT_API Handle {
+		private:
+			T sysptr;
+
+		public:
+
+			Handle(T ptr) : sysptr{ptr} {
+			}
+
+			~Handle() {
+				WinHttpCloseHandle(sysptr);
+			}
+
+			inline operator bool() const noexcept {
+				return sysptr;
+			}
+
+			inline operator T() noexcept {
+				return sysptr;
+			}
+
+		};
+
+#endif // _WIN32
+
 		/// @brief The HTTP client engine.
 		class UDJAT_PRIVATE Engine {
 		private:
@@ -55,23 +83,13 @@
 #if defined(HAVE_WINHTTP)
 
 			/// @brief WinHTTP session handle.
-			HINTERNET session;
+			HTTP::Handle<HINTERNET> session;
 
-			/// @brief Connect to HTTP host.
-			HINTERNET connect();
+			const HTTP::Method method;
 
-			/// @brief Open HTTP Request.
-			HINTERNET open(HINTERNET connection, const char *verb);
+			wchar_t *pwszUrl;
 
-			inline HINTERNET open(HINTERNET connection) {
-				return open(connection,std::to_string(method()));
-			}
-
-			/// @brief Send request.
-			void send(HINTERNET request);
-
-			/// @brief Wait for response.
-			Udjat::String wait(HINTERNET req, const std::function<bool(double current, double total)> &progress);
+			URL_COMPONENTS urlComp;
 
 #elif defined(HAVE_CURL)
 
