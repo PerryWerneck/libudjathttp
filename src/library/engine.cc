@@ -33,6 +33,33 @@
 	void HTTP::Engine::content_length(unsigned long long) {
 	}
 
+	int HTTP::Engine::check_result(int status_code, bool except) {
+
+		if(status_code >= 200 && status_code <= 299) {
+			return status_code;
+		}
+
+		switch(status_code) {
+		case 304:	// Not modified.
+			Logger::String{worker.url().c_str()," was not modified"}.trace("curl");
+			return 304;
+
+		default:
+
+			if(except) {
+				if(message.empty()) {
+					throw HTTP::Exception((unsigned int) status_code, worker.url().c_str());
+				} else {
+					throw HTTP::Exception((unsigned int) status_code, worker.url().c_str(), message.c_str());
+				}
+			}
+
+		}
+
+		return status_code;
+
+	}
+
  }
 
 

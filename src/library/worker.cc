@@ -237,8 +237,10 @@
 		{
 			File::Temporary handler{filename};
 			if(!save(handler,progress)) {
+				debug("Not saved, returning false");
 				return false;
 			}
+			debug("aaaa");
 			Logger::String{"Updating ",filename}.trace("http");
 			handler.save(replace);
 		}

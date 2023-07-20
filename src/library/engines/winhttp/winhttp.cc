@@ -309,7 +309,7 @@
 			}
 
 			// Get contents.
-			if(dwStatusCode >= 200 || dwStatusCode <= 299) {
+			{
 
 				char buffer[4096] = {0};
 				DWORD length = 0;
@@ -339,7 +339,7 @@
 		}
 
 		debug("dwStatusCode=",dwStatusCode);
-		return dwStatusCode;
+		return check_result(dwStatusCode,except);
 	}
 
  }

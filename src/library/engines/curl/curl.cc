@@ -51,27 +51,7 @@
 		long response_code = 0;
 		curl_easy_getinfo(hCurl, CURLINFO_RESPONSE_CODE, &response_code);
 
-		if(except) {
-
-			switch(response_code) {
-			case 304:	// Not modified.
-				Logger::String{worker.url().c_str()," was not modified"}.trace("curl");
-				return 304;
-
-			default:
-				if(response_code < 200 || response_code > 299) {
-					if(message.empty()) {
-						throw HTTP::Exception((unsigned int) response_code, worker.url().c_str());
-					} else {
-						throw HTTP::Exception((unsigned int) response_code, worker.url().c_str(), message.c_str());
-					}
-				}
-
-			}
-
-		}
-
-		return (int) response_code;
+		return check_result((int) response_code);
 	}
 
 	HTTP::Engine::Engine(HTTP::Worker &w, const HTTP::Method method, time_t timeout) : hCurl{curl_easy_init()}, worker{w} {

@@ -125,6 +125,10 @@
 
 			HTTP::Worker &worker;
 
+			/// @brief Check result code, launch exception.
+			/// @param except If true launch exception on error code.
+			int check_result(int status_code, bool except);
+
 		public:
 			Engine(HTTP::Worker &worker, const HTTP::Method method, time_t timeout = 0);
 
