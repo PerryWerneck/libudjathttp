@@ -31,6 +31,7 @@
  #include <udjat/win32/exception.h>
  #include <udjat/tools/configuration.h>
  #include <sstream>
+ #include <udjat/win32/container.h>
 
  using namespace std;
 
@@ -95,27 +96,6 @@
 		delete[](pwszUrl);
 	}
 
-	/*
-	static HINTERNET connect(HINTERNET session, URL_COMPONENTS &urlComp) {
-
-		debug("Connecting");
-
-		HINTERNET connection =
-			WinHttpConnect(
-				session,
-				wstring{urlComp.lpszHostName, urlComp.dwHostNameLength}.c_str(),
-				urlComp.nPort,
-				0
-			);
-
-		if(!connection) {
-			throw Win32::Exception("Can't connect to host");
-		}
-
-		return connection;
-	}
-	*/
-
 	static wstring get_verb(const HTTP::Method id) {
 
 		static const struct {
@@ -132,6 +112,7 @@
 		for(auto &method : methods) {
 			if(method.id == id) {
 				wchar_t buffer[100];
+				debug("Verb=",method.verb);
 				mbstowcs(buffer, method.verb, strlen(method.verb)+1);
 				return wstring{buffer};
 			}
@@ -142,6 +123,8 @@
 	}
 
 	int HTTP::Engine::perform(bool except) {
+
+		dwStatusCode = EBUSY;
 
 		try {
 
@@ -198,13 +181,14 @@
 
 			}
 
-			// Get payload
+			// Send request.
+			debug("Sending request");
 			{
 				const char * payload = worker.payload();
 				size_t sz = strlen(payload);
 
-				if(WinHttpSendRequest(
-						request,
+				if(!WinHttpSendRequest(
+						(HINTERNET) request,
 						(headers.empty() ? WINHTTP_NO_ADDITIONAL_HEADERS : headers.c_str()),
 						headers.size(),
 						(LPVOID) (sz ? payload : WINHTTP_NO_REQUEST_DATA),
@@ -218,6 +202,123 @@
 			}
 
 			// wait
+			debug("Receiving response");
+			if(!WinHttpReceiveResponse(request, NULL)) {
+				throw Win32::Exception();
+			}
+
+			// Get status code.
+			{
+				DWORD dwSize = sizeof(DWORD);
+
+				if(!WinHttpQueryHeaders(
+						(HINTERNET) request,
+						WINHTTP_QUERY_STATUS_CODE | WINHTTP_QUERY_FLAG_NUMBER,
+						WINHTTP_HEADER_NAME_BY_INDEX,
+						&dwStatusCode,
+						&dwSize,
+						WINHTTP_NO_HEADER_INDEX
+					)) {
+						throw Win32::Exception("Cant get HTTP status code");
+					}
+
+			}
+			debug("Status code=",dwStatusCode);
+
+			// Get status message
+			{
+				wchar_t buffer[1024];
+				DWORD dwSize = 1023;
+
+				ZeroMemory(buffer, sizeof(buffer));
+
+				WinHttpQueryHeaders(
+					request,
+					WINHTTP_QUERY_STATUS_TEXT,
+					WINHTTP_HEADER_NAME_BY_INDEX,
+                    buffer,
+                    &dwSize,
+					WINHTTP_NO_HEADER_INDEX
+				);
+
+				char text[1024];
+				ZeroMemory(text, sizeof(text));
+				wcstombs(text, buffer, 1023);
+
+				debug(text);
+				this->message.assign(text);
+
+			}
+
+			// Get file length
+			{
+				DWORD fileLength = 0;
+				DWORD size = sizeof(DWORD);
+				if( WinHttpQueryHeaders( request, WINHTTP_QUERY_CONTENT_LENGTH | WINHTTP_QUERY_FLAG_NUMBER , NULL, &fileLength, &size, NULL ) == TRUE ) {
+					content_length(fileLength);
+				}
+			}
+
+			// Get headers
+			// https://learn.microsoft.com/en-us/windows/win32/api/winhttp/nf-winhttp-winhttpqueryheaders
+			{
+				class Headers : public Win32::Container<WCHAR> {
+				private:
+					HINTERNET request;
+					HTTP::Engine &engine;
+				protected:
+					DWORD load(WCHAR *buffer, ULONG *ifbuffersize) override {
+						if(WinHttpQueryHeaders(request,WINHTTP_QUERY_RAW_HEADERS,WINHTTP_HEADER_NAME_BY_INDEX,buffer,ifbuffersize,WINHTTP_NO_HEADER_INDEX)) {
+							return 0;
+						}
+						return GetLastError();
+					}
+
+				public:
+					constexpr Headers(HTTP::Engine &e, HINTERNET r) : request{r}, engine{e} {
+					}
+
+					void parse() {
+
+						const WCHAR * header = get();
+						while(*header) {
+							wstring wHeader{header};
+							size_t szHeader = wHeader.size();
+							char text[wHeader.size()*2];
+
+							wcstombs(text, wHeader.c_str(), wHeader.size()*2);
+
+							const char *delimiter = strchr(text,':');
+
+							if(delimiter) {
+								engine.response(
+									String{text,(size_t) (delimiter-text)}.strip().c_str(),
+									String{delimiter+1}.strip().c_str()
+								);
+							}
+
+							header += (szHeader+1);
+						}
+
+
+					}
+
+				};
+
+				Headers{*this,request}.parse();
+			}
+
+			// Get contents.
+			if(dwStatusCode >= 200 || dwStatusCode <= 299) {
+
+				char buffer[4096] = {0};
+				DWORD length = 0;
+				while(WinHttpReadData(request, buffer, sizeof(buffer), &length) && length > 0) {
+					this->write(buffer,length);
+					length = 0;
+				}
+
+			}
 
 		} catch(const std::exception &e) {
 
@@ -225,7 +326,7 @@
 			if(except) {
 				throw;
 			}
-			return -1;
+			dwStatusCode = (DWORD) -1;
 
 		} catch(...) {
 
@@ -233,11 +334,12 @@
 			if(except) {
 				throw;
 			}
-			return -1;
+			dwStatusCode = (DWORD) -1;
 
 		}
 
-		return 0;
+		debug("dwStatusCode=",dwStatusCode);
+		return dwStatusCode;
 	}
 
  }

@@ -95,6 +95,8 @@
 
 			URL_COMPONENTS urlComp;
 
+			DWORD dwStatusCode = 0;
+
 #elif defined(HAVE_CURL)
 
 			/// @brief Handle to curl.
@@ -102,9 +104,6 @@
 
 			/// @brief Curl error.
 			char error[CURL_ERROR_SIZE+1];
-
-			/// @brief HTTP response message.
-			std::string message;
 
 			static size_t do_write(void *contents, size_t size, size_t nmemb, Engine *engine) noexcept;
 			static size_t read_callback(char *buffer, size_t size, size_t nitems, Engine *engine) noexcept;
@@ -118,6 +117,9 @@
 			const char *outptr = nullptr;
 
 #endif // HAVE_WINHTTP
+
+			/// @brief HTTP response message.
+			std::string message;
 
 		protected:
 

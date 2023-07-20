@@ -46,8 +46,16 @@ int main(int argc, char **argv) {
 
 	// cout << HTTP::Worker{"http://127.0.0.1/~perry/libudjat.xml"}.get([](double, double){ return true; }) << endl;
 
-	std::shared_ptr<Protocol::Worker> worker = make_shared<HTTP::Worker>("http://127.0.0.1/~perry/libudjat.xml");
-	worker->save("/tmp/test.html");
+	try {
+
+		std::shared_ptr<Protocol::Worker> worker = make_shared<HTTP::Worker>("http://127.0.0.1/~perry/libudjat.xml");
+		worker->save("/tmp/test.html");
+
+	} catch(const std::exception &e) {
+
+		cerr << "Error: " << e.what() << endl;
+
+	}
 
 	Udjat::Module::unload();
 
