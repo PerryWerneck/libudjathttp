@@ -257,5 +257,36 @@
 
 	}
 
+	void HTTP::Worker::save(const std::function<bool(unsigned long long current, unsigned long long total, const void *buf, size_t length)> &writer) {
+
+		class Engine : public Udjat::HTTP::Engine {
+		private:
+			const std::function<bool(unsigned long long current, unsigned long long total, const void *buf, size_t length)> &writer;
+			double current = 0;
+			double total = 0;
+
+		public:
+			Engine(HTTP::Worker &worker, const std::function<bool(unsigned long long current, unsigned long long total, const void *buf, size_t length)> &w)
+				: Udjat::HTTP::Engine{worker}, writer{w} {
+			}
+
+			void content_length(unsigned long long length) override {
+				total = (double) length;
+			}
+
+			void response(const char *, const char *) override {
+			}
+
+			void write(const void *contents, size_t length) override {
+				writer(current,total,contents,length);
+				current += length;
+			}
+
+		};
+
+		Engine{*this, writer}.perform(true);
+
+	}
+
  }
 

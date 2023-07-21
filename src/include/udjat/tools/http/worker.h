@@ -1,7 +1,7 @@
 /* SPDX-License-Identifier: LGPL-3.0-or-later */
 
 /*
- * Copyright (C) 2021 Perry Werneck <perry.werneck@gmail.com>
+ * Copyright (C) 2023 Perry Werneck <perry.werneck@gmail.com>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
@@ -67,8 +67,6 @@
 
 			int test(const std::function<bool(double current, double total)> &progress) noexcept override;
 
-			bool save(File::Handler &file, const std::function<bool(double current, double total)> &progress) override;
-
 			inline const std::list<Protocol::Header> requests() const {
 				return headers.request;
 			}
@@ -80,16 +78,11 @@
 			Protocol::Header & request(const char *name) override;
 			const Protocol::Header & response(const char *name) override;
 
-			bool save(const char *filename, const std::function<bool(double current, double total)> &progress, bool replace) override;
-
 			Worker & credentials(const char *user, const char *passwd) override;
 
-			/*
-
+			bool save(File::Handler &file, const std::function<bool(double current, double total)> &progress) override;
+			bool save(const char *filename, const std::function<bool(double current, double total)> &progress, bool replace) override;
 			void save(const std::function<bool(unsigned long long current, unsigned long long total, const void *buf, size_t length)> &writer) override;
-
-			*/
-
 
 		};
 
