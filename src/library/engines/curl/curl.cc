@@ -51,7 +51,7 @@
 		long response_code = 0;
 		curl_easy_getinfo(hCurl, CURLINFO_RESPONSE_CODE, &response_code);
 
-		return check_result((int) response_code);
+		return check_result((int) response_code, except);
 	}
 
 	HTTP::Engine::Engine(HTTP::Worker &w, const HTTP::Method method, time_t timeout) : hCurl{curl_easy_init()}, worker{w} {
@@ -184,7 +184,11 @@
 
 		}
 
+#ifdef CURL_WRITEFUNC_ERROR
 		return CURL_WRITEFUNC_ERROR;
+#else
+		return -1;
+#endif // CURL_WRITEFUNC_ERROR
 	}
 
 	int HTTP::Engine::trace_callback(CURL *, curl_infotype type, char *data, size_t size, Engine *) noexcept {
