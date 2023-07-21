@@ -48,7 +48,7 @@
 
 		public:
 
-			Worker(const char *url, const HTTP::Method method = HTTP::Get, const char *payload = "") : Protocol::Worker{url,method,payload} {
+			Worker(const char *url = "", const HTTP::Method method = HTTP::Get, const char *payload = "") : Protocol::Worker{url,method,payload} {
 			}
 
 			const char * user() const noexcept {

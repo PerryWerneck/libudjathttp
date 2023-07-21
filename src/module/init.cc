@@ -30,7 +30,6 @@
 
  using namespace std;
 
- /*
  /// @brief Register udjat module.
  UDJAT_API Udjat::Module * udjat_module_init() {
 
@@ -85,5 +84,4 @@
 
 	return new Module();
  }
- */
 
