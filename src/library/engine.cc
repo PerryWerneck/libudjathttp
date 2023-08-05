@@ -39,21 +39,17 @@
 			return status_code;
 		}
 
-		switch(status_code) {
-		case 304:	// Not modified.
+		if(status_code == 304) {	// Not modified.
 			Logger::String{worker.url().c_str()," was not modified"}.trace("curl");
 			return 304;
+		}
 
-		default:
-
-			if(except) {
-				if(message.empty()) {
-					throw HTTP::Exception((unsigned int) status_code, worker.url().c_str());
-				} else {
-					throw HTTP::Exception((unsigned int) status_code, worker.url().c_str(), message.c_str());
-				}
+		if(except) {
+			if(message.empty()) {
+				throw HTTP::Exception((unsigned int) status_code, worker.url().c_str());
+			} else {
+				throw HTTP::Exception((unsigned int) status_code, worker.url().c_str(), message.c_str());
 			}
-
 		}
 
 		return status_code;
