@@ -23,12 +23,17 @@
 
  #pragma once
  #include <config.h>
+ #include <udjat/tools/http/worker.h>
  #include <udjat/defs.h>
+ #include <udjat/tools/protocol.h>
  #include <udjat/tools/url.h>
+ #include <udjat/tools/string.h>
+ #include <udjat/tools/http/timestamp.h>
 
 #if defined(HAVE_WINHTTP)
 
 	#include <winhttp.h>
+	#include <udjat/win32/exception.h>
 
 #elif defined(HAVE_CURL)
 
@@ -44,6 +49,37 @@
 
  	namespace HTTP {
 
+#ifdef _WIN32
+
+		template <typename T>
+		class UDJAT_API Handle {
+		private:
+			T sysptr;
+
+		public:
+
+			Handle(T ptr) : sysptr{ptr} {
+				if(!sysptr) {
+					throw Win32::Exception();
+				}
+			}
+
+			~Handle() {
+				WinHttpCloseHandle(sysptr);
+			}
+
+			inline operator bool() const noexcept {
+				return sysptr;
+			}
+
+			inline operator T() noexcept {
+				return sysptr;
+			}
+
+		};
+
+#endif // _WIN32
+
 		/// @brief The HTTP client engine.
 		class UDJAT_PRIVATE Engine {
 		private:
@@ -51,32 +87,23 @@
 #if defined(HAVE_WINHTTP)
 
 			/// @brief WinHTTP session handle.
-			HINTERNET session;
+			HTTP::Handle<HINTERNET> session;
 
-			/// @brief Connect to HTTP host.
-			HINTERNET connect();
+			const HTTP::Method method;
 
-			/// @brief Open HTTP Request.
-			HINTERNET open(HINTERNET connection, const char *verb);
+			wchar_t *pwszUrl;
 
-			inline HINTERNET open(HINTERNET connection) {
-				return open(connection,std::to_string(method()));
-			}
+			URL_COMPONENTS urlComp;
 
-			/// @brief Send request.
-			void send(HINTERNET request);
-
-			/// @brief Wait for response.
-			Udjat::String wait(HINTERNET req, const std::function<bool(double current, double total)> &progress);
+			DWORD dwStatusCode = 0;
 
 #elif defined(HAVE_CURL)
 
 			/// @brief Handle to curl.
 			CURL * hCurl;
-			char error[CURL_ERROR_SIZE+1];
 
-			/// @brief Set the connected socket.
-			virtual void socket(int sock);
+			/// @brief Curl error.
+			char error[CURL_ERROR_SIZE+1];
 
 			static size_t do_write(void *contents, size_t size, size_t nmemb, Engine *engine) noexcept;
 			static size_t read_callback(char *buffer, size_t size, size_t nitems, Engine *engine) noexcept;
@@ -86,16 +113,46 @@
 			static int sockopt_callback(Engine *engine, curl_socket_t curlfd, curlsocktype purpose) noexcept;
 			static size_t header_callback(char *buffer, size_t size, size_t nitems, Engine *engine) noexcept;
 
+			struct curl_slist *headers = NULL;
+			const char *outptr = nullptr;
+
 #endif // HAVE_WINHTTP
 
+			/// @brief HTTP response message.
+			std::string message;
+
+		protected:
+
+			HTTP::Worker &worker;
+
+			/// @brief Check result code, launch exception.
+			/// @param except If true launch exception on error code.
+			int check_result(int status_code, bool except);
+
 		public:
-			Engine(const char *url, int timeout = 0);
+			Engine(HTTP::Worker &worker, const HTTP::Method method, time_t timeout = 0);
+
+			Engine(HTTP::Worker &worker, time_t timeout = 0) : Engine(worker,worker.method(),timeout) {
+			}
+
 			~Engine();
 
 			int response_code();
 
-			virtual void allocate(unsigned long long length) = 0;
+			/// @brief Perform.
+			/// @param except If true launch exception if http response is not 200-299.
+			/// @return HTTP status code.
+			/// @retval -1 Unexpected exception.
+			int perform(bool except = true);
+
+			/// @brief Write to output file.
 			virtual void write(const void *contents, size_t length) = 0;
+
+			/// @brief Set content-length from server.
+			virtual void content_length(unsigned long long length);
+
+			/// @brief Set response header.
+			virtual void response(const char *name, const char *value) = 0;
 
 		};
 
@@ -103,54 +160,3 @@
 
  }
 
-/*
- namespace Udjat {
-
- 	namespace HTTP {
-
-		class UDJAT_PRIVATE Writer {
-		private:
-
-			std::string error_message;
-
-#ifdef HAVE_CURL
-			static size_t do_write(void *contents, size_t size, size_t nmemb, Writer *writer) noexcept;
-#endif // HAVE_CURL
-
-		protected:
-
-			const HTTP::Worker &worker;
-
-			unsigned long long current = 0;
-			unsigned long long total = 0;
-
-#ifdef HAVE_CURL
-			CURL *hCurl = nullptr;
-#endif // HAVE_CURL
-
-		public:
-
-			Writer(const HTTP::Worker &w): worker{w} {
-			}
-
-#ifdef HAVE_CURL
-
-			Writer(const HTTP::Worker &w, CURL *c) : worker{w}, hCurl{c} {
-			};
-
-			void get(curl_slist *chunk);
-
-#endif // HAVE_CURL
-
-			int response_code();
-
-			virtual void allocate(unsigned long long length) = 0;
-			virtual void write(const void *contents, size_t length) = 0;
-
-		};
-
- 	}
-
- }
-
-*/

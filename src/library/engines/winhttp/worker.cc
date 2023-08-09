@@ -17,13 +17,14 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+ /*
 #include <winsock2.h>
 #include <winsock.h>
 
 #include <config.h>
 #include <internals.h>
 #include <udjat/tools/url.h>
-#include <private/worker.h>
+#include <udjat/tools/http/worker.h>
 #include <udjat/tools/configuration.h>
 #include <udjat/win32/exception.h>
 
@@ -338,3 +339,4 @@ namespace Udjat {
 	}
 
 }
+*/

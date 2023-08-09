@@ -27,7 +27,7 @@
  #include <udjat/agent.h>
  #include <udjat/factory.h>
  #include <udjat/module.h>
- #include <udjat/tools/protocol.h>
+ #include <udjat/tools/http/worker.h>
  #include <iostream>
  #include <memory>
 
@@ -44,7 +44,18 @@ int main(int argc, char **argv) {
 	Udjat::Logger::enable(Udjat::Logger::Debug);
 	Udjat::Logger::console(true);
 
+	// cout << HTTP::Worker{"http://127.0.0.1/~perry/libudjat.xml"}.get([](double, double){ return true; }) << endl;
 
+	try {
+
+		std::shared_ptr<Protocol::Worker> worker = make_shared<HTTP::Worker>("http://127.0.0.1/~perry/libudjat.xml");
+		worker->save("/tmp/test.html");
+
+	} catch(const std::exception &e) {
+
+		cerr << "Error: " << e.what() << endl;
+
+	}
 
 	Udjat::Module::unload();
 

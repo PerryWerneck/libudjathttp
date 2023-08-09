@@ -17,9 +17,10 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+ /*
  #include <config.h>
  #include <internals.h>
- #include <private/worker.h>
+ #include <udjat/tools/http/worker.h>
  #include <udjat/tools/logger.h>
 
  using namespace std;
@@ -96,3 +97,4 @@
 	}
 
  }
+ */

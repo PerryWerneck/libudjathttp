@@ -17,13 +17,14 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+ /*
  #include <internals.h>
  #include <cstring>
  #include <unistd.h>
  #include <cstdio>
  #include <udjat/tools/http/timestamp.h>
  #include <udjat/tools/file.h>
- #include <private/worker.h>
+ #include <udjat/tools/http/worker.h>
  #include <udjat/tools/logger.h>
  #include <udjat/win32/charset.h>
  #include <sys/types.h>
@@ -151,4 +152,5 @@
 	}
 
  }
+ */
 

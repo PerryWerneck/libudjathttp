@@ -22,7 +22,7 @@
  #include <udjat/module.h>
  #include <udjat/tools/protocol.h>
  #include <udjat/moduleinfo.h>
- #include <private/worker.h>
+ #include <udjat/tools/http/worker.h>
 
  #ifdef HAVE_CURL
 	#include <curl/curl.h>
@@ -30,7 +30,6 @@
 
  using namespace std;
 
- /*
  /// @brief Register udjat module.
  UDJAT_API Udjat::Module * udjat_module_init() {
 
@@ -85,5 +84,4 @@
 
 	return new Module();
  }
- */
 
