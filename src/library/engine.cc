@@ -46,9 +46,9 @@
 
 		if(except) {
 			if(message.empty()) {
-				throw HTTP::Exception((unsigned int) status_code, worker.url().c_str());
+				throw HTTP::Exception((unsigned int) status_code);
 			} else {
-				throw HTTP::Exception((unsigned int) status_code, worker.url().c_str(), message.c_str());
+				throw HTTP::Exception((unsigned int) status_code, message.c_str());
 			}
 		}
 
