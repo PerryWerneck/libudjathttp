@@ -135,7 +135,7 @@
 			Engine(HTTP::Worker &worker, time_t timeout = 0) : Engine(worker,worker.method(),timeout) {
 			}
 
-			~Engine();
+			virtual ~Engine();
 
 			int response_code();
 
