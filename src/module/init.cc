@@ -33,6 +33,7 @@
  /// @brief Register udjat module.
  UDJAT_API Udjat::Module * udjat_module_init() {
 
+
 	static const Udjat::ModuleInfo moduleinfo{
 #if defined(_WIN32)
 		"WinHTTP module for " STRINGIZE_VALUE_OF(PRODUCT_NAME), 	// The module description.

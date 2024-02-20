@@ -1,7 +1,7 @@
 /* SPDX-License-Identifier: LGPL-3.0-or-later */
 
 /*
- * Copyright (C) 2021 Perry Werneck <perry.werneck@gmail.com>
+ * Copyright (C) 2023 Perry Werneck <perry.werneck@gmail.com>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
@@ -18,38 +18,47 @@
  */
 
  #include <config.h>
- #include <udjat/tools/http/worker.h>
- #include <cstring>
- #include <unistd.h>
- #include <cstdio>
- #include <udjat/tools/http/timestamp.h>
- #include <udjat/tools/configuration.h>
- #include <udjat/tools/protocol.h>
+ #include <udjat/defs.h>
+ #include <private/engine.h>
  #include <udjat/tools/logger.h>
- #include <iostream>
- #include <fcntl.h>
  #include <udjat/tools/mainloop.h>
+ #include <unistd.h>
+ #include <fcntl.h>
+ #include <iostream>
  #include <poll.h>
+ #include <udjat/tools/configuration.h>
+
+ #ifdef DEBUG
+	#define TRACE_DEFAULT true
+ #else
+	#define TRACE_DEFAULT false
+ #endif  // DEBUG
 
  using namespace std;
 
  namespace Udjat {
- #ifdef HAVE_CURL
 
-	#ifdef DEBUG
-		#define TRACE_DEFAULT true
-	#else
-		#define TRACE_DEFAULT false
-	#endif  // DEBUG
+	int HTTP::Engine::perform(bool except) {
 
-	HTTP::Worker::Worker(const char *url, const HTTP::Method method, const char *payload) : Protocol::Worker(url,method,payload) {
+		outptr = nullptr;
+		this->error[0] = 0;
+		CURLcode res = curl_easy_perform(hCurl);
 
-		memset(error,0,CURL_ERROR_SIZE);
+		if(res != CURLE_OK) {
+			throw runtime_error(this->error[0] ? this->error : curl_easy_strerror(res));
+		}
 
-		hCurl = curl_easy_init();
+		long response_code = 0;
+		curl_easy_getinfo(hCurl, CURLINFO_RESPONSE_CODE, &response_code);
+
+		return check_result((int) response_code, except);
+	}
+
+	HTTP::Engine::Engine(HTTP::Worker &w, const HTTP::Method method, time_t timeout) : hCurl{curl_easy_init()}, worker{w} {
 
 		curl_easy_setopt(hCurl, CURLOPT_FOLLOWLOCATION, 1L);
 
+		memset(error,0,CURL_ERROR_SIZE+1);
 		curl_easy_setopt(hCurl, CURLOPT_ERRORBUFFER, error);
 
 		curl_easy_setopt(hCurl, CURLOPT_HEADERDATA, (void *) this);
@@ -64,131 +73,131 @@
 		// https://curl.se/libcurl/c/CURLOPT_FORBID_REUSE.html
 		curl_easy_setopt(hCurl, CURLOPT_FORBID_REUSE, 1L);
 
-		// Set timeout
-		{
-			// Maximum time the transfer is allowed to complete.
-			int timeout = Config::Value<int>("curl","timeout",0).get();
-			if(timeout) {
-				curl_easy_setopt(hCurl, CURLOPT_TIMEOUT, timeout);
-			}
+		// Maximum time the transfer is allowed to complete.
+		if(timeout) {
+			curl_easy_setopt(hCurl, CURLOPT_TIMEOUT, timeout);
 		}
 
-	}
+		debug("URL='",worker.url().c_str());
+		curl_easy_setopt(hCurl, CURLOPT_URL, worker.url().c_str());
 
-	HTTP::Worker & HTTP::Worker::credentials(const char *user, const char *passwd) {
-		curl_easy_setopt(hCurl, CURLOPT_HTTPAUTH, CURLAUTH_BASIC);
-		curl_easy_setopt(hCurl, CURLOPT_USERNAME, user);
-		curl_easy_setopt(hCurl, CURLOPT_PASSWORD, passwd);
-		return *this;
-	}
+		switch(method) {
+		case HTTP::Get:
+			curl_easy_setopt(hCurl, CURLOPT_HTTPGET, 1L);
+			break;
 
-	HTTP::Worker::~Worker() {
-		curl_easy_cleanup(hCurl);
-	}
+		case HTTP::Head:
+			curl_easy_setopt(hCurl, CURLOPT_NOBODY, 1L);
+			break;
 
-	curl_slist * HTTP::Worker::headers() const noexcept {
-		struct curl_slist *chunk = NULL;
-		for(const Header &header : headerlist) {
-			debug(header.name(),":",header.value());
-			chunk = curl_slist_append(chunk,(string(header.name()) + ":" + header.value()).c_str());
+		case HTTP::Post:
+			curl_easy_setopt(hCurl, CURLOPT_POST, 1);
+			break;
+
+		case HTTP::Put:
+			curl_easy_setopt(hCurl, CURLOPT_PUT, 1);
+			break;
+
+		case HTTP::Delete:
+			curl_easy_setopt(hCurl, CURLOPT_CUSTOMREQUEST, "DELETE");
+			break;
+
+		default:
+			throw system_error(EINVAL,system_category(),"Invalid or unsupported http verb");
 		}
-		return chunk;
-	}
 
-	Udjat::String HTTP::Worker::perform() {
+		if(Logger::enabled(Logger::Debug) && Config::Value<bool>("http","trace",TRACE_DEFAULT).get()) {
+			debug("Trace is enabled");
+			curl_easy_setopt(hCurl, CURLOPT_VERBOSE, 1L);
+			curl_easy_setopt(hCurl, CURLOPT_DEBUGDATA, this);
+			curl_easy_setopt(hCurl, CURLOPT_DEBUGFUNCTION, trace_callback);
+		}
 
-		debug("Current URL is '",(std::string &) url(),"'");
+		if(*worker.payload()) {
 
-		curl_easy_setopt(hCurl, CURLOPT_URL, url().c_str());
+			// https://stackoverflow.com/questions/11600130/post-data-with-libcurl
+			// https://curl.se/libcurl/c/http-post.html
+			debug("Has payload, enabling it");
+			curl_easy_setopt(hCurl, CURLOPT_READDATA, (void *) this);
+			curl_easy_setopt(hCurl, CURLOPT_READFUNCTION, read_callback);
+
+		}
+
 		curl_easy_setopt(hCurl, CURLOPT_WRITEDATA, this);
 		curl_easy_setopt(hCurl, CURLOPT_WRITEFUNCTION, write_callback);
 
-		struct curl_slist *chunk = headers();
-		if(chunk) {
-			curl_easy_setopt(hCurl, CURLOPT_HTTPHEADER, chunk);
+		{
+			const char *user = worker.user();
+			const char *passwd = worker.passwd();
+
+			if(user && *user && passwd && *passwd) {
+				curl_easy_setopt(hCurl, CURLOPT_HTTPAUTH, CURLAUTH_BASIC);
+				curl_easy_setopt(hCurl, CURLOPT_USERNAME, user);
+				curl_easy_setopt(hCurl, CURLOPT_PASSWORD, passwd);
+			}
+
 		}
 
-		this->error[0] = 0;
-		CURLcode res = curl_easy_perform(hCurl);
-		curl_slist_free_all(chunk);
-
-		if(res != CURLE_OK) {
-			debug("Error='",this->error,"'");
-			throw HTTP::Exception(url().c_str(),(this->error[0] ? this->error : curl_easy_strerror(res)));
+		for(auto &header : worker.requests()) {
+			debug(header.name(),": ",header.value());
+			headers = curl_slist_append(headers,String{header.name(),":",header.value()}.c_str());
 		}
 
+		if(headers) {
+			curl_easy_setopt(hCurl, CURLOPT_HTTPHEADER, headers);
+		}
+
+	}
+
+	HTTP::Engine::~Engine() {
+		if(headers) {
+			curl_slist_free_all(headers);
+		}
+		curl_easy_cleanup(hCurl);
+	}
+
+	int HTTP::Engine::response_code() {
 		long response_code = 0;
 		curl_easy_getinfo(hCurl, CURLINFO_RESPONSE_CODE, &response_code);
-
-		Logger::String{"",url().c_str()," ",response_code," ",message}.write(Logger::Trace,"curl");
-
-		if(response_code >= 200 && response_code <= 299) {
-			return Udjat::String(buffers.in.str().c_str());
-		}
-
-		if(message.empty()) {
-			throw HTTP::Exception((unsigned int) response_code, url().c_str());
-		} else {
-			throw HTTP::Exception((unsigned int) response_code, url().c_str(), message.c_str());
-		}
-
+		return (int) response_code;
 	}
 
-	size_t HTTP::Worker::write_callback(void *contents, size_t size, size_t nmemb, Worker *worker) noexcept {
+	size_t HTTP::Engine::write_callback(void *contents, size_t size, size_t nmemb, Engine *engine) noexcept {
 
 		size_t realsize = size * nmemb;
-		worker->buffers.in.write((const char *) contents, realsize);
-		return realsize;
 
-	}
-
-	size_t HTTP::Worker::read_callback(char *outbuffer, size_t size, size_t nitems, Worker *worker) noexcept {
-
-		size_t length = 0;
+		debug("realsize=",realsize);
 
 		try {
 
-			if(!worker->buffers.out) {
-				worker->buffers.out = worker->out.payload.c_str();
-				if(Config::Value<bool>("http","trace-payload",TRACE_DEFAULT).get()) {
-					Logger::String("Posting to ",worker->url().c_str()).write(Logger::Trace,"http");
-					Logger::String("",worker->buffers.out).write(Logger::Trace);
-				}
-			}
-
-			if(!*worker->buffers.out) {
-				return 0;
-			}
-
-			length = std::min((size * nitems), strlen(worker->buffers.out));
-
-			memcpy(outbuffer,worker->buffers.out,length);
-			worker->buffers.out += length;
+			engine->write(contents,realsize);
+			return realsize;
 
 		} catch(const std::exception &e) {
 
-			cerr << "curl\tError '" << e.what() << "' getting post payload" << endl;
-			return CURL_READFUNC_ABORT;
+			Logger::String{e.what()}.error("curl");
+			strncpy(engine->error,e.what(),CURL_ERROR_SIZE);
 
 		} catch(...) {
 
-			cerr << "curl\tUnexpected error getting post payload" << endl;
-			return CURL_READFUNC_ABORT;
+			Logger::String{"Unexpected error"}.error("curl");
 
 		}
 
-		return length;
+#ifdef CURL_WRITEFUNC_ERROR
+		return CURL_WRITEFUNC_ERROR;
+#else
+		return -1;
+#endif // CURL_WRITEFUNC_ERROR
 	}
 
-	#pragma GCC diagnostic push
-	#pragma GCC diagnostic ignored "-Wunused-parameter"
-	int HTTP::Worker::trace_callback(CURL *handle, curl_infotype type, char *data, size_t size, Worker *worker) noexcept {
+	int HTTP::Engine::trace_callback(CURL *, curl_infotype type, char *data, size_t size, Engine *) noexcept {
 
 		Logger::String logger{""};
 
 		switch (type) {
 		case CURLINFO_TEXT:
-			logger.append(data);
+			logger.append(data,size);
 			return 0;
 
 		case CURLINFO_HEADER_OUT:
@@ -204,11 +213,11 @@
 			break;
 
 		case CURLINFO_HEADER_IN:
-			logger.append("<= Recv header");
+			logger.append("<= Recv header (",size," bytes)");
 			break;
 
 		case CURLINFO_DATA_IN:
-			logger.append("<= Recv data");
+			logger.append("<= Recv data (",size," bytes)");
 			break;
 
 		case CURLINFO_SSL_DATA_IN:
@@ -216,6 +225,7 @@
 			break;
 
 		default:
+			debug("Unexpected type '",type,"'");
 			return 0;
 
 		}
@@ -224,76 +234,6 @@
 
 		return 0;
 
-	}
-	#pragma GCC diagnostic pop
-
-	#pragma GCC diagnostic push
-	#pragma GCC diagnostic ignored "-Wunused-parameter"
-	int HTTP::Worker::sockopt_callback(Worker *worker, curl_socket_t curlfd, curlsocktype purpose) noexcept {
-		return CURL_SOCKOPT_ALREADY_CONNECTED;
-	}
-	#pragma GCC diagnostic pop
-
-	size_t HTTP::Worker::header_callback(char *buffer, size_t size, size_t nitems, Worker *worker) noexcept {
-
-		string header(buffer,size*nitems);
-
-		if(strncasecmp(header.c_str(),"HTTP/",5) == 0 && header.size()) {
-			unsigned int v[2];
-			unsigned int code;
-			char str[201];
-			memset(str,0,sizeof(str));
-
-			if(sscanf(header.c_str()+5,"%u.%u %d %200c",&v[0],&v[1],&code,str) == 4) {
-
-				for(size_t ix = 0; ix < sizeof(str);ix++) {
-					if(str[ix] < ' ') {
-						str[ix] = 0;
-						break;
-					}
-				}
-
-				worker->message = str;
-			}
-
-			Logger::String("",(std::string &) worker->url()," ",header).write(Logger::Trace,"http");
-
-		} else if(strncasecmp(header.c_str(),"Last-Modified:",14) == 0 && header.size()) {
-
-			try {
-
-				const char *ptr = header.c_str()+15;
-				while(*ptr && isspace(*ptr)) {
-					ptr++;
-				}
-
-				if(*ptr) {
-					worker->in.modification = HTTP::TimeStamp(ptr);
-#ifdef DEBUG
-					cout << "last-modified: " << worker->in.modification << endl;
-#endif // DEBUG
-				}
-
-			} catch(const std::exception &e) {
-
-				cerr << "http\tError '" << e.what() << "' processing transfer date" << endl;
-
-			} catch(...) {
-
-				cerr << "http\tunexpected error processing transfer date" << endl;
-
-			}
-
-		}
-#ifdef DEBUG
-		else if(!header.empty()) {
-
-			Logger::String{header}.write(Logger::Debug,"curl");
-
-		}
-#endif // DEBUG
-
-		return size*nitems;
 	}
 
 	static int non_blocking(int sock, bool on) {
@@ -320,22 +260,21 @@
 
 	}
 
-	curl_socket_t HTTP::Worker::open_socket_callback(Worker *worker, curlsocktype purpose, struct curl_sockaddr *address) noexcept {
+	curl_socket_t HTTP::Engine::open_socket_callback(Engine *engine, curlsocktype purpose, struct curl_sockaddr *address) noexcept {
 
 		// https://curl.se/libcurl/c/externalsocket.html
-		debug("Connecting to ",(std::string &) worker->url());
+		debug("Connecting to host");
 
 		if(purpose != CURLSOCKTYPE_IPCXN) {
-			cerr << "curl\tInvalid type in curl_opensocket" << endl;
+			Logger::String{"Invalid purpose '",purpose,"' in curl_opensocket"}.error("curl");
 			return CURL_SOCKET_BAD;
 		}
 
-		int sockfd = socket(address->family,address->socktype,address->protocol);
+		int sockfd = ::socket(address->family,address->socktype,address->protocol);
 		if(sockfd < 0) {
-			cerr << "curl\tError '" << strerror(errno) << "' creating socket to " << worker->url() << endl;
+			Logger::String{"Error '",strerror(errno),"' creating socket"}.error("curl");
 			return CURL_SOCKET_BAD;
 		}
-
 
 		//
 		// Non blocking connect
@@ -355,8 +294,8 @@
 			}
 
 			if(errno != EINPROGRESS) {
-				strncpy(worker->error,strerror(errno),sizeof(worker->error));
-				cerr << "curl\tError '" << worker->error << "' (" << errno << ") connecting to " << worker->url() << endl;
+				strncpy(engine->error,strerror(errno),CURL_ERROR_SIZE);
+				Logger::String{"Error '",engine->error,"' (",errno,") connecting to host"}.error("curl");
 				::close(sockfd);
 				return CURL_SOCKET_BAD;
 			}
@@ -373,8 +312,8 @@
 				auto rc = poll(&pfd,1,10);
 
 				if(rc == -1) {
-					strncpy(worker->error,strerror(errno),sizeof(worker->error));
-					cerr << "curl\tError '" << worker->error << "' (" << errno << ") connecting to " << worker->url() << endl;
+					strncpy(engine->error,strerror(errno),sizeof(engine->error));
+					cerr << "curl\tError '" << engine->error << "' (" << errno << ") on connect" << endl;
 					::close(sockfd);
 					return CURL_SOCKET_BAD;
 
@@ -388,8 +327,8 @@
 							error = errno;
 						}
 
-						strncpy(worker->error,strerror(errno),sizeof(worker->error));
-						cerr << "curl\tError '" << worker->error << "' (" << errno << ") connecting to " << worker->url() << endl;
+						strncpy(engine->error,strerror(errno),sizeof(engine->error));
+						cerr << "curl\tError '" << engine->error << "' (" << errno << ") while connecting" << endl;
 						::close(sockfd);
 						return CURL_SOCKET_BAD;
 
@@ -397,21 +336,21 @@
 
 					if(pfd.revents & POLLHUP) {
 
-						strncpy(worker->error,strerror(ECONNRESET),sizeof(worker->error));
-						cerr << "curl\tError '" << worker->error << "' (" << errno << ") connecting to " << worker->url() << endl;
+						strncpy(engine->error,strerror(ECONNRESET),sizeof(engine->error));
+						cerr << "curl\tError '" << engine->error << "' (" << errno << ") while connecting" << endl;
 						::close(sockfd);
 						return CURL_SOCKET_BAD;
 
 					}
 
 					if(pfd.revents & POLLOUT) {
-						debug("Connected to ",(std::string &) worker->url());
+						debug("Connected");
 						break;
 					}
 
 				} else if(!mainloop) {
 
-					cerr << "curl\tMainLoop disabled, aborting connect to " << worker->url() << endl;
+					cerr << "curl\tMainLoop disabled, aborting connect" << endl;
 					::close(sockfd);
 					return CURL_SOCKET_BAD;
 
@@ -424,8 +363,8 @@
 			}
 
 			if(!timer) {
-				strncpy(worker->error,strerror(ETIMEDOUT),sizeof(worker->error));
-				cerr << "curl\tError '" << worker->error << "' (" << errno << ") connecting to " << worker->url() << endl;
+				strncpy(engine->error,strerror(ETIMEDOUT),sizeof(engine->error));
+				cerr << "curl\tError '" << engine->error << "' (" << errno << ") on connect" << endl;
 				::close(sockfd);
 				return CURL_SOCKET_BAD;
 			}
@@ -453,14 +392,136 @@
 		}
 
 		// Update worker
-		worker->set_socket(sockfd);
-		worker->out.payload.expand(true,true);
+		try {
 
-		debug("Payload with ",worker->out.payload.size()," bytes:\n",worker->out.payload);
+			engine->worker.socket(sockfd);
+			return (curl_socket_t) sockfd;
 
-		return (curl_socket_t) sockfd;
+		} catch(const std::exception &e) {
+
+			Logger::String{e.what()}.error("curl");
+			strncpy(engine->error,e.what(),CURL_ERROR_SIZE);
+
+		} catch(...) {
+
+			Logger::String{"Unexpected error"}.error("curl");
+
+		}
+
+		::close(sockfd);
+		return CURL_SOCKET_BAD;
 
 	}
 
- #endif // HAVE_CURL
+	size_t HTTP::Engine::header_callback(char *buffer, size_t size, size_t nitems, Engine *engine) noexcept {
+
+		Udjat::String header{(const char *) buffer,(size_t) (size*nitems)};
+
+		try {
+
+			if(strncasecmp(header.c_str(),"HTTP/",5) == 0 && header.size()) {
+
+				unsigned int v[2];
+				unsigned int code;
+				char str[201];
+				memset(str,0,sizeof(str));
+
+				if(sscanf(header.c_str()+5,"%u.%u %d %200c",&v[0],&v[1],&code,str) == 4) {
+
+					for(size_t ix = 0; ix < sizeof(str);ix++) {
+						if(str[ix] < ' ') {
+							str[ix] = 0;
+							break;
+						}
+					}
+
+					engine->message = str;
+				}
+
+
+			} else if(strncasecmp(header.c_str(),"Content-Length:",15) == 0 && header.size()) {
+
+				char *end = nullptr;
+				engine->content_length(strtoull(header.c_str()+16,&end,10));
+
+			} else if(!header.strip().empty()) {
+
+				const char *from = header.c_str();
+				const char *delimiter = strchr(from,':');
+
+				if(delimiter) {
+					engine->response(
+						String{from,(size_t) (delimiter-from)}.strip().c_str(),
+						String{delimiter+1}.strip().c_str()
+					);
+				}
+
+			}
+
+			return size*nitems;
+
+		} catch(const std::exception &e) {
+
+			Logger::String{e.what()}.error("curl");
+			strncpy(engine->error,e.what(),CURL_ERROR_SIZE);
+
+		} catch(...) {
+
+			Logger::String{"Unexpected error processing http header"}.error("curl");
+
+		}
+
+		// TODO: Abort on error.
+		return size*nitems;
+
+	}
+
+	int HTTP::Engine::sockopt_callback(Engine *, curl_socket_t, curlsocktype) noexcept {
+		return CURL_SOCKOPT_ALREADY_CONNECTED;
+	}
+
+	size_t HTTP::Engine::read_callback(char *outbuffer, size_t size, size_t nitems, Engine *engine) noexcept {
+
+		size_t length = 0;
+
+		try {
+
+			if(!engine->outptr) {
+
+				// Get payload.
+				engine->outptr = engine->worker.payload();
+				if(*engine->outptr && Logger::enabled(Logger::Trace) && Config::Value<bool>("http","trace-payload",TRACE_DEFAULT).get()) {
+					Logger::String{"Payload\n",engine->outptr}.trace("curl");
+				}
+
+			}
+
+			if(*engine->outptr) {
+				size_t szpayload = strlen(engine->outptr);
+
+				length = (size*nitems);
+				if(szpayload < length) {
+					length = szpayload;
+				}
+
+				memcpy(outbuffer,engine->outptr,length);
+				engine->outptr += length;
+			}
+
+		} catch(const std::exception &e) {
+
+			cerr << "curl\tError '" << e.what() << "' getting post payload" << endl;
+			return CURL_READFUNC_ABORT;
+
+		} catch(...) {
+
+			cerr << "curl\tUnexpected error getting post payload" << endl;
+			return CURL_READFUNC_ABORT;
+
+		}
+
+		return length;
+	}
+
  }
+

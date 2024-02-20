@@ -17,6 +17,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+ /*
 #include <winsock2.h>
 #include <winsock.h>
 
@@ -90,7 +91,7 @@ namespace Udjat {
 		WinHttpCloseHandle(this->session);
 	}
 
-	HTTP::Worker & HTTP::Worker::credentials(const char *user, const char *passwd) {
+	HTTP::Worker & HTTP::Worker::credentials(const char *, const char *) {
 		throw runtime_error("Not implemented");
 		return *this;
 	}
@@ -338,3 +339,4 @@ namespace Udjat {
 	}
 
 }
+*/

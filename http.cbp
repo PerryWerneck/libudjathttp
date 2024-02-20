@@ -38,30 +38,27 @@
 			<Add directory="src/libhttp/include" />
 		</Compiler>
 		<Unit filename="src/include/config.h" />
-		<Unit filename="src/include/internals.h" />
+		<Unit filename="src/include/private/engine.h" />
 		<Unit filename="src/include/udjat/tools/http.h">
 			<Option virtualFolder="src/include/" />
 		</Unit>
 		<Unit filename="src/include/udjat/tools/http/worker.h" />
-		<Unit filename="src/libhttp/include/config.h" />
-		<Unit filename="src/libhttp/include/http/defs.h" />
-		<Unit filename="src/libhttp/include/http/table.h" />
-		<Unit filename="src/libhttp/include/http/value.h" />
-		<Unit filename="src/libhttp/include/internals.h" />
 		<Unit filename="src/libhttp/os/linux/private.h" />
 		<Unit filename="src/libhttp/os/windows/native_win32.h" />
+		<Unit filename="src/library/engine.cc" />
 		<Unit filename="src/library/engines/curl/curl.cc" />
 		<Unit filename="src/library/engines/curl/get.cc" />
 		<Unit filename="src/library/engines/curl/test.cc" />
 		<Unit filename="src/library/engines/winhttp/get.cc" />
 		<Unit filename="src/library/engines/winhttp/test.cc" />
+		<Unit filename="src/library/engines/winhttp/winhttp.cc" />
 		<Unit filename="src/library/engines/winhttp/worker.cc" />
 		<Unit filename="src/library/os/linux/get.cc" />
+		<Unit filename="src/library/os/linux/writer.cc" />
 		<Unit filename="src/library/os/windows/base64.cc" />
 		<Unit filename="src/library/os/windows/base64.h" />
 		<Unit filename="src/library/worker.cc" />
 		<Unit filename="src/module/init.cc" />
-		<Unit filename="src/os/windows/base64.h" />
 		<Unit filename="src/testprogram/testprogram.cc" />
 		<Unit filename="src/testprogram/windows/resources.rc" />
 		<Extensions />

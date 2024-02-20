@@ -17,6 +17,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+ /*
  #include <config.h>
  #include <udjat/tools/http/worker.h>
  #include <cstring>
@@ -69,7 +70,7 @@
 			break;
 
 		default:
-			cerr << "Invalid or unsupported http verb" << endl;
+			cerr << "curl\tInvalid or unsupported http verb" << endl;
 			return EINVAL;
 		}
 
@@ -114,3 +115,4 @@
 
  #endif // HAVE_CURL
  }
+ */

@@ -27,6 +27,7 @@
  #include <udjat/agent.h>
  #include <udjat/factory.h>
  #include <udjat/module.h>
+ #include <udjat/tools/http/worker.h>
  #include <iostream>
  #include <memory>
 
@@ -37,85 +38,26 @@
 
 int main(int argc, char **argv) {
 
-	/*
-	if(HTTP::Client("http://127.0.0.1/~perry/test.xml").get("/tmp/localhost.html")) {
-		cout << endl << endl << "File was updated!" << endl << endl;
-	}
-	*/
+	Udjat::Quark::init();
+	Udjat::Logger::redirect();
+	Udjat::Logger::enable(Udjat::Logger::Trace);
+	Udjat::Logger::enable(Udjat::Logger::Debug);
+	Udjat::Logger::console(true);
 
-	auto module = udjat_module_init();
+	// cout << HTTP::Worker{"http://127.0.0.1/~perry/libudjat.xml"}.get([](double, double){ return true; }) << endl;
 
-	cout << "Response:" << endl << URL("http://localhost").get() << endl;
-
-	// auto response = URL("http://localhost").test();
-	//cout << "-----------------> Test: " << response << endl;
-
-	/*
-	if(URL("http://127.0.0.1/~perry/test.xml").get("localhost.html")) {
-		cout << endl << endl << "File was updated!" << endl << endl;
-	}
-	*/
-
-	/*
 	try {
 
-		URL("http://localhost").get("/tmp/localhost.html",[](double current, double total){
-			cout << "Donwloading " << current << " of " << total << endl;
-			return true;
-		});
+		std::shared_ptr<Protocol::Worker> worker = make_shared<HTTP::Worker>("http://127.0.0.1/~perry/libudjat.xml");
+		worker->save("/tmp/test.html");
 
 	} catch(const std::exception &e) {
 
-		cerr << "**** Error '" << e.what() << "'" << endl;
+		cerr << "Error: " << e.what() << endl;
 
 	}
-	*/
-
-
-	/*
-	try {
-
-		HTTP::Client("http://localhost").post(
-			"ipaddr='${ipaddr}'\n"
-			"hostip='${hostip}'\n"
-			"nic='${network-interface}'\n"
-			"macaddress='${macaddress}'"
-		);
-
-	} catch(const std::exception &e) {
-
-		cout << e.what() << endl;
-
-	}
-	*/
-
-	/*
-	{
-
-		Config::Value<string> url("http","connectivity","http://localhost/~perry/test.xml");
-		cout << "Test url is '" << url << "'" << endl;
-
-		try {
-
-			cout << "-----------------------------------" << endl;
-
-
-			HTTP::Client(url.c_str()).save("test.html");
-
-			cout << "-----------------------------------" << endl;
-
-		} catch(const std::exception &e) {
-
-			cerr << "**** Error downloading " << url << ": '" << e.what() << "'" << endl;
-
-		}
-
-	}
-	*/
 
 	Udjat::Module::unload();
-
-	cout << "Ending test program" << endl;
 
 	return 0;
 
