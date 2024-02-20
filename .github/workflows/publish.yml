@@ -15,7 +15,7 @@ jobs:
       - uses: oprypin/find-latest-tag@v1
         id: gettag
         with:
-          repository: PerryWerneck/udjat-module-users
+          repository: PerryWerneck/udjat-module-http
           releases-only: true
       - uses: msys2/setup-msys2@v2
         with:
@@ -35,7 +35,7 @@ jobs:
       - uses: ncipollo/release-action@v1
         with:
           tag: ${{ steps.gettag.outputs.tag }}
-          artifacts: "udjat-module-*.pkg.tar.zst"
+          artifacts: "*udjat-module-*.pkg.tar.zst"
           allowUpdates: true
           draft: false
           makeLatest: true
