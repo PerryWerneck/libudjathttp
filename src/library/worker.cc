@@ -212,6 +212,7 @@
 		};
 
 		// Check timestamp of last file modification.
+#if UDJAT_CHECK_VERSION(1,2,0)
 		{
 			time_t mtime = file.mtime();
 			if(mtime) {
@@ -219,6 +220,7 @@
 				debug("modified-time=",request("If-Modified-Since").c_str());
 			}
 		}
+#endif
 
 		debug("Saving file");
 		int rc = Engine{*this, file, progress}.perform(true);
@@ -246,12 +248,14 @@
 		}
 
 		// Set file modification time according to the host's modification time.
+#if UDJAT_CHECK_VERSION(1,2,0)
 		HTTP::TimeStamp timestamp{response("Last-Modified").value()};
 		debug("timestamp=",timestamp.to_string());
 		if(timestamp) {
 			Logger::String{"Timestamp of ",filename," set to ",timestamp.to_string()}.trace("http");
 			File::mtime(filename,(time_t) timestamp);
 		}
+#endif
 
 		return true;
 

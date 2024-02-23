@@ -75,12 +75,18 @@
 				return headers.response;
 			}
 
+#if UDJAT_CHECK_VERSION(1,2,0)
 			Protocol::Header & request(const char *name) override;
 			const Protocol::Header & response(const char *name) override;
+			bool save(File::Handler &file, const std::function<bool(double current, double total)> &progress) override;
+#else
+			Protocol::Header & request(const char *name);
+			const Protocol::Header & response(const char *name);
+			bool save(File::Handler &file, const std::function<bool(double current, double total)> &progress);
+#endif // UDJAT_CHECK_VERSION
 
 			Worker & credentials(const char *user, const char *passwd) override;
 
-			bool save(File::Handler &file, const std::function<bool(double current, double total)> &progress) override;
 			bool save(const char *filename, const std::function<bool(double current, double total)> &progress, bool replace) override;
 			void save(const std::function<bool(unsigned long long current, unsigned long long total, const void *buf, size_t length)> &writer) override;
 
