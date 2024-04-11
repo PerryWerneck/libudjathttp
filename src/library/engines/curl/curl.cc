@@ -95,7 +95,7 @@
 			break;
 
 		case HTTP::Put:
-			curl_easy_setopt(hCurl, CURLOPT_PUT, 1);
+			curl_easy_setopt(hCurl, CURLOPT_UPLOAD, 1);
 			break;
 
 		case HTTP::Delete:
@@ -312,7 +312,7 @@
 				auto rc = poll(&pfd,1,10);
 
 				if(rc == -1) {
-					strncpy(engine->error,strerror(errno),sizeof(engine->error));
+					strncpy(engine->error,strerror(errno),sizeof(engine->error)-1);
 					cerr << "curl\tError '" << engine->error << "' (" << errno << ") on connect" << endl;
 					::close(sockfd);
 					return CURL_SOCKET_BAD;
@@ -327,7 +327,7 @@
 							error = errno;
 						}
 
-						strncpy(engine->error,strerror(errno),sizeof(engine->error));
+						strncpy(engine->error,strerror(errno),sizeof(engine->error)-1);
 						cerr << "curl\tError '" << engine->error << "' (" << errno << ") while connecting" << endl;
 						::close(sockfd);
 						return CURL_SOCKET_BAD;
@@ -336,7 +336,7 @@
 
 					if(pfd.revents & POLLHUP) {
 
-						strncpy(engine->error,strerror(ECONNRESET),sizeof(engine->error));
+						strncpy(engine->error,strerror(ECONNRESET),sizeof(engine->error)-1);
 						cerr << "curl\tError '" << engine->error << "' (" << errno << ") while connecting" << endl;
 						::close(sockfd);
 						return CURL_SOCKET_BAD;
@@ -363,7 +363,7 @@
 			}
 
 			if(!timer) {
-				strncpy(engine->error,strerror(ETIMEDOUT),sizeof(engine->error));
+				strncpy(engine->error,strerror(ETIMEDOUT),sizeof(engine->error)-1);
 				cerr << "curl\tError '" << engine->error << "' (" << errno << ") on connect" << endl;
 				::close(sockfd);
 				return CURL_SOCKET_BAD;
