@@ -290,6 +290,7 @@
 
 			// Connect to host.
 			if(!connect(sockfd,(struct sockaddr *)(&(address->addr)),address->addrlen)) {
+				Logger::String{"Connected to host using socket '",sockfd,"'"}.trace("curl");
 				return (curl_socket_t) sockfd;
 			}
 
@@ -344,7 +345,6 @@
 					}
 
 					if(pfd.revents & POLLOUT) {
-						debug("Connected");
 						break;
 					}
 
@@ -374,6 +374,8 @@
 				::close(sockfd);
 				return CURL_SOCKET_BAD;
 			}
+
+			Logger::String{"Connected to host using socket '",sockfd,"'"}.trace("curl");
 
 		}
 
