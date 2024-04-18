@@ -67,6 +67,9 @@
 		curl_easy_setopt(hCurl, CURLOPT_OPENSOCKETDATA, this);
 		curl_easy_setopt(hCurl, CURLOPT_OPENSOCKETFUNCTION, open_socket_callback);
 
+		curl_easy_setopt(hCurl, CURLOPT_CLOSESOCKETDATA, this);
+		curl_easy_setopt(hCurl, CURLOPT_CLOSESOCKETFUNCTION, close_socket_callback);
+
 		curl_easy_setopt(hCurl, CURLOPT_SOCKOPTDATA, this);
 		curl_easy_setopt(hCurl, CURLOPT_SOCKOPTFUNCTION, sockopt_callback);
 
@@ -412,6 +415,26 @@
 
 		::close(sockfd);
 		return CURL_SOCKET_BAD;
+
+	}
+
+	int HTTP::Engine::close_socket_callback(Engine *, curl_socket_t item) {
+
+#ifdef _WIN32
+		if(sockclose(item)) {
+			Logger::String{"Error '",WSAGetLastError(),"' closing socket ",item}.warning("curl");
+			return 1;
+		}
+#else
+		int rc = ::close(item);
+		if(rc) {
+			Logger::String{"Error '",strerror(rc),"' closing socket ",item}.warning("curl");
+			return 1;
+		}
+#endif // _WIN32
+
+		Logger::String{"Socket ",item," was closed"}.trace("curl");
+		return 0;
 
 	}
 
