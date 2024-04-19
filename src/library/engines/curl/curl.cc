@@ -56,6 +56,8 @@
 
 	HTTP::Engine::Engine(HTTP::Worker &w, const HTTP::Method method, time_t timeout) : hCurl{curl_easy_init()}, worker{w} {
 
+		Logger::String{"Starting worker ",(unsigned long long) this}.write(Logger::Debug,"curl");
+
 		curl_easy_setopt(hCurl, CURLOPT_FOLLOWLOCATION, 1L);
 
 		memset(error,0,CURL_ERROR_SIZE+1);
@@ -153,6 +155,9 @@
 	}
 
 	HTTP::Engine::~Engine() {
+
+		Logger::String{"Stopping worker ",(unsigned long long) this}.write(Logger::Debug,"curl");
+
 		if(headers) {
 			curl_slist_free_all(headers);
 		}
