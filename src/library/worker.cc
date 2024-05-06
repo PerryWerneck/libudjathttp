@@ -148,6 +148,19 @@
 
 	}
 
+	Protocol::Header & HTTP::Worker::header(const char *name) {
+
+		for(auto &header : headers.request) {
+			if(header == name) {
+				return header;
+			}
+		}
+
+		headers.request.emplace_back(name);
+		return headers.request.back();
+
+	}
+
 	Protocol::Header & HTTP::Worker::request(const char *name) {
 
 		for(auto &header : headers.request) {
