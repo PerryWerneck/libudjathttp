@@ -73,14 +73,11 @@
 				progress(current,total);
 			}
 
-			Engine & perform() {
-				Udjat::HTTP::Engine::perform(true);
-				return *this;
-			}
-
 		};
 
-		return Engine{*this,progress}.perform().str();
+		Engine engine{*this,progress};
+		status_code = engine.perform();
+		return engine.str();
 
 	}
 
@@ -117,7 +114,8 @@
 
 		try {
 
-			return Engine{*this,progress}.perform(false);
+			status_code = Engine{*this,progress}.perform(false);
+			return (int) status_code;
 
 		} catch(const std::exception &e) {
 
@@ -236,10 +234,10 @@
 #endif
 
 		debug("Saving file");
-		int rc = Engine{*this, file, progress}.perform(true);
-		debug("rc=",rc);
+		status_code = Engine{*this, file, progress}.perform(true);
+		debug("rc=",status_code);
 
-		if(rc >= 200 && rc <= 299) {
+		if(status_code >= 200 && status_code <= 299) {
 			return true;
 		}
 
@@ -255,7 +253,6 @@
 				debug("Not saved, returning false");
 				return false;
 			}
-			debug("aaaa");
 			Logger::String{"Updating ",filename}.trace("http");
 			handler.save(replace);
 		}
@@ -301,7 +298,7 @@
 
 		};
 
-		Engine{*this, writer}.perform(true);
+		status_code = Engine{*this, writer}.perform(true);
 
 	}
 
