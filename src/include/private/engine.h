@@ -140,6 +140,10 @@
 
 			int response_code();
 
+			inline const char * response_message() const noexcept {
+				return message.c_str();
+			}
+
 			/// @brief Perform.
 			/// @param except If true launch exception if http response is not 200-299.
 			/// @return HTTP status code.

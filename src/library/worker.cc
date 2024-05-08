@@ -20,6 +20,7 @@
  #include <config.h>
  #include <udjat/tools/http/worker.h>
  #include <udjat/tools/http/timestamp.h>
+ #include <udjat/tools/http/exception.h>
  #include <private/engine.h>
  #include <udjat/tools/logger.h>
  #include <udjat/tools/file.h>
@@ -77,6 +78,9 @@
 
 		Engine engine{*this,progress};
 		status_code = engine.perform();
+		if(status_code < 200 || status_code > 299) {
+			throw HTTP::Exception(status_code,this->url().c_str(),engine.response_message());
+		}
 		return engine.str();
 
 	}
