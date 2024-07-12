@@ -81,11 +81,10 @@
 			bool save(File::Handler &file, const std::function<bool(double current, double total)> &progress) override;
 #else
 			Protocol::Header & request(const char *name);
+			Protocol::Header & header(const char *name) override;
 			const Protocol::Header & response(const char *name);
 			bool save(File::Handler &file, const std::function<bool(double current, double total)> &progress);
 #endif // UDJAT_CHECK_VERSION
-
-			Protocol::Header & header(const char *name) override;
 
 			Worker & credentials(const char *user, const char *passwd) override;
 

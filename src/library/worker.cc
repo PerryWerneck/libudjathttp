@@ -79,7 +79,11 @@
 		Engine engine{*this,progress};
 		status_code = engine.perform();
 		if(status_code < 200 || status_code > 299) {
+#if UDJAT_CHECK_VERSION(1,2,0)
+			throw HTTP::Exception(status_code,engine.response_message());
+#else
 			throw HTTP::Exception(status_code,this->url().c_str(),engine.response_message());
+#endif
 		}
 		return engine.str();
 
@@ -150,6 +154,8 @@
 
 	}
 
+#if UDJAT_CHECK_VERSION(1,2,0)
+#else
 	Protocol::Header & HTTP::Worker::header(const char *name) {
 
 		for(auto &header : headers.request) {
@@ -162,7 +168,7 @@
 		return headers.request.back();
 
 	}
-
+#endif
 	Protocol::Header & HTTP::Worker::request(const char *name) {
 
 		for(auto &header : headers.request) {
