@@ -6,7 +6,7 @@ includedir=@includedir@
 Name: udjat-http-client
 Description: UDJAT Simple HTTP client library
 Version: @PACKAGE_VERSION@
-Libs: -ludjathttp.static @CURL_LIBS@
+Libs: -l:libudjathttp.a @CURL_LIBS@
 Libs.private: @LIBS@ @UDJAT_LIBS@
 Cflags: -I@includedir@
 
