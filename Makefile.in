@@ -1,13 +1,15 @@
-
 #---[ Library configuration ]------------------------------------------------------------
 
 PACKAGE_NAME=@PACKAGE_NAME@
-PRODUCT_NAME=@PRODUCT_NAME@
+LIBRARY_NAME="http"
+SONAME=@SONAME@
 
-MODULE_SOURCES= \
+LIBRARY_SOURCES= \
 	$(wildcard src/library/*.cc) \
 	$(wildcard src/library/os/@OSNAME@/*.cc) \
-	$(wildcard src/library/engines/@ENGINE@/*.cc) \
+	$(wildcard src/library/engines/@ENGINE@/*.cc)
+
+MODULE_SOURCES= \
 	$(wildcard src/module/*.cc)
 
 TEST_SOURCES= \
@@ -22,9 +24,6 @@ MKDIR=@MKDIR_P@
 INSTALL=@INSTALL@
 INSTALL_DATA=@INSTALL_DATA@
 INSTALL_PROGRAM=@INSTALL_PROGRAM@
-INSTALL_STRIP_PROGRAM=@INSTALL_STRIP_PROGRAM@
-XGETTEXT=@XGETTEXT@
-MSGCAT=@MSGCAT@
 XGETTEXT=@XGETTEXT@
 MSGCAT=@MSGCAT@
 WINDRES=@WINDRES@
@@ -45,15 +44,18 @@ localedir=@localedir@
 docdir=@docdir@
 sysconfdir=/etc
 
+BASEDIR=@BASEDIR@
 DLL_LDFLAGS=@DLL_LDFLAGS@
 
 OBJDIR=.obj
 OBJDBG=$(OBJDIR)/Debug
 OBJRLS=$(OBJDIR)/Release
 
-BINDIR=.bin
+BINDIR=$(BASEDIR)/.bin
 BINDBG=$(BINDIR)/Debug
 BINRLS=$(BINDIR)/Release
+
+POTDIR=.pot
 
 #---[ Rules ]----------------------------------------------------------------------------
 
@@ -64,17 +66,15 @@ CFLAGS= \
 	@CXXFLAGS@ \
 	-Isrc/include \
 	-DBUILD_DATE=`date +%Y%m%d` \
-	@UDJAT_CFLAGS@ \
-	@CURL_CFLAGS@ \
-	@PUGIXML_CFLAGS@
+	-DLOCALEDIR=$(localedir) \
+	@UDJAT_CFLAGS@ 
 
 LDFLAGS=\
 	@LDFLAGS@
 
 LIBS= \
 	@LIBS@ \
-	@UDJAT_LIBS@ \
-	@CURL_LIBS@
+	@UDJAT_LIBS@
 
 #---[ Debug Rules ]----------------------------------------------------------------------
 
@@ -131,6 +131,33 @@ $(OBJRLS)/%.o: \
 	@$(MKDIR) $(@D)
 	@$(WINDRES) $< -O coff -o $@
 
+$(POTDIR)/%.pot: \
+	%.cc
+
+	@echo $(notdir $@) ...
+	@$(MKDIR) $(dir $@)
+	@$(XGETTEXT) \
+		--from-code=UTF-8 \
+		--language=C \
+		--keyword=_ \
+		--keyword=N_ \
+		--keyword=MSG_:2 \
+		--output=$@ \
+		$<
+	@touch $@
+
+$(POTDIR)/%.pot: \
+	%.rc
+
+	@echo $< ...
+	@$(MKDIR) $(dir $@)
+	@touch $@
+
+install-%: \
+	%/Makefile
+
+	@$(MAKE) -C `dirname $<` DESTDIR=$(DESTDIR) install
+
 #---[ Release Targets ]------------------------------------------------------------------
 
 all: \
@@ -140,21 +167,8 @@ all: \
 Release: \
 	$(BINRLS)/$(PACKAGE_NAME)@LIBEXT@
 
-$(BINRLS)/$(PACKAGE_NAME)@LIBEXT@: \
-	$(foreach SRC, $(basename $(MODULE_SOURCES)), $(OBJRLS)/$(SRC).o)
-
-	@$(MKDIR) $(@D)
-	@echo $< ...
-	@$(LD) \
-		-shared \
-		-o $@ \
-		$(LDFLAGS) \
-		$^ \
-		$(LIBS) \
-		@PUGIXML_LIBS@
-
 locale/$(PACKAGE_NAME).pot: \
-	$(foreach SRC, $(basename $(MAIN_SOURCES)), $(POTDIR)/$(SRC).pot)
+	$(foreach SRC, $(basename $(LIBRARY_SOURCES) $(MODULE_SOURCES)), $(POTDIR)/$(SRC).pot)
 
 	@rm -f $@
 	@$(MKDIR) $(dir $@)
@@ -163,49 +177,148 @@ locale/$(PACKAGE_NAME).pot: \
 locale: \
 	locale/$(PACKAGE_NAME).pot
 
+$(BINRLS)/$(SONAME): \
+	$(foreach SRC, $(basename $(LIBRARY_SOURCES)), $(OBJRLS)/$(SRC).o)
+
+	@$(MKDIR) $(@D)
+	@echo $< ...
+	@$(LD) \
+		$(DLL_LDFLAGS) \
+		-Wl,-soname,$(@F) \
+		-o $@ \
+		$(LDFLAGS) \
+		$^ \
+		$(LIBS)
+
+$(BINRLS)/libudjat$(LIBRARY_NAME).a: \
+	$(foreach SRC, $(basename $(LIBRARY_SOURCES)), $(OBJRLS)/$(SRC).o)
+
+	@$(MKDIR) $(@D)
+	@echo $< ...
+	@$(AR) rcs $@ $^
+
+$(BINRLS)/$(PACKAGE_NAME)@LIBEXT@: \
+	$(foreach SRC, $(basename $(MODULE_SOURCES)), $(OBJRLS)/$(SRC).o) \
+	$(BINRLS)/$(SONAME)
+
+	@$(MKDIR) $(@D)
+	@echo $< ...
+	@$(LD) \
+		-shared \
+		-o $@ \
+		$(LDFLAGS) \
+		$^ \
+		$(LIBS)
+
+
 #---[ Install Targets ]------------------------------------------------------------------
 
 install: \
 	install-@OSNAME@ \
-	install-module
+	install-module \
+	install-dev \
+	install-locale
 
-install-linux:
+install-linux: \
+	$(BINRLS)/$(SONAME)
 
-	# Install configuration
-	@$(MKDIR) $(DESTDIR)$(sysconfdir)/$(PRODUCT_NAME).conf.d
-
-	@$(INSTALL_DATA) \
-		conf.d/*.conf \
-		$(DESTDIR)$(sysconfdir)/$(PRODUCT_NAME).conf.d
-
-install-windows:
-	@echo No configuration file for windows
-		
-install-debug: \
-	$(BINDBG)/$(PACKAGE_NAME)@LIBEXT@
-
-	@$(MKDIR) \
-		$(DESTDIR)@MODULE_PATH@
+	# Install library
+	@$(MKDIR) $(DESTDIR)$(libdir)
 
 	@$(INSTALL_PROGRAM) \
-		$(BINDBG)/$(PACKAGE_NAME)@LIBEXT@ \
-		$(DESTDIR)@MODULE_PATH@/$(PACKAGE_NAME)@LIBEXT@
+		$(BINRLS)/$(SONAME) \
+		$(DESTDIR)$(libdir)/$(SONAME)
+		
+install-windows: \
+	$(BINRLS)/@SONAME@
+
+	@$(MKDIR) \
+		$(DESTDIR)$(bindir)
+
+	@$(INSTALL_PROGRAM) \
+		$(BINRLS)/@SONAME@ \
+		$(DESTDIR)$(bindir)/@SONAME@
 		
 install-module: \
-	$(BINRLS)/$(PACKAGE_NAME)@LIBEXT@ \
-	locale/$(PACKAGE_NAME).pot
-	
+	$(BINRLS)/$(PACKAGE_NAME)@LIBEXT@
+
 	@$(MKDIR) \
 		$(DESTDIR)@MODULE_PATH@
 
 	@$(INSTALL_PROGRAM) \
 		$(BINRLS)/$(PACKAGE_NAME)@LIBEXT@ \
 		$(DESTDIR)@MODULE_PATH@/$(PACKAGE_NAME)@LIBEXT@
+
+install-dev: \
+	install-@OSNAME@-dev \
+	install-@OSNAME@-static
+		
+	@$(MKDIR) \
+		$(DESTDIR)$(includedir)/udjat/tools/http
+
+	@$(INSTALL_DATA) \
+		src/include/udjat/tools/http/*.h \
+		$(DESTDIR)$(includedir)/udjat/tools/http
+
+	# Install PKG-CONFIG files
+	@$(MKDIR) \
+		$(DESTDIR)$(libdir)/pkgconfig
+
+	@$(INSTALL_DATA) \
+		sdk/@OSNAME@/dynamic.pc \
+		$(DESTDIR)$(libdir)/pkgconfig/udjat-$(LIBRARY_NAME).pc
+
+	@$(INSTALL_DATA) \
+		sdk/@OSNAME@/static.pc \
+		$(DESTDIR)$(libdir)/pkgconfig/udjat-$(LIBRARY_NAME)-static.pc
+
+install-linux-static: \
+	$(BINRLS)/libudjat$(LIBRARY_NAME).a
+
+	# Install static library
+	@$(MKDIR) $(DESTDIR)$(libdir)
+	@$(INSTALL_DATA) \
+		$(BINRLS)/libudjat$(LIBRARY_NAME).a \
+		$(DESTDIR)$(libdir)/libudjat$(LIBRARY_NAME).a
+
+install-windows-static: \
+	$(BINRLS)/libudjat$(LIBRARY_NAME).a
+
+	@$(MKDIR) \
+		$(DESTDIR)$(libdir)
+
+	@$(INSTALL_PROGRAM) \
+		$(BINRLS)/libudjat$(LIBRARY_NAME).a \
+		$(DESTDIR)$(libdir)/libudjat$(LIBRARY_NAME).a
+
+install-linux-dev:
+
+	# Install linux SDK
+	@$(MKDIR) \
+		$(DESTDIR)$(libdir)
+
+	@$(LN_S) \
+		$(SONAME) \
+		$(DESTDIR)$(libdir)/libudjat$(LIBRARY_NAME).so
+
+install-windows-dev:
+
+	@$(MKDIR) \
+		$(DESTDIR)$(libdir)
+
+	@$(DLLTOOL) \
+		--input-def $(BINRLS)/udjat$(LIBRARY_NAME).def \
+		--dllname @SONAME@ \
+		--output-lib $(DESTDIR)$(libdir)/libudjat$(LIBRARY_NAME).dll.a
 		
 	
 #---[ Uninstall Targets ]----------------------------------------------------------------
 
 uninstall: \
+	uninstall-@OSNAME@
+
+uninstall-linux:
+
 	@rm -f \
 		$(DESTDIR)@MODULE_PATH@/$(PACKAGE_NAME)@LIBEXT@
 
@@ -216,6 +329,7 @@ Debug: \
 
 $(BINDBG)/udjat@EXEEXT@: \
 	$(BINDBG)/$(PACKAGE_NAME)@LIBEXT@ \
+	$(BINDBG)/$(SONAME) \
 	$(foreach SRC, $(basename $(TEST_SOURCES)), $(OBJDBG)/$(SRC).o)
 
 	@$(MKDIR) $(@D)
@@ -226,11 +340,25 @@ $(BINDBG)/udjat@EXEEXT@: \
 		-L$(BINDBG) \
 		-Wl,-rpath,$(BINDBG) \
 		$(LDFLAGS) \
-		$(LIBS) \
-		@PUGIXML_LIBS@
+		$(LIBS)
+
+
+$(BINDBG)/$(SONAME): \
+	$(foreach SRC, $(basename $(LIBRARY_SOURCES)), $(OBJDBG)/$(SRC).o)
+
+	@$(MKDIR) $(@D)
+	@echo $< ...
+	@$(LD) \
+		$(DLL_LDFLAGS) \
+		-Wl,-soname,$(@F) \
+		-o $@ \
+		$(LDFLAGS) \
+		$^ \
+		$(LIBS)
 
 $(BINDBG)/$(PACKAGE_NAME)@LIBEXT@: \
-	$(foreach SRC, $(basename $(MODULE_SOURCES)), $(OBJDBG)/$(SRC).o)
+	$(foreach SRC, $(basename $(MODULE_SOURCES)), $(OBJDBG)/$(SRC).o) \
+	$(BINDBG)/$(SONAME)
 
 	@$(MKDIR) $(@D)
 	@echo $< ...
@@ -240,15 +368,15 @@ $(BINDBG)/$(PACKAGE_NAME)@LIBEXT@: \
 		-o $@ \
 		$(LDFLAGS) \
 		$^ \
-		$(LIBS) \
-		@PUGIXML_LIBS@
+		$(LIBS)
+
 
 run: \
 	$(BINDBG)/udjat@EXEEXT@
 
 ifeq ($(VALGRIND),no)
 
-	@LD_LIBRARY_PATH=$(B	INDBG) \
+	@LD_LIBRARY_PATH=$(BINDBG) \
 		$(BINDBG)/udjat@EXEEXT@ -f
 
 else
@@ -279,8 +407,7 @@ clean: \
 	cleanDebug \
 	cleanRelease
 
-
--include $(foreach SRC, $(basename $(MODULE_SOURCES) $(TEST_SOURCES)), $(OBJDBG)/$(SRC).d)
--include $(foreach SRC, $(basename $(MODULE_SOURCES) $(TEST_SOURCES)), $(OBJRLS)/$(SRC).d)
+-include $(foreach SRC, $(basename $(LIBRARY_SOURCES) $(MODULE_SOURCES) $(TEST_SOURCES)), $(OBJDBG)/$(SRC).d)
+-include $(foreach SRC, $(basename $(LIBRARY_SOURCES) $(MODULE_SOURCES) $(TEST_SOURCES)), $(OBJRLS)/$(SRC).d)
 
 
