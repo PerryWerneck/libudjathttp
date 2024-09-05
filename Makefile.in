@@ -63,7 +63,7 @@ DEPENDS= \
 	Makefile
 
 CFLAGS= \
-	@CXXFLAGS@ \
+	@CPPFLAGS@ \
 	-Isrc/include \
 	-DBUILD_DATE=`date +%Y%m%d` \
 	-DLOCALEDIR=$(localedir) \
@@ -73,8 +73,7 @@ LDFLAGS=\
 	@LDFLAGS@
 
 LIBS= \
-	@LIBS@ \
-	@UDJAT_LIBS@
+	@LIBS@ @UDJAT_LIBS@ @CURL_LIBS@
 
 #---[ Debug Rules ]----------------------------------------------------------------------
 

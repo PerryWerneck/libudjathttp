@@ -56,12 +56,11 @@ dnl ---------------------------------------------------------------------------
 dnl Check for OS specifics
 dnl ---------------------------------------------------------------------------
 
-CFLAGS="$CFLAGS -I$ac_pwd/src/include"
+CPPFLAGS="$CPPFLAGS -I$ac_pwd/src/include"
 
 case "$host" in
 	*-mingw32|*-pc-msys)
-		CFLAGS="$CFLAGS -pthread"
-		CXXFLAGS="$CXXFLAGS -pthread"
+		CPPFLAGS="$CPPFLAGS -pthread"
 		LDFLAGS="$LDFLAGS -pthread"
 		DLL_LDFLAGS="-shared -Wl,--output-def,\$(@D)/udjathttp.def"
 		LIBS="$LIBS -lws2_32 -lwinhttp"
@@ -80,7 +79,7 @@ case "$host" in
 		;;
 
  	*)
-		CFLAGS="$CFLAGS -pthread"
+		CPPFLAGS="$CPPFLAGS -pthread -ffat-lto-objects -DLIBDIR=\"\$(libdir)\" -DDATADIR=\"\$(datarootdir)\""
 		LDFLAGS="$LDFLAGS -pthread"
 		DLL_LDFLAGS="-shared"
 		AC_SUBST(LIBEXT,.so)
@@ -148,7 +147,7 @@ AC_TRY_RUN([int main() { return 0; }],
 CC="$ac_save_cc"])
 AC_MSG_RESULT($app_cv_fvisibility_ok)
 if test $app_cv_fvisibility_ok = yes; then
-  CXXFLAGS="$CXXFLAGS -fvisibility=hidden"
+  CPPFLAGS="$CPPFLAGS -fvisibility=hidden"
 fi
 
 dnl ---------------------------------------------------------------------------
@@ -175,7 +174,7 @@ AC_ARG_ENABLE([pic],
 ])
 
 if test "$app_cv_pic" == "yes"; then
-	CXXFLAGS="$CXXFLAGS -fPIC"
+	CPPFLAGS="$CPPFLAGS -fPIC"
 fi
 
 dnl ---------------------------------------------------------------------------
