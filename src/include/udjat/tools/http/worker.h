@@ -65,6 +65,9 @@
 
 			String get(const std::function<bool(double current, double total)> &progress) override;
 
+			bool get(const char *filename,const std::function<bool(double current, double total)> &progress);
+			bool get(const char *filename);
+
 			int test(const std::function<bool(double current, double total)> &progress) noexcept override;
 
 			inline const std::list<Protocol::Header> requests() const {

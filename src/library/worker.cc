@@ -195,6 +195,17 @@
 
 	}
 
+	bool HTTP::Worker::get(const char *filename) {
+		return get(filename,[](double,double){
+			return true;
+		});
+	}
+
+	bool HTTP::Worker::get(const char *filename,const std::function<bool(double current, double total)> &progress) {
+		File::Handler file{filename};
+		return save(file,progress);
+	}
+
 	bool HTTP::Worker::save(File::Handler &file, const std::function<bool(double current, double total)> &progress) {
 
 		class Engine : public Udjat::HTTP::Engine {
