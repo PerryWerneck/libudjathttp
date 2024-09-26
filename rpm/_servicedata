@@ -1,4 +1,6 @@
 <servicedata>
 <service name="tar_scm">
                 <param name="url">https://github.com/PerryWerneck/udjat-module-http.git</param>
-              <param name="changesrevision">4d918c743fd9d7fa0b4d9befb5b6c37b63f8fa82</param></service></servicedata>
+              <param name="changesrevision">547ae9a523ca3852a683e7f5a4c1e55ba4cde1d7</param></service><service name="tar_scm">
+                <param name="url">https://git.autoban.desenv.bb.com.br/udjat/module/udjat-module-http.git</param>
+              <param name="changesrevision">b81e09cf0e72e4866822caf84bd59476c5d0f841</param></service></servicedata>
