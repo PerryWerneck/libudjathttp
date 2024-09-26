@@ -265,11 +265,11 @@ install-dev: \
 
 	@$(INSTALL_DATA) \
 		sdk/@OSNAME@/dynamic.pc \
-		$(DESTDIR)$(libdir)/pkgconfig/udjat-$(LIBRARY_NAME).pc
+		$(DESTDIR)$(libdir)/pkgconfig/libudjat$(LIBRARY_NAME).pc
 
 	@$(INSTALL_DATA) \
 		sdk/@OSNAME@/static.pc \
-		$(DESTDIR)$(libdir)/pkgconfig/udjat-$(LIBRARY_NAME)-static.pc
+		$(DESTDIR)$(libdir)/pkgconfig/libudjat$(LIBRARY_NAME)-static.pc
 
 install-linux-static: \
 	$(BINRLS)/libudjat$(LIBRARY_NAME).a
