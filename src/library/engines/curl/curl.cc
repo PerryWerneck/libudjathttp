@@ -28,6 +28,7 @@
  #include <iostream>
  #include <poll.h>
  #include <udjat/tools/configuration.h>
+ #include <udjat/tools/intl.h>
 
  #ifdef DEBUG
 	#define TRACE_DEFAULT true
@@ -42,6 +43,7 @@
  	class UDJAT_PRIVATE CurlException : public Udjat::Exception {
 	public:
 		CurlException(CURLcode res, const char *message, const char *url = "") : Udjat::Exception{res,curl_easy_strerror(res)} {
+			info.title = _( "Network operation failed" );
 			info.url = url;
 			info.body = message;
 			info.domain = "curl";
@@ -130,7 +132,7 @@
 			break;
 
 		default:
-			throw system_error(EINVAL,system_category(),"Invalid or unsupported http verb");
+			throw system_error(EINVAL,system_category(),_( "Invalid or unsupported http verb" ));
 		}
 
 		if(Logger::enabled(Logger::Debug) && Config::Value<bool>("http","trace",TRACE_DEFAULT).get()) {
