@@ -22,6 +22,7 @@
  #include <private/engine.h>
  #include <udjat/tools/logger.h>
  #include <udjat/tools/mainloop.h>
+ #include <udjat/tools/exception.h>
  #include <unistd.h>
  #include <fcntl.h>
  #include <iostream>
@@ -45,7 +46,11 @@
 		CURLcode res = curl_easy_perform(hCurl);
 
 		if(res != CURLE_OK) {
-			throw runtime_error(this->error[0] ? this->error : curl_easy_strerror(res));
+			if(this->error[0]) {
+				throw Udjat::Exception(res,this->error,curl_easy_strerror(res));
+			} else {
+				throw runtime_error(curl_easy_strerror(res));
+			}
 		}
 
 		long response_code = 0;
@@ -336,8 +341,8 @@
 							error = errno;
 						}
 
-						strncpy(engine->error,strerror(errno),sizeof(engine->error)-1);
-						cerr << "curl\tError '" << engine->error << "' (" << errno << ") while connecting" << endl;
+						strncpy(engine->error,strerror(error),sizeof(engine->error)-1);
+						cerr << "curl\tError '" << engine->error << "' (" << error << ") while connecting" << endl;
 						::close(sockfd);
 						return CURL_SOCKET_BAD;
 

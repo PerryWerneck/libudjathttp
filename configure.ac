@@ -6,7 +6,7 @@ AC_PREREQ(2.59)
 
 dnl Initialise automake with the package name, version and
 dnl bug-reporting address.
-AC_INIT([udjat-module-http], [1.1], [perry.werneck@gmail.com],[udjat-module-http],[https://github.com/PerryWerneck/udjat-module-http])
+AC_INIT([udjat-module-http], [1.2.0], [perry.werneck@gmail.com],[udjat-module-http],[https://github.com/PerryWerneck/udjat-module-http])
 
 dnl Place auxilliary scripts here.
 AC_CONFIG_AUX_DIR([scripts])
@@ -42,12 +42,15 @@ dnl ---------------------------------------------------------------------------
 
 app_vrs_major=$(echo $VERSION | cut -d. -f1)
 app_vrs_minor=$(echo $VERSION | cut -d. -f2)
+app_vrs_release=$(echo $VERSION | cut -d. -f3)
 
 AC_DEFINE_UNQUOTED(PACKAGE_MAJOR_VERSION, $app_vrs_major, [The module major version])
 AC_DEFINE_UNQUOTED(PACKAGE_MINOR_VERSION, $app_vrs_minor, [The module minor version])
+AC_DEFINE_UNQUOTED(PACKAGE_RELEASE, $app_vrs_release, [The module release version])
 
 AC_SUBST(PACKAGE_MAJOR_VERSION,$app_vrs_major)
 AC_SUBST(PACKAGE_MINOR_VERSION,$app_vrs_minor)
+AC_SUBST(PACKAGE_RELEASE,$app_vrs_release)
 
 AC_DEFINE_UNQUOTED(GETTEXT_PACKAGE,"udjathttp-$app_vrs_major.$app_vrs_minor",[The gettext package name.])
 AC_SUBST(GETTEXT_PACKAGE,"udjathttp-$app_vrs_major.$app_vrs_minor")

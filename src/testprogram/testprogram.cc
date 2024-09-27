@@ -48,8 +48,13 @@ int main(int argc, char **argv) {
 
 	try {
 
-//		std::shared_ptr<Protocol::Worker> worker = make_shared<HTTP::Worker>("http://www.google.com");
-		std::shared_ptr<Protocol::Worker> worker = make_shared<HTTP::Worker>("http://localhost");
+		const char *url = getenv("TEST_URL");
+		if(!url) {
+			url = "http://localhost";
+		}
+
+		std::shared_ptr<Protocol::Worker> worker = make_shared<HTTP::Worker>(url);
+
 		worker->save("/tmp/test.html");
 		debug("--------------------------> Result code: ",worker->result_code());
 
