@@ -61,3 +61,4 @@ stamp-h1
 *.pc
 
 .environment
+.pot

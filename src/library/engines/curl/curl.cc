@@ -39,6 +39,23 @@
 
  namespace Udjat {
 
+ 	class UDJAT_PRIVATE CurlException : public Udjat::Exception {
+	public:
+		CurlException(CURLcode res, const char *message, const char *url = "") : Udjat::Exception{res,curl_easy_strerror(res)} {
+			info.url = url;
+			info.body = message;
+			info.domain = "curl";
+		}
+
+		void write(const Logger::Level level = Logger::Error) const noexcept override {
+			debug("Title: ",info.title.c_str());
+			debug("what:  ",what());
+			debug("body:  ",info.body.c_str());
+			Logger::String{info.body.c_str()}.write(level,"curl");
+		}
+
+	};
+
 	int HTTP::Engine::perform(bool except) {
 
 		outptr = nullptr;
@@ -47,7 +64,7 @@
 
 		if(res != CURLE_OK) {
 			if(this->error[0]) {
-				throw Udjat::Exception(res,this->error,curl_easy_strerror(res));
+				throw CurlException(res,this->error);
 			} else {
 				throw runtime_error(curl_easy_strerror(res));
 			}

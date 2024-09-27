@@ -58,8 +58,14 @@ int main(int argc, char **argv) {
 		worker->save("/tmp/test.html");
 		debug("--------------------------> Result code: ",worker->result_code());
 
+	} catch(const Udjat::Exception &e) {
+
+		debug("Udjat::Exception");
+		e.write();
+
 	} catch(const std::exception &e) {
 
+		debug("std::exception");
 		cerr << "Error: " << e.what() << endl;
 
 	}
