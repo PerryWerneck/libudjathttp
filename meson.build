@@ -95,6 +95,7 @@ includes_dir = include_directories('../src/include')
 lib_src = [
   'src/library/engine.cc',
   'src/library/worker.cc',
+  'src/library/module.cc',
 ]
 
 module_src = [

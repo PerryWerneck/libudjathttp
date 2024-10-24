@@ -31,19 +31,39 @@
 
  using namespace std;
 
- /// @brief Register udjat module.
- UDJAT_API Udjat::Module * udjat_module_init() {
+ namespace Udjat {
 
-	static const Udjat::ModuleInfo info{
-#if defined(_WIN32)
-		"WinHTTP module for " STRINGIZE_VALUE_OF(PRODUCT_NAME), 	// The module description.
-#elif defined(HAVE_CURL)
-		"CURL " LIBCURL_VERSION " module for " STRINGIZE_VALUE_OF(PRODUCT_NAME), 		// The module description.
+#ifdef HAVE_CURL
+	#define ALLOW_DEFAULT true
 #else
-		"HTTP module for " STRINGIZE_VALUE_OF(PRODUCT_NAME), 		// The module description.
-#endif //
-	};
+	#define ALLOW_DEFAULT false
+#endif
 
-	return new Udjat::HTTP::Module("http",info);
+	Udjat::Module * HTTP::Module::Factory(const char *name, const ModuleInfo &info) {
+
+		class Module : public HTTP::Module {
+		private:
+			std::shared_ptr<Protocol> http, https;
+
+		public:
+			Module(const char *name, const ModuleInfo &info) 
+				: HTTP::Module{name,info},http{make_shared<Protocol>("http",info,ALLOW_DEFAULT)},https{make_shared<Protocol>("https",info)} {
+			}
+
+			virtual ~Module() {
+			}
+
+		};
+
+		return new Module(name,info);
+	}
+
+	HTTP::Module::Module(const char *name, const ModuleInfo &info) : Udjat::Module(name,info) {
+	}
+
+	HTTP::Module::~Module() {
+	}
+
  }
+
 
