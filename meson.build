@@ -75,13 +75,6 @@ if cxx.compiles('#include <unistd.h>', name : 'unistd.h')
   app_conf.set('HAVE_UNISTD_H', 1)
 endif
 
-config_src = [
-  configure_file(
-      output : 'config.h', 
-      configuration : app_conf
-  )
-]
-
 #
 # SDK
 #
@@ -119,6 +112,7 @@ if host_machine.system() == 'windows'
   sdk_conf.set('REQUIRES','')
   sdk_conf.set('DYNLIBS','-ludjathttp.dll -lws2_32 -lwinhttp')
   sdk_conf.set('STATICLIBS','-ludjathttp -lws2_32 -lwinhttp')
+  app_conf.set('HAVE_WINHTTP', 1)
   lib_src += [
     'src/library/engines/winhttp/get.cc',
     'src/library/engines/winhttp/test.cc',
@@ -127,9 +121,10 @@ if host_machine.system() == 'windows'
     'src/library/os/windows/base64.cc'
   ]
 else
-  sdk_conf.set('REQUIRES','cups')
+  sdk_conf.set('REQUIRES','libcurl')
   sdk_conf.set('DYNLIBS','-ludjathttp')
   sdk_conf.set('STATICLIBS','-l:libudjathttp.a')
+  app_conf.set('HAVE_CURL', 1)
   lib_deps += [
     dependency('libcurl'),
   ]
@@ -142,6 +137,13 @@ endif
 #
 # Targets
 #
+config_src = [
+  configure_file(
+      output : 'config.h', 
+      configuration : app_conf
+  )
+]
+
 dynamic = shared_library(
   'udjathttp', 
   config_src + lib_src,
@@ -179,6 +181,7 @@ executable(
   config_src + test_src,
   install: false,
   link_with : [ dynamic, module ],
+  dependencies: [ libudjat ],
   include_directories: includes_dir
 )
 
