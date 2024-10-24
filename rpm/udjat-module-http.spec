@@ -45,6 +45,12 @@ BuildRequires:	gcc-c++
 BuildRequires:	pkgconfig(libudjat)
 BuildRequires:	pkgconfig(libcurl)
 
+%if 0%{?suse_version} == 01500
+BuildRequires:  meson = 0.61.4
+%else
+BuildRequires:  meson
+%endif
+
 %define MAJOR_VERSION %(echo %{version} | cut -d. -f1)
 %define MINOR_VERSION %(echo %{version} | cut -d. -f2 | cut -d+ -f1)
 
@@ -71,18 +77,14 @@ Development files for %{product_name}'s HTTP client library.
 #---[ Build & Install ]-----------------------------------------------------------------------------------------------
 
 %prep
-%setup
-
-NOCONFIGURE=1 \
-	./autogen.sh
-
-%configure 
+%autosetup -n udjat-module-http-%{version}
+%meson
 
 %build
-make all
+%meson_build
 
 %install
-%makeinstall
+%meson_install
 
 %files
 %{module_path}/*.so
