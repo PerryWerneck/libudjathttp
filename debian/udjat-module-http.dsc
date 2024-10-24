@@ -1,6 +1,6 @@
 Format: 1.0
 Source: udjat-module-http
-Version: 1.0-0
+Version: 1.2.0+git20241024-0
 Binary: libudjatdbus
 Maintainer: Perry Werneck <perry.werneck@gmail.com>
 Architecture: any
