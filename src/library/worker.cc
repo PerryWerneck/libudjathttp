@@ -226,18 +226,28 @@
 			}
 
 			void content_length(unsigned long long length) override {
-				debug("Setting file size to ",length," bytes");
+				debug("Setting file '",((int) file),"' size to ",length," bytes");
 				total = (double) length;
 				if(length) {
-					file.allocate(length);
+					try {
+						file.allocate(length);
+					} catch(const std::system_error &e) {
+						if(e.code().value() == ENOSPC) {
+							throw;
+						} else {
+							Logger::String{"Error '",e.code().value(),"' setting file size to ",length," bytes: ",e.what()," (fd=",(int) file,")"}.warning("curl");
+						}
+					} catch(const std::exception &e) {
+						Logger::String{"Error setting file size to ",length," bytes: ",e.what()," (fd=",(int) file,")"}.warning("curl");
+					}
 				}
 				progress(current,total);
 			}
 
 			void write(const void *contents, size_t length) override {
+				debug("Saving ",current,"/",total);
 				file.write(current,contents,length);
 				current += length;
-				debug("Saving ",current,"/",total);
 				progress(current,total);
 			}
 

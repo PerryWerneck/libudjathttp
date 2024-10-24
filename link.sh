@@ -12,4 +12,13 @@ if [ "$?" != "0" ]; then
 	exit -1
 fi
 
+sudo ln -sf $(readlink -f .bin/Debug/libudjathttp.so.*.*) /usr/lib64
+if [ "$?" != "0" ]; then
+	exit -1
+fi
+
+sudo ln -sf $(readlink -f .bin/Debug/*.a) /usr/lib64
+if [ "$?" != "0" ]; then
+	exit -1
+fi
 
