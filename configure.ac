@@ -6,7 +6,7 @@ AC_PREREQ(2.59)
 
 dnl Initialise automake with the package name, version and
 dnl bug-reporting address.
-AC_INIT([udjat-module-http], [1.1], [perry.werneck@gmail.com],[udjat-module-http],[https://github.com/PerryWerneck/udjat-module-http])
+AC_INIT([udjat-module-http], [1.2.0], [perry.werneck@gmail.com],[udjat-module-http],[https://github.com/PerryWerneck/udjat-module-http])
 
 dnl Place auxilliary scripts here.
 AC_CONFIG_AUX_DIR([scripts])
@@ -42,12 +42,15 @@ dnl ---------------------------------------------------------------------------
 
 app_vrs_major=$(echo $VERSION | cut -d. -f1)
 app_vrs_minor=$(echo $VERSION | cut -d. -f2)
+app_vrs_release=$(echo $VERSION | cut -d. -f3)
 
 AC_DEFINE_UNQUOTED(PACKAGE_MAJOR_VERSION, $app_vrs_major, [The module major version])
 AC_DEFINE_UNQUOTED(PACKAGE_MINOR_VERSION, $app_vrs_minor, [The module minor version])
+AC_DEFINE_UNQUOTED(PACKAGE_RELEASE, $app_vrs_release, [The module release version])
 
 AC_SUBST(PACKAGE_MAJOR_VERSION,$app_vrs_major)
 AC_SUBST(PACKAGE_MINOR_VERSION,$app_vrs_minor)
+AC_SUBST(PACKAGE_RELEASE,$app_vrs_release)
 
 AC_DEFINE_UNQUOTED(GETTEXT_PACKAGE,"udjathttp-$app_vrs_major.$app_vrs_minor",[The gettext package name.])
 AC_SUBST(GETTEXT_PACKAGE,"udjathttp-$app_vrs_major.$app_vrs_minor")
@@ -56,12 +59,11 @@ dnl ---------------------------------------------------------------------------
 dnl Check for OS specifics
 dnl ---------------------------------------------------------------------------
 
-CFLAGS="$CFLAGS -I$ac_pwd/src/include"
+CPPFLAGS="$CPPFLAGS -I$ac_pwd/src/include"
 
 case "$host" in
 	*-mingw32|*-pc-msys)
-		CFLAGS="$CFLAGS -pthread"
-		CXXFLAGS="$CXXFLAGS -pthread"
+		CPPFLAGS="$CPPFLAGS -pthread"
 		LDFLAGS="$LDFLAGS -pthread"
 		DLL_LDFLAGS="-shared -Wl,--output-def,\$(@D)/udjathttp.def"
 		LIBS="$LIBS -lws2_32 -lwinhttp"
@@ -80,7 +82,7 @@ case "$host" in
 		;;
 
  	*)
-		CFLAGS="$CFLAGS -pthread"
+		CPPFLAGS="$CPPFLAGS -pthread -ffat-lto-objects -DLIBDIR=\"\$(libdir)\" -DDATADIR=\"\$(datarootdir)\""
 		LDFLAGS="$LDFLAGS -pthread"
 		DLL_LDFLAGS="-shared"
 		AC_SUBST(LIBEXT,.so)
@@ -148,7 +150,7 @@ AC_TRY_RUN([int main() { return 0; }],
 CC="$ac_save_cc"])
 AC_MSG_RESULT($app_cv_fvisibility_ok)
 if test $app_cv_fvisibility_ok = yes; then
-  CXXFLAGS="$CXXFLAGS -fvisibility=hidden"
+  CPPFLAGS="$CPPFLAGS -fvisibility=hidden"
 fi
 
 dnl ---------------------------------------------------------------------------
@@ -175,7 +177,7 @@ AC_ARG_ENABLE([pic],
 ])
 
 if test "$app_cv_pic" == "yes"; then
-	CXXFLAGS="$CXXFLAGS -fPIC"
+	CPPFLAGS="$CPPFLAGS -fPIC"
 fi
 
 dnl ---------------------------------------------------------------------------

@@ -1,5 +1,5 @@
 #
-# spec file for package libudjat
+# spec file for package libudjathttp
 #
 # Copyright (c) 2015 SUSE LINUX GmbH, Nuernberg, Germany.
 # Copyright (C) <2008> <Banco do Brasil S.A.>
@@ -26,6 +26,10 @@ Release:		0
 License:		LGPL-3.0
 Source:			%{name}-%{version}.tar.xz
 
+%define MAJOR_VERSION %(echo %{version} | cut -d. -f1)
+%define MINOR_VERSION %(echo %{version} | cut -d. -f2 | cut -d+ -f1)
+%define _libvrs %{MAJOR_VERSION}_%{MINOR_VERSION}
+
 URL:			https://github.com/PerryWerneck/udjat-module-http.git
 
 Group:			Development/Libraries/C and C++
@@ -49,6 +53,21 @@ Provides:		udjat-protocol-http
 %description
 HTTP client module and library for %{product_name}
 
+%package -n libudjathttp%{_libvrs}
+Summary: %{product_name} http client library
+
+%description -n libudjathttp%{_libvrs}
+HTTP client libbrary for %{product_name}
+
+%package -n libudjathttp-devel
+Summary:        Development files for %{name}
+Requires:       pkgconfig(libudjat)
+Requires:       libudjathttp%{_libvrs} = %{version}
+
+%description -n libudjathttp-devel
+
+Development files for %{product_name}'s HTTP client library.
+
 #---[ Build & Install ]-----------------------------------------------------------------------------------------------
 
 %prep
@@ -67,7 +86,17 @@ make all
 
 %files
 %{module_path}/*.so
-%config(noreplace) %{_sysconfdir}/%{product_name}.conf.d/*.conf
+
+%files -n libudjathttp%{_libvrs}
+%defattr(-,root,root)
+%{_libdir}/lib*.so.%{MAJOR_VERSION}.%{MINOR_VERSION}
+
+%files -n libudjathttp-devel
+%defattr(-,root,root)
+%{_includedir}/udjat/tools/http/*.h
+%{_libdir}/*.so
+%{_libdir}/*.a
+%{_libdir}/pkgconfig/*.pc
 
 %changelog
 

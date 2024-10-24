@@ -110,6 +110,7 @@
 			static size_t write_callback(void *contents, size_t size, size_t nmemb, Engine *engine) noexcept;
 			static int trace_callback(CURL *handle, curl_infotype type, char *data, size_t size, Engine *engine) noexcept;
 			static curl_socket_t open_socket_callback(Engine *engine, curlsocktype purpose, struct curl_sockaddr *address) noexcept;
+			static int close_socket_callback(Engine *engine, curl_socket_t item);
 			static int sockopt_callback(Engine *engine, curl_socket_t curlfd, curlsocktype purpose) noexcept;
 			static size_t header_callback(char *buffer, size_t size, size_t nitems, Engine *engine) noexcept;
 
@@ -138,6 +139,10 @@
 			virtual ~Engine();
 
 			int response_code();
+
+			inline const char * response_message() const noexcept {
+				return message.c_str();
+			}
 
 			/// @brief Perform.
 			/// @param except If true launch exception if http response is not 200-299.

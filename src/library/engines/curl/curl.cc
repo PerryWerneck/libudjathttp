@@ -22,11 +22,13 @@
  #include <private/engine.h>
  #include <udjat/tools/logger.h>
  #include <udjat/tools/mainloop.h>
+ #include <udjat/tools/exception.h>
  #include <unistd.h>
  #include <fcntl.h>
  #include <iostream>
  #include <poll.h>
  #include <udjat/tools/configuration.h>
+ #include <udjat/tools/intl.h>
 
  #ifdef DEBUG
 	#define TRACE_DEFAULT true
@@ -38,6 +40,24 @@
 
  namespace Udjat {
 
+ 	class UDJAT_PRIVATE CurlException : public Udjat::Exception {
+	public:
+		CurlException(CURLcode res, const char *message, const char *url = "") : Udjat::Exception{res,curl_easy_strerror(res)} {
+			info.title = _( "Network operation failed" );
+			info.url = url;
+			info.body = message;
+			info.domain = "curl";
+		}
+
+		void write(const Logger::Level level = Logger::Error) const noexcept override {
+			debug("Title: ",info.title.c_str());
+			debug("what:  ",what());
+			debug("body:  ",info.body.c_str());
+			Logger::String{info.body.c_str()}.write(level,"curl");
+		}
+
+	};
+
 	int HTTP::Engine::perform(bool except) {
 
 		outptr = nullptr;
@@ -45,7 +65,11 @@
 		CURLcode res = curl_easy_perform(hCurl);
 
 		if(res != CURLE_OK) {
-			throw runtime_error(this->error[0] ? this->error : curl_easy_strerror(res));
+			if(this->error[0]) {
+				throw CurlException(res,this->error);
+			} else {
+				throw runtime_error(curl_easy_strerror(res));
+			}
 		}
 
 		long response_code = 0;
@@ -55,6 +79,8 @@
 	}
 
 	HTTP::Engine::Engine(HTTP::Worker &w, const HTTP::Method method, time_t timeout) : hCurl{curl_easy_init()}, worker{w} {
+
+		Logger::String{"Starting worker ",(unsigned long long) this}.write(Logger::Debug,"curl");
 
 		curl_easy_setopt(hCurl, CURLOPT_FOLLOWLOCATION, 1L);
 
@@ -66,6 +92,9 @@
 
 		curl_easy_setopt(hCurl, CURLOPT_OPENSOCKETDATA, this);
 		curl_easy_setopt(hCurl, CURLOPT_OPENSOCKETFUNCTION, open_socket_callback);
+
+		curl_easy_setopt(hCurl, CURLOPT_CLOSESOCKETDATA, this);
+		curl_easy_setopt(hCurl, CURLOPT_CLOSESOCKETFUNCTION, close_socket_callback);
 
 		curl_easy_setopt(hCurl, CURLOPT_SOCKOPTDATA, this);
 		curl_easy_setopt(hCurl, CURLOPT_SOCKOPTFUNCTION, sockopt_callback);
@@ -95,7 +124,7 @@
 			break;
 
 		case HTTP::Put:
-			curl_easy_setopt(hCurl, CURLOPT_PUT, 1);
+			curl_easy_setopt(hCurl, CURLOPT_UPLOAD, 1);
 			break;
 
 		case HTTP::Delete:
@@ -103,7 +132,7 @@
 			break;
 
 		default:
-			throw system_error(EINVAL,system_category(),"Invalid or unsupported http verb");
+			throw system_error(EINVAL,system_category(),_( "Invalid or unsupported http verb" ));
 		}
 
 		if(Logger::enabled(Logger::Debug) && Config::Value<bool>("http","trace",TRACE_DEFAULT).get()) {
@@ -150,6 +179,9 @@
 	}
 
 	HTTP::Engine::~Engine() {
+
+		Logger::String{"Stopping worker ",(unsigned long long) this}.write(Logger::Debug,"curl");
+
 		if(headers) {
 			curl_slist_free_all(headers);
 		}
@@ -290,6 +322,7 @@
 
 			// Connect to host.
 			if(!connect(sockfd,(struct sockaddr *)(&(address->addr)),address->addrlen)) {
+				Logger::String{"Connected to host using socket '",sockfd,"'"}.trace("curl");
 				return (curl_socket_t) sockfd;
 			}
 
@@ -312,7 +345,7 @@
 				auto rc = poll(&pfd,1,10);
 
 				if(rc == -1) {
-					strncpy(engine->error,strerror(errno),sizeof(engine->error));
+					strncpy(engine->error,strerror(errno),sizeof(engine->error)-1);
 					cerr << "curl\tError '" << engine->error << "' (" << errno << ") on connect" << endl;
 					::close(sockfd);
 					return CURL_SOCKET_BAD;
@@ -327,8 +360,8 @@
 							error = errno;
 						}
 
-						strncpy(engine->error,strerror(errno),sizeof(engine->error));
-						cerr << "curl\tError '" << engine->error << "' (" << errno << ") while connecting" << endl;
+						strncpy(engine->error,strerror(error),sizeof(engine->error)-1);
+						cerr << "curl\tError '" << engine->error << "' (" << error << ") while connecting" << endl;
 						::close(sockfd);
 						return CURL_SOCKET_BAD;
 
@@ -336,7 +369,7 @@
 
 					if(pfd.revents & POLLHUP) {
 
-						strncpy(engine->error,strerror(ECONNRESET),sizeof(engine->error));
+						strncpy(engine->error,strerror(ECONNRESET),sizeof(engine->error)-1);
 						cerr << "curl\tError '" << engine->error << "' (" << errno << ") while connecting" << endl;
 						::close(sockfd);
 						return CURL_SOCKET_BAD;
@@ -344,7 +377,6 @@
 					}
 
 					if(pfd.revents & POLLOUT) {
-						debug("Connected");
 						break;
 					}
 
@@ -363,7 +395,7 @@
 			}
 
 			if(!timer) {
-				strncpy(engine->error,strerror(ETIMEDOUT),sizeof(engine->error));
+				strncpy(engine->error,strerror(ETIMEDOUT),sizeof(engine->error)-1);
 				cerr << "curl\tError '" << engine->error << "' (" << errno << ") on connect" << endl;
 				::close(sockfd);
 				return CURL_SOCKET_BAD;
@@ -374,6 +406,8 @@
 				::close(sockfd);
 				return CURL_SOCKET_BAD;
 			}
+
+			Logger::String{"Connected to host using socket '",sockfd,"'"}.trace("curl");
 
 		}
 
@@ -410,6 +444,26 @@
 
 		::close(sockfd);
 		return CURL_SOCKET_BAD;
+
+	}
+
+	int HTTP::Engine::close_socket_callback(Engine *, curl_socket_t item) {
+
+#ifdef _WIN32
+		if(sockclose(item)) {
+			Logger::String{"Error '",WSAGetLastError(),"' closing socket ",item}.warning("curl");
+			return 1;
+		}
+#else
+		int rc = ::close(item);
+		if(rc) {
+			Logger::String{"Error '",strerror(rc),"' closing socket ",item}.warning("curl");
+			return 1;
+		}
+#endif // _WIN32
+
+		Logger::String{"Socket ",item," was closed"}.trace("curl");
+		return 0;
 
 	}
 

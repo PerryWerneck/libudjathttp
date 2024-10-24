@@ -48,11 +48,24 @@ int main(int argc, char **argv) {
 
 	try {
 
-		std::shared_ptr<Protocol::Worker> worker = make_shared<HTTP::Worker>("http://127.0.0.1/~perry/libudjat.xml");
+		const char *url = getenv("TEST_URL");
+		if(!url) {
+			url = "http://localhost";
+		}
+
+		std::shared_ptr<Protocol::Worker> worker = make_shared<HTTP::Worker>(url);
+
 		worker->save("/tmp/test.html");
+		debug("--------------------------> Result code: ",worker->result_code());
+
+	} catch(const Udjat::Exception &e) {
+
+		debug("Udjat::Exception");
+		e.write();
 
 	} catch(const std::exception &e) {
 
+		debug("std::exception");
 		cerr << "Error: " << e.what() << endl;
 
 	}

@@ -20,6 +20,7 @@
  #include <config.h>
  #include <udjat/tools/http/worker.h>
  #include <udjat/tools/http/timestamp.h>
+ #include <udjat/tools/http/exception.h>
  #include <private/engine.h>
  #include <udjat/tools/logger.h>
  #include <udjat/tools/file.h>
@@ -73,14 +74,18 @@
 				progress(current,total);
 			}
 
-			Engine & perform() {
-				Udjat::HTTP::Engine::perform(true);
-				return *this;
-			}
-
 		};
 
-		return Engine{*this,progress}.perform().str();
+		Engine engine{*this,progress};
+		status_code = engine.perform();
+		if(status_code < 200 || status_code > 299) {
+#if UDJAT_CHECK_VERSION(1,2,0)
+			throw HTTP::Exception(status_code,engine.response_message());
+#else
+			throw HTTP::Exception(status_code,this->url().c_str(),engine.response_message());
+#endif
+		}
+		return engine.str();
 
 	}
 
@@ -117,7 +122,8 @@
 
 		try {
 
-			return Engine{*this,progress}.perform(false);
+			status_code = Engine{*this,progress}.perform(false);
+			return (int) status_code;
 
 		} catch(const std::exception &e) {
 
@@ -148,6 +154,21 @@
 
 	}
 
+#if UDJAT_CHECK_VERSION(1,2,0)
+#else
+	Protocol::Header & HTTP::Worker::header(const char *name) {
+
+		for(auto &header : headers.request) {
+			if(header == name) {
+				return header;
+			}
+		}
+
+		headers.request.emplace_back(name);
+		return headers.request.back();
+
+	}
+#endif
 	Protocol::Header & HTTP::Worker::request(const char *name) {
 
 		for(auto &header : headers.request) {
@@ -174,6 +195,17 @@
 
 	}
 
+	bool HTTP::Worker::get(const char *filename) {
+		return get(filename,[](double,double){
+			return true;
+		});
+	}
+
+	bool HTTP::Worker::get(const char *filename,const std::function<bool(double current, double total)> &progress) {
+		File::Handler file{filename};
+		return save(file,progress);
+	}
+
 	bool HTTP::Worker::save(File::Handler &file, const std::function<bool(double current, double total)> &progress) {
 
 		class Engine : public Udjat::HTTP::Engine {
@@ -194,24 +226,35 @@
 			}
 
 			void content_length(unsigned long long length) override {
-				debug("Setting file size to ",length," bytes");
+				debug("Setting file '",((int) file),"' size to ",length," bytes");
 				total = (double) length;
 				if(length) {
-					file.allocate(length);
+					try {
+						file.allocate(length);
+					} catch(const std::system_error &e) {
+						if(e.code().value() == ENOSPC) {
+							throw;
+						} else {
+							Logger::String{"Error '",e.code().value(),"' setting file size to ",length," bytes: ",e.what()," (fd=",(int) file,")"}.warning("curl");
+						}
+					} catch(const std::exception &e) {
+						Logger::String{"Error setting file size to ",length," bytes: ",e.what()," (fd=",(int) file,")"}.warning("curl");
+					}
 				}
 				progress(current,total);
 			}
 
 			void write(const void *contents, size_t length) override {
+				debug("Saving ",current,"/",total);
 				file.write(current,contents,length);
 				current += length;
-				debug("Saving ",current,"/",total);
 				progress(current,total);
 			}
 
 		};
 
 		// Check timestamp of last file modification.
+#if UDJAT_CHECK_VERSION(1,2,0)
 		{
 			time_t mtime = file.mtime();
 			if(mtime) {
@@ -219,12 +262,13 @@
 				debug("modified-time=",request("If-Modified-Since").c_str());
 			}
 		}
+#endif
 
 		debug("Saving file");
-		int rc = Engine{*this, file, progress}.perform(true);
-		debug("rc=",rc);
+		status_code = Engine{*this, file, progress}.perform(true);
+		debug("rc=",status_code);
 
-		if(rc >= 200 && rc <= 299) {
+		if(status_code >= 200 && status_code <= 299) {
 			return true;
 		}
 
@@ -240,18 +284,19 @@
 				debug("Not saved, returning false");
 				return false;
 			}
-			debug("aaaa");
 			Logger::String{"Updating ",filename}.trace("http");
 			handler.save(replace);
 		}
 
 		// Set file modification time according to the host's modification time.
+#if UDJAT_CHECK_VERSION(1,2,0)
 		HTTP::TimeStamp timestamp{response("Last-Modified").value()};
 		debug("timestamp=",timestamp.to_string());
 		if(timestamp) {
 			Logger::String{"Timestamp of ",filename," set to ",timestamp.to_string()}.trace("http");
 			File::mtime(filename,(time_t) timestamp);
 		}
+#endif
 
 		return true;
 
@@ -284,7 +329,7 @@
 
 		};
 
-		Engine{*this, writer}.perform(true);
+		status_code = Engine{*this, writer}.perform(true);
 
 	}
 

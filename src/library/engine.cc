@@ -23,6 +23,7 @@
 
  #include <config.h>
  #include <udjat/defs.h>
+ #include <udjat/version.h>
  #include <private/engine.h>
  #include <udjat/tools/logger.h>
 
@@ -45,11 +46,19 @@
 		}
 
 		if(except) {
+#if UDJAT_CHECK_VERSION(1,2,0)
 			if(message.empty()) {
 				throw HTTP::Exception((unsigned int) status_code);
 			} else {
 				throw HTTP::Exception((unsigned int) status_code, message.c_str());
 			}
+#else
+			if(message.empty()) {
+				throw runtime_error(Logger::String{"HTTP Error ",status_code});
+			} else {
+				throw runtime_error(message);
+			}
+#endif // UDJAT_CHECK_VERSION
 		}
 
 		return status_code;
