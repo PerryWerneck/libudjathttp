@@ -1,0 +1,7 @@
+#: src/library/engines/curl/curl.cc:46
+msgid "Network operation failed"
+msgstr "Operação de rede falhou"
+
+#: src/library/engines/curl/curl.cc:135
+msgid "Invalid or unsupported http verb"
+msgstr "Verbo HTTP inválido ou não suportado"

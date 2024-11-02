@@ -27,7 +27,6 @@ libversion = '@0@.@1@'.format(pkg_major_version,pkg_minor_version)
 #
 gettext_package = meson.project_name() + libversion
 add_project_arguments('-DGETTEXT_PACKAGE="' + gettext_package + '"', language: 'cpp')
-i18n = import('i18n')
 subdir('po')
 
 #
