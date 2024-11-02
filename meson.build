@@ -20,10 +20,20 @@ pkg_micro_version = version_array[2].to_int()
 libversion = '@0@.@1@'.format(pkg_major_version,pkg_minor_version)
 
 #
+# i18n
+#
+# https://mesonbuild.com/i18n-module.html
+# https://mesonbuild.com/Porting-from-autotools.html
+#
+gettext_package = meson.project_name() + libversion
+add_project_arguments('-DGETTEXT_PACKAGE="' + gettext_package + '"', language: 'cpp')
+i18n = import('i18n')
+subdir('po')
+
+#
 # LibUdjat
 #
 libudjat = dependency('libudjat') 
-
 lib_deps = [
   libudjat,
 ]
@@ -34,31 +44,26 @@ lib_deps = [
 cxx = meson.get_compiler('cpp')
 enable_debug = get_option('debug') or get_option('buildtype').contains('debug')
 
-compiler_flags_common = [
+compiler_flags = [
   '-ggdb3',
   '-ffat-lto-objects',
   '-fvisibility=hidden',
   '-fPIC',
+  '-DHAVE_CONFIG_H=1',
   '-DBUILD_DATE='+run_command('date','+%Y%m%d').stdout().strip(),
 ]
 
 if enable_debug
-  compiler_flags_common += [
+  compiler_flags += [
 	  '-DDEBUG=1'
   ]
 else
-  compiler_flags_common += [
+  compiler_flags += [
 	'-DNDEBUG=1'
   ]
 endif
 
-compiler_flags_common += [
-  '-DHAVE_CONFIG_H=1'
-]
-
-global_cxxflags = cxx.get_supported_arguments(compiler_flags_common)
-
-add_project_arguments(global_cxxflags, language: 'cpp')
+add_project_arguments(cxx.get_supported_arguments(compiler_flags), language: 'cpp')
 
 #
 # Configuration
@@ -146,18 +151,19 @@ config_src = [
 ]
 
 dynamic = shared_library(
-  'udjathttp', 
+  meson.project_name(), 
   config_src + lib_src,
   install: true,
   version : libversion,
   soversion : libversion,
+  gnu_symbol_visibility: 'hidden',
   gnu_symbol_visibility: 'hidden',
   dependencies: lib_deps,
   include_directories: includes_dir
 )
 
 static_library(
-  'udjathttp', 
+  meson.project_name(), 
   config_src + lib_src,
   install: true,
   dependencies: lib_deps,
@@ -201,7 +207,6 @@ configure_file(
   install_dir: get_option('libdir') + '/pkgconfig',
   configuration : sdk_conf
 )
-
 
 #
 # Common targets
