@@ -21,7 +21,7 @@
 
 Summary:		%{product_name} http client library 
 Name:			udjat-module-http
-Version:		1.2.0+git20241024
+Version: 1.2.1
 Release:		0
 License:		LGPL-3.0
 Source:			%{name}-%{version}.tar.xz
