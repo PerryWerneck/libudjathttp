@@ -28,7 +28,7 @@
 # find . -type f -iname '*.cc' | grep -v 'build' | sed 's@^./@@g' | grep -v testprogram > po/POTFILES.in
 
 i18n = import('i18n')
-gettext_package = meson.project_name() + libversion
+gettext_package = 'lib' + meson.project_name() + '-' + libversion
 
 add_project_arguments('-DGETTEXT_PACKAGE="' + gettext_package + '"', language: 'cpp')
 
