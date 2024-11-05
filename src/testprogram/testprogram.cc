@@ -38,6 +38,7 @@
 
 int main(int argc, char **argv) {
 
+	Udjat::Config::allow_user_homedir(true);
 	Udjat::Quark::init();
 	Udjat::Logger::redirect();
 	Udjat::Logger::enable(Udjat::Logger::Trace);
