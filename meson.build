@@ -207,7 +207,7 @@ executable(
 
 configure_file(
   input : 'sdk/dynamic.pc.in',
-  output : 'udjathttp.pc',
+  output : 'lib' + meson.project_name() + '.pc',
   install: true,
   install_dir: get_option('libdir') + '/pkgconfig',
   configuration : sdk_conf
@@ -215,7 +215,7 @@ configure_file(
 
 configure_file(
   input : 'sdk/static.pc.in',
-  output : 'udjathttp-static.pc',
+  output : 'lib' + meson.project_name() + '-static.pc',
   install: true,
   install_dir: get_option('libdir') + '/pkgconfig',
   configuration : sdk_conf
