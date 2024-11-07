@@ -28,5 +28,6 @@ jobs:
           fileName: "mingw-w64-x86_64-libudjat-1.2-0-x86_64.pkg.tar.zst"      
       - name: Run Build
         run: |
+          pacman -U --noconfirm *.pkg.tar.zst
           dos2unix PKGBUILD.mingw
           makepkg BUILDDIR=/tmp/pkg -p PKGBUILD.mingw
