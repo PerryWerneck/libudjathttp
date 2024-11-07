@@ -105,7 +105,7 @@ sdk_conf.set('exec_prefix',get_option('prefix'))
 sdk_conf.set('includedir',get_option('includedir'))
 sdk_conf.set('libdir',get_option('libdir'))
 
-includes_dir = include_directories('../src/include')
+includes_dir = include_directories('src/include')
 
 #
 # Sources
