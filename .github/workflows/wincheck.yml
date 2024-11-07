@@ -20,6 +20,12 @@ jobs:
           msystem: mingw64
           update: true
           install: dos2unix xz mingw-w64-x86_64-gcc pkgconf mingw-w64-x86_64-gettext mingw-w64-x86_64-meson gettext-devel
+      - name: Download libudjat
+        uses: robinraju/release-downloader@v1.7
+        with:
+          repository: "PerryWerneck/libudjat"
+          latest: true
+          fileName: "mingw-w64-x86_64-libudjat-1.2-0-x86_64.pkg.tar.zst"      
       - name: Run Build
         run: |
           dos2unix PKGBUILD.mingw
