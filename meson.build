@@ -221,7 +221,8 @@ configure_file(
   configuration : sdk_conf
 )
 
-#
-# Common targets
-#
-install_subdir('src/include/udjat', install_dir : get_option('includedir'))
+install_headers(
+  'src/include/udjat/tools/http/worker.h',
+  'src/include/udjat/tools/http/module.h',
+  subdir: 'udjat/tools/http'  
+)
