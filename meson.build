@@ -63,7 +63,6 @@ compiler_flags = [
   '-fvisibility=hidden',
   '-fPIC',
   '-DHAVE_CONFIG_H=1',
-  '-DBUILD_DATE='+run_command('date','+%Y%m%d').stdout().strip(),
 ]
 
 if enable_debug
@@ -93,19 +92,7 @@ if cxx.compiles('#include <unistd.h>', name : 'unistd.h')
   app_conf.set('HAVE_UNISTD_H', 1)
 endif
 
-#
-# SDK
-#
-sdk_conf = configuration_data()
-sdk_conf.set('PACKAGE_NAME', 'udjathttp')
-sdk_conf.set('PACKAGE_VERSION', meson.project_version())
-sdk_conf.set('PACKAGE_DESCRIPTION','HTTP module and library for udjat')
-sdk_conf.set('prefix',get_option('prefix'))
-sdk_conf.set('exec_prefix',get_option('prefix'))
-sdk_conf.set('includedir',get_option('includedir'))
-sdk_conf.set('libdir',get_option('libdir'))
-
-includes_dir = include_directories('src/include')
+includes_dir = include_directories('../src/include')
 
 #
 # Sources
@@ -125,13 +112,35 @@ test_src = [
 ]
 
 #
+# SDK
+#
+# https://mesonbuild.com/Pkgconfig-module.html
+#
+pkg = import('pkgconfig')
+
+#
 # OS dependencies
 #
 if host_machine.system() == 'windows'
-  sdk_conf.set('REQUIRES','')
-  sdk_conf.set('DYNLIBS','-ludjathttp.dll -lws2_32 -lwinhttp')
-  sdk_conf.set('STATICLIBS','-ludjathttp -lws2_32 -lwinhttp')
+
   app_conf.set('HAVE_WINHTTP', 1)
+
+  pkg.generate(
+    name: 'lib' + meson.project_name(),
+    description: project_description,
+    libraries: [ '-l' + meson.project_name() + '.dll' ]
+  )
+
+  pkg.generate(
+    name: 'lib' + meson.project_name() + '-static',
+    description: project_description,
+    libraries: [ 
+      '-l' + meson.project_name(),
+      '-lws2_32',
+      '-lwinhttp',
+    ]
+  )
+
   lib_src += [
     'src/library/engines/winhttp/get.cc',
     'src/library/engines/winhttp/test.cc',
@@ -140,17 +149,30 @@ if host_machine.system() == 'windows'
     'src/library/os/windows/base64.cc'
   ]
 else
-  sdk_conf.set('REQUIRES','libcurl')
-  sdk_conf.set('DYNLIBS','-ludjathttp')
-  sdk_conf.set('STATICLIBS','-l:libudjathttp.a')
+
+  pkg.generate(
+    name: 'lib' + meson.project_name(),
+    description: project_description,
+    libraries: [ '-l' + meson.project_name() ]
+  )
+
+  pkg.generate(
+    name: 'lib' + meson.project_name() + '-static',
+    description: project_description,
+    requires: [ 'libcurl' ],
+    libraries: [ '-l:lib' + meson.project_name() + '.a' ]
+  )
+
   app_conf.set('HAVE_CURL', 1)
   lib_deps += [
     dependency('libcurl'),
   ]
+
   lib_src += [
     'src/library/engines/curl/test.cc',
     'src/library/engines/curl/curl.cc',
   ]
+
 endif
 
 #
@@ -205,24 +227,8 @@ executable(
   include_directories: includes_dir
 )
 
-configure_file(
-  input : 'sdk/dynamic.pc.in',
-  output : 'lib' + meson.project_name() + '.pc',
-  install: true,
-  install_dir: get_option('libdir') + '/pkgconfig',
-  configuration : sdk_conf
-)
-
-configure_file(
-  input : 'sdk/static.pc.in',
-  output : 'lib' + meson.project_name() + '-static.pc',
-  install: true,
-  install_dir: get_option('libdir') + '/pkgconfig',
-  configuration : sdk_conf
-)
-
 install_headers(
   'src/include/udjat/tools/http/worker.h',
   'src/include/udjat/tools/http/module.h',
-  subdir: 'udjat/tools/http'  
+  subdir: 'udjat/tools'  
 )
