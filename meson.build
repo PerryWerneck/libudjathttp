@@ -192,7 +192,6 @@ dynamic = shared_library(
   version : libversion,
   soversion : libversion,
   gnu_symbol_visibility: 'hidden',
-  gnu_symbol_visibility: 'hidden',
   dependencies: lib_deps,
   include_directories: includes_dir
 )
