@@ -6,10 +6,9 @@
 #
 msgid ""
 msgstr ""
-
 "Project-Id-Version: udjathttp 1.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2024-01-30 20:06-0300\n"
+"POT-Creation-Date: 2024-11-08 10:43-0300\n"
 "PO-Revision-Date: 2024-01-30 20:11-0300\n"
 "Last-Translator: Perry Werneck <perry.werneck@gmail.com>\n"
 "Language-Team: Brazilian Portuguese <perry.werneck@gmail.com>\n"
@@ -30,4 +29,3 @@ msgstr "Operação de rede falhou"
 #: src/library/engines/curl/curl.cc:135
 msgid "Invalid or unsupported http verb"
 msgstr "Verbo HTTP inválido ou não suportado"
-
