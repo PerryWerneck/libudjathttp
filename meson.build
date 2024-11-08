@@ -92,18 +92,6 @@ if cxx.compiles('#include <unistd.h>', name : 'unistd.h')
   app_conf.set('HAVE_UNISTD_H', 1)
 endif
 
-#
-# SDK
-#
-sdk_conf = configuration_data()
-sdk_conf.set('PACKAGE_NAME', 'udjathttp')
-sdk_conf.set('PACKAGE_VERSION', meson.project_version())
-sdk_conf.set('PACKAGE_DESCRIPTION','HTTP module and library for udjat')
-sdk_conf.set('prefix',get_option('prefix'))
-sdk_conf.set('exec_prefix',get_option('prefix'))
-sdk_conf.set('includedir',get_option('includedir'))
-sdk_conf.set('libdir',get_option('libdir'))
-
 includes_dir = include_directories('../src/include')
 
 #
