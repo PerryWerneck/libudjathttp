@@ -250,5 +250,5 @@ executable(
 install_headers(
   'src/include/udjat/tools/http/worker.h',
   'src/include/udjat/tools/http/module.h',
-  subdir: 'udjat/tools'  
+  subdir: 'udjat/tools/http'  
 )
