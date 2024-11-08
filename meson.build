@@ -92,7 +92,7 @@ if cxx.compiles('#include <unistd.h>', name : 'unistd.h')
   app_conf.set('HAVE_UNISTD_H', 1)
 endif
 
-includes_dir = include_directories('../src/include')
+includes_dir = include_directories('src/include')
 
 #
 # Sources
@@ -185,17 +185,37 @@ config_src = [
   )
 ]
 
-dynamic = shared_library(
-  meson.project_name(), 
-  config_src + lib_src,
-  install: true,
-  version : libversion,
-  soversion : libversion,
-  gnu_symbol_visibility: 'hidden',
-  gnu_symbol_visibility: 'hidden',
-  dependencies: lib_deps,
-  include_directories: includes_dir
-)
+if host_machine.system() == 'windows'
+
+  dynamic = shared_library(
+    meson.project_name(), 
+    config_src + lib_src,
+    install: true,
+    version : libversion,
+    soversion : libversion,
+    gnu_symbol_visibility: 'hidden',
+    dependencies: lib_deps,
+    link_args: [ 
+      '-lws2_32',
+      '-lwinhttp',
+    ],
+    include_directories: includes_dir
+  )
+
+else
+
+  dynamic = shared_library(
+    meson.project_name(), 
+    config_src + lib_src,
+    install: true,
+    version : libversion,
+    soversion : libversion,
+    gnu_symbol_visibility: 'hidden',
+    dependencies: lib_deps,
+    include_directories: includes_dir
+  )
+
+endif
 
 static_library(
   meson.project_name(), 
