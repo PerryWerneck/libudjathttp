@@ -147,6 +147,18 @@ if host_machine.system() == 'windows'
     ]
   )
 
+  configure_file(
+    input : 'src/library/os/windows/resources.rc.in',
+    output : 'resources.rc',
+    configuration : app_conf
+  )
+
+  configure_file(
+    input : 'src/library/os/windows/app-manifest.xml.in',
+    output : 'app-manifest.xml',
+    configuration : app_conf
+  )
+
   lib_src += [
     'src/library/engines/winhttp/get.cc',
     'src/library/engines/winhttp/test.cc',
@@ -192,6 +204,12 @@ config_src = [
 ]
 
 if host_machine.system() == 'windows'
+
+  # https://mesonbuild.com/Windows-module.html
+  windows = import('windows')
+  windows.compile_resources(
+    'resources.rc'
+  )
 
   dynamic = shared_library(
     meson.project_name(), 
