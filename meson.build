@@ -44,7 +44,7 @@ libversion = '@0@.@1@'.format(pkg_major_version,pkg_minor_version)
 subdir('po')
 
 #
-# LibUdjat
+# Required libraries
 #
 libudjat = dependency('libudjat') 
 lib_deps = [
@@ -57,12 +57,18 @@ lib_deps = [
 cxx = meson.get_compiler('cpp')
 enable_debug = get_option('debug') or get_option('buildtype').contains('debug')
 
+time_epoch = run_command('sh', '-c', 'echo "$SOURCE_DATE_EPOCH"', check : true).stdout().strip()
+if time_epoch == ''
+  time_epoch = run_command('date','+%Y%m%d', check: true).stdout().strip()
+endif
+
 compiler_flags = [
   '-ggdb3',
   '-ffat-lto-objects',
   '-fvisibility=hidden',
   '-fPIC',
   '-DHAVE_CONFIG_H=1',
+  '-DBUILD_DATE='+time_epoch,
 ]
 
 if enable_debug
