@@ -94,6 +94,9 @@ app_conf.set('PACKAGE_VERSION_MAJOR', pkg_major_version)
 app_conf.set('PACKAGE_VERSION_MINOR', pkg_minor_version)
 app_conf.set('PACKAGE_VERSION_MICRO', pkg_micro_version)
 
+app_conf.set('PRODUCT_NAME', libudjat.get_variable('product_name'))
+app_conf.set('PRODUCT_VERSION', libudjat.version())
+
 if cxx.compiles('#include <unistd.h>', name : 'unistd.h')
   app_conf.set('HAVE_UNISTD_H', 1)
 endif
@@ -193,12 +196,6 @@ config_src = [
 
 if host_machine.system() == 'windows'
 
-  configure_file(
-    input : 'src/library/os/windows/app-manifest.xml.in',
-    output : 'app-manifest.xml',
-    configuration : app_conf
-  )
-
   # https://mesonbuild.com/Windows-module.html
   windows = import('windows')
   resources = windows.compile_resources(
@@ -211,7 +208,7 @@ if host_machine.system() == 'windows'
 
   dynamic = shared_library(
     meson.project_name(), 
-    config_src + lib_src,
+    config_src + lib_src + resources,
     install: true,
     version : libversion,
     soversion : libversion,
@@ -221,6 +218,19 @@ if host_machine.system() == 'windows'
       '-lws2_32',
       '-lwinhttp',
     ],
+    include_directories: includes_dir
+  )
+
+  # https://mesonbuild.com/Reference-manual_functions.html#shared_library
+  module = shared_library(
+    'http', 
+    config_src + module_src + resources,
+    name_prefix: 'udjat-module-',
+    install: true,
+    link_with: dynamic,
+    install_dir: libudjat.get_variable('module_path'),
+    gnu_symbol_visibility: 'hidden',
+    dependencies: lib_deps,
     include_directories: includes_dir
   )
 
@@ -237,25 +247,25 @@ else
     include_directories: includes_dir
   )
 
+  # https://mesonbuild.com/Reference-manual_functions.html#shared_library
+  module = shared_library(
+    'http', 
+    config_src + module_src,
+    name_prefix: 'udjat-module-',
+    install: true,
+    link_with: dynamic,
+    install_dir: libudjat.get_variable('module_path'),
+    gnu_symbol_visibility: 'hidden',
+    dependencies: lib_deps,
+    include_directories: includes_dir
+  )
+
 endif
 
 static_library(
   meson.project_name(), 
   config_src + lib_src,
   install: true,
-  dependencies: lib_deps,
-  include_directories: includes_dir
-)
-
-# https://mesonbuild.com/Reference-manual_functions.html#shared_library
-module = shared_library(
-  'http', 
-  config_src + module_src,
-  name_prefix: 'udjat-module-',
-  install: true,
-  link_with: dynamic,
-  install_dir: libudjat.get_variable('module_path'),
-  gnu_symbol_visibility: 'hidden',
   dependencies: lib_deps,
   include_directories: includes_dir
 )
