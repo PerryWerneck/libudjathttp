@@ -287,4 +287,5 @@ install_headers(
 
 install_headers(
   'src/include/udjat/module/http.h',
+  subdir: 'udjat/module'  
 )
