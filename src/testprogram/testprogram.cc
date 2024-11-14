@@ -18,7 +18,29 @@
  */
 
  #include <config.h>
+ #include <udjat/defs.h>
+ #include <udjat/tests.h>
+ #include <udjat/moduleinfo.h>
+ #include <udjat/module/http.h>
+ #include <udjat/tools/application.h>
+ 
+ using namespace std;
+ using namespace Udjat;
 
+ int main(int argc, char **argv) {
+
+	static const ModuleInfo info{"civetweb-tester"};
+	
+	return Testing::run(argc,argv,info,[](Application &){
+
+		udjat_module_init();
+
+	});
+
+ }
+ 
+
+/*
  #include <udjat/tools/systemservice.h>
  #include <udjat/tools/application.h>
  #include <udjat/tools/url.h>
@@ -76,3 +98,5 @@ int main(int argc, char **argv) {
 	return 0;
 
 }
+
+*/

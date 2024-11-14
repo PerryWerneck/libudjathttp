@@ -275,12 +275,16 @@ executable(
   config_src + test_src,
   install: false,
   link_with : [ dynamic, module ],
+  link_args: [ '-l:libudjat-testing.a' ],
   dependencies: [ libudjat ],
   include_directories: includes_dir
 )
 
 install_headers(
   'src/include/udjat/tools/http/worker.h',
-  'src/include/udjat/tools/http/module.h',
   subdir: 'udjat/tools/http'  
+)
+
+install_headers(
+  'src/include/udjat/module/http.h',
 )

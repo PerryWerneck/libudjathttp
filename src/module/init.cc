@@ -23,7 +23,7 @@
  #include <udjat/tools/protocol.h>
  #include <udjat/moduleinfo.h>
  #include <udjat/tools/http/worker.h>
- #include <udjat/tools/http/module.h>
+ #include <udjat/module/http.h>
 
  #ifdef HAVE_CURL
 	#include <curl/curl.h>
@@ -44,6 +44,6 @@
 #endif //
 	};
 
-	return new Udjat::HTTP::Module("http",info);
+	return Udjat::HTTP::Module::Factory("http",info);
  }
 

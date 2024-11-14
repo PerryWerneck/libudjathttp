@@ -23,7 +23,8 @@
  #include <udjat/tools/protocol.h>
  #include <udjat/moduleinfo.h>
  #include <udjat/tools/http/worker.h>
- #include <udjat/tools/http/module.h>
+ #include <udjat/module/http.h>
+ #include <udjat/tools/logger.h>
 
  #ifdef HAVE_CURL
 	#include <curl/curl.h>
@@ -58,7 +59,8 @@
 		return new Module(name,info);
 	}
 
-	HTTP::Module::Module(const char *name, const ModuleInfo &info) : Udjat::Module(name,info) {
+	HTTP::Module::Module(const char *name, const ModuleInfo &modinfo) : Udjat::Module(name,modinfo) {
+		debug("Loading ",modinfo.description,"...");
 	}
 
 	HTTP::Module::~Module() {
