@@ -94,6 +94,8 @@ app_conf.set('PACKAGE_VERSION_MAJOR', pkg_major_version)
 app_conf.set('PACKAGE_VERSION_MINOR', pkg_minor_version)
 app_conf.set('PACKAGE_VERSION_MICRO', pkg_micro_version)
 
+app_conf.set_quoted('LOG_DOMAIN', 'http')
+
 app_conf.set('PRODUCT_NAME', libudjat.get_variable('product_name'))
 app_conf.set('PRODUCT_VERSION', libudjat.version())
 
