@@ -26,6 +26,8 @@
  #include <udjat/module/info.h>
  #include <udjat/tools/protocol.h>
  #include <udjat/tools/http/worker.h>
+ #include <udjat/tools/http/action.h>
+ #include <udjat/tools/http/agent.h>
  
  #include <memory>
 
@@ -34,7 +36,7 @@
 	namespace HTTP {
 
 		/// @brief Generic http module.
-		class UDJAT_API Module : public Udjat::Module {
+		class UDJAT_API Module : public Udjat::Module, private Udjat::HTTP::Action::Factory, private Udjat::HTTP::Agent::Factory {
 		protected:
 
 			class Protocol : public Udjat::Protocol {

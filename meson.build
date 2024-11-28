@@ -112,6 +112,7 @@ lib_src = [
   'src/library/engine.cc',
   'src/library/worker.cc',
   'src/library/module.cc',
+  'src/library/agent.cc',
 ]
 
 module_src = [
@@ -181,6 +182,7 @@ else
 
   lib_src += [
     'src/library/engines/curl/test.cc',
+    'src/library/engines/curl/action.cc',
     'src/library/engines/curl/curl.cc',
   ]
 
@@ -284,6 +286,7 @@ executable(
 
 install_headers(
   'src/include/udjat/tools/http/worker.h',
+  'src/include/udjat/tools/http/action.h',
   subdir: 'udjat/tools/http'  
 )
 

@@ -1,7 +1,7 @@
 /* SPDX-License-Identifier: LGPL-3.0-or-later */
 
 /*
- * Copyright (C) 2021 Perry Werneck <perry.werneck@gmail.com>
+ * Copyright (C) 2024 Perry Werneck <perry.werneck@gmail.com>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
@@ -17,27 +17,43 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
- #include <config.h>
+ /**
+  * @brief Implements HTTP Action.
+  */
+
+ #pragma once
+
  #include <udjat/defs.h>
- #include <udjat/tests.h>
- #include <udjat/moduleinfo.h>
- #include <udjat/module.h>
- #include <udjat/tools/application.h>
  #include <udjat/tools/action.h>
- #include <udjat/tools/logger.h>
  
- using namespace std;
- using namespace Udjat;
+ namespace Udjat {
 
- int main(int argc, char **argv) {
+	namespace HTTP {
 
-	static const ModuleInfo info{"url-tester"};
-	
-	return Testing::run(argc,argv,info,[](Application &){
+		class UDJAT_API Action : public Udjat::Action {
+		protected:
+			const char *url;
+			const HTTP::Method method;
+			const char *text = "";
+			const MimeType mimetype;
+		
+		public:
 
-	 	udjat_module_init();
+			class Factory : public Udjat::Action::Factory {
+			public:
+				Factory(const char *name = "url") : Udjat::Action::Factory{name} {
+				}
 
-	});
+				std::shared_ptr<Udjat::Action> ActionFactory(const XML::Node &node) const override;
+
+			};
+
+			Action(const XML::Node &node);
+
+			int call(const Udjat::Value &request, Udjat::Value &response, bool except) override;
+
+		};
+
+	}
 
  }
-

@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<config>
+
+	<module name='information' required='no' />
+	<agent name='intvalue' type='integer' value='0' />
+
+	<agent type='url' name='localhost' url='http://localhost/urlprobe' update-timer='120'>
+	</agent>
+
+</config>
+
