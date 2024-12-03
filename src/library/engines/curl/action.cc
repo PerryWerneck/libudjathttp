@@ -50,7 +50,7 @@
 		}
 	}
 
-	int HTTP::Action::call(const Udjat::Value &request, Udjat::Value &response, bool except) {
+	int HTTP::Action::call(Udjat::Request &request, Udjat::Response &response, bool except) {
 		return Udjat::Action::exec(response,except,[&]() {
 
 			// Get payload

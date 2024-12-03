@@ -25,6 +25,8 @@
 
  #include <udjat/defs.h>
  #include <udjat/tools/action.h>
+ #include <udjat/tools/request.h>
+ #include <udjat/tools/response.h>
  
  namespace Udjat {
 
@@ -50,7 +52,7 @@
 
 			Action(const XML::Node &node);
 
-			int call(const Udjat::Value &request, Udjat::Value &response, bool except) override;
+			int call(Udjat::Request &request, Udjat::Response &response, bool except) override;
 
 		};
 
