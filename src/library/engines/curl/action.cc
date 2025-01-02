@@ -25,8 +25,8 @@
  #include <udjat/defs.h>
  #include <curl/curl.h>
  #include <udjat/tools/protocol.h>
- #include <udjat/tools/action.h>
- #include <udjat/tools/http/action.h>
+ #include <udjat/tools/actions/abstract.h>
+ #include <udjat/tools/actions/http.h>
  #include <memory>
 
  using namespace std;
