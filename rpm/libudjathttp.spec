@@ -23,7 +23,7 @@
 
 Summary:		HTTP client library for %{product_name}  
 Name:			libudjat%{module_name}
-Version: 1.2.1
+Version: 2.0.0
 Release:		0
 License:		LGPL-3.0
 Source:			%{name}-%{version}.tar.xz
