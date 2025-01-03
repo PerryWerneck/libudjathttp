@@ -18,7 +18,7 @@
  */
 
  /**
-  * @brief Implements HTTP Action.
+  * @brief Implements HTTP agent.
   */
 
  #pragma once

@@ -140,6 +140,7 @@ if host_machine.system() == 'windows'
   pkg.generate(
     name: 'lib' + meson.project_name(),
     description: project_description,
+    requires: [ 'libudjat' ],
     libraries: [ '-l' + meson.project_name() + '.dll' ]
   )
 
@@ -165,6 +166,7 @@ else
   pkg.generate(
     name: 'lib' + meson.project_name(),
     description: project_description,
+    requires: [ 'libudjat' ],
     libraries: [ '-l' + meson.project_name() ]
   )
 
@@ -298,4 +300,9 @@ install_headers(
 install_headers(
   'src/include/udjat/module/http.h',
   subdir: 'udjat/module'  
+)
+
+install_headers(
+  'src/include/udjat/agent/http.h',
+  subdir: 'udjat/agent'  
 )
