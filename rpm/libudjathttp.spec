@@ -17,11 +17,7 @@
 
 %define module_name http
 
-%define product_name %(pkg-config --variable=product_name libudjat)
-%define product_version %(pkg-config --variable=product_version libudjat)
-%define module_path %(pkg-config --variable=module_path libudjat)
-
-Summary:		HTTP client library for %{product_name}  
+Summary:		HTTP client library for %{udjat_product_name}  
 Name:			libudjat%{module_name}
 Version: 2.0.0
 Release:		0
@@ -33,70 +29,36 @@ URL:			https://github.com/PerryWerneck/libudjat%{module_name}
 Group:			Development/Libraries/C and C++
 BuildRoot:		/var/tmp/%{name}-%{version}
 
-BuildRequires:	binutils
-BuildRequires:	coreutils
-
-%if "%{_vendor}" == "debbuild"
-BuildRequires:  meson-deb-macros
-BuildRequires:	curl-dev
-BuildRequires:	libudjat-dev
-%else
 BuildRequires:	gcc-c++ >= 5
 BuildRequires:	pkgconfig(libcurl)
-BuildRequires:	pkgconfig(libudjat)
-%endif
+BuildRequires:	pkgconfig(libudjat) >= 2.0.0
 
-%if 0%{?suse_version} == 01500
-BuildRequires:  meson = 0.61.4
-%else
-BuildRequires:  meson
-%endif
+BuildRequires:	meson >= 0.61.4
 
 %description
+HTTP client library for %{udjat_product_name}
+
+C++ HTTP client classes for use with %{udjat_product_name}
+
+%package -n %{udjat_library}
+Summary:	HTTP client library for %{product_name}
+
+%description -n %{udjat_library}
 HTTP client library for %{product_name}
 
 C++ HTTP client classes for use with lib%{product_name}
-
-#---[ Library ]-------------------------------------------------------------------------------------------------------
-
-%define MAJOR_VERSION %(echo %{version} | cut -d. -f1)
-%define MINOR_VERSION %(echo %{version} | cut -d. -f2 | cut -d+ -f1)
-%define _libvrs %{MAJOR_VERSION}_%{MINOR_VERSION}
-
-%package -n %{name}%{_libvrs}
-Summary: HTTP client library for %{product_name}
-
-%description -n %{name}%{_libvrs}
-HTTP client library for %{product_name}
-
-C++ HTTP client classes for use with lib%{product_name}
-
-#---[ Development ]---------------------------------------------------------------------------------------------------
 
 %package devel
-Summary: Development files for %{name}
-Requires: %{name}%{_libvrs} = %{version}
-
-%if "%{_vendor}" == "debbuild"
-Provides:	%{name}-dev
-Provides:	pkgconfig(%{name})
-Provides:	pkgconfig(%{name}-static)
-%endif
+Summary:	Development files for %{name}
+%udjat_devel_requires
 
 %description devel
 HTTP client library for %{product_name}
 
 C++ HTTP client classes for use with lib%{product_name}
 
-%lang_package -n %{name}%{_libvrs}
-
-#---[ Module ]--------------------------------------------------------------------------------------------------------
-
-%package -n %{product_name}-module-%{module_name}
-Summary: HTTP module for %{name}
-
-%description -n %{product_name}-module-%{module_name}
-%{product_name} module with http client support.
+%lang_package -n %{udjat_library}
+%udjat_module_package -n %{module_name}
 
 #---[ Build & Install ]-----------------------------------------------------------------------------------------------
 
@@ -109,16 +71,13 @@ Summary: HTTP module for %{name}
 
 %install
 %meson_install
-%find_lang %{name}-%{MAJOR_VERSION}.%{MINOR_VERSION} langfiles
+%find_lang %{name}-%{udjat_major}.%{udjat_minor} langfiles
 
-%files -n %{name}%{_libvrs}
+%files -n %{udjat_library}
 %defattr(-,root,root)
-%{_libdir}/%{name}.so.%{MAJOR_VERSION}.%{MINOR_VERSION}
+%{_libdir}/%{name}.so.%{udjat_major}.%{udjat_minor}
 
-%files -n %{name}%{_libvrs}-lang -f langfiles
-
-%files -n %{product_name}-module-%{module_name}
-%{module_path}/*.so
+%files -n %{udjat_library}-lang -f langfiles
 
 %files devel
 %defattr(-,root,root)
@@ -129,10 +88,15 @@ Summary: HTTP module for %{name}
 
 %dir %{_includedir}/udjat/tools/http
 %{_includedir}/udjat/tools/http/*.h
+%{_includedir}/udjat/module/*.h
+%{_includedir}/udjat/tools/actions/*.h
 
-%post -n %{name}%{_libvrs} -p /sbin/ldconfig
+%dir %{_includedir}/udjat/agent
+%{_includedir}/udjat/agent/http.h
 
-%postun -n %{name}%{_libvrs} -p /sbin/ldconfig
+%post -n %{udjat_library} -p /sbin/ldconfig
+
+%postun -n %{udjat_library} -p /sbin/ldconfig
 
 %changelog
 
