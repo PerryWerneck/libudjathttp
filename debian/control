@@ -1,19 +1,35 @@
-Source: udjat-module-http
+Source: libudjathttp
 Section: unknown
 Priority: optional
 Maintainer: Perry Werneck <perry.werneck@gmail.com>
-Build-Depends: debhelper (>= 7), autotools-dev, autoconf, automake, pkg-config, gettext, libudjat-dev, libcurl4-openssl-dev
+Build-Depends: debhelper (>= 7), meson, pkg-config, libudjat2-dev, libcurl-dev
+
+Package: libudjathttp
+Architecture: any
+Section: libs
+Depends: ${misc:Depends}, ${shlibs:Depends}
+Provides: libudjathttp (= ${binary:Version})
+Description: Udjat core library.
+ Udjat core library.
 
 Package: udjat-module-http
 Architecture: any
 Section: libs
-Depends: ${misc:Depends}
-Description: ATA SMART module for udjat.
- ATA S.M.A.R.T. Disk Health Monitoring module for udjat.
+Depends: ${misc:Depends}, ${shlibs:Depends}
+Description: Udjat core library.
+ Udjat core library.
 
-Package: udjat-module-http-dbg
+Package: libudjathttp-dev
 Architecture: any
-Depends: libudjat (= ${binary:Version})
-Description: Debugging symbols for udjat-module-http
- This package contains the debugging symbols for udjat-module-http.
+Provides: libudjathttp-dev (= ${binary:Version})
+Section: libdevel
+Depends: ${misc:Depends}, pkg-config, libudjathttp (= ${binary:Version})
+Description: Libudjat development files.
+ Development headers for libudjathttp
+
+Package: libudjathttp-dbg
+Architecture: any
+Depends: libudjathttp (= ${binary:Version})
+Description: Debugging symbols for libudjathttp
+ This package contains the debugging symbols for libudjathttp.
 

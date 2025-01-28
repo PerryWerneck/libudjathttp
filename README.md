@@ -3,8 +3,10 @@
 Windows/Linux http client library module for libudjat based applications.
 
 [![License: GPL v3](https://img.shields.io/badge/License-GPL%20v3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
-![CodeQL](https://github.com/PerryWerneck/udjat-module-http/workflows/CodeQL/badge.svg?branch=master)
-[![build result](https://build.opensuse.org/projects/home:PerryWerneck:udjat/packages/udjat-module-http/badge.svg?type=percent)](https://build.opensuse.org/package/show/home:PerryWerneck:udjat/udjat-module-http)
+[![build result](https://build.opensuse.org/projects/home:PerryWerneck:udjat/packages/libudjathttp/badge.svg?type=percent)](https://build.opensuse.org/package/show/home:PerryWerneck:udjat/libudjathttp)
+
+## Installation
+
 
 # Sample use
 

@@ -17,33 +17,45 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
- #include <config.h>
+ /**
+  * @brief Implements HTTP Action.
+  */
+
+ #pragma once
+
  #include <udjat/defs.h>
- #include <udjat/module.h>
- #include <udjat/tools/protocol.h>
- #include <udjat/moduleinfo.h>
- #include <udjat/tools/http/worker.h>
- #include <udjat/module/http.h>
+ #include <udjat/tools/actions/abstract.h>
+ #include <udjat/tools/request.h>
+ #include <udjat/tools/response.h>
+ 
+ namespace Udjat {
 
- #ifdef HAVE_CURL
-	#include <curl/curl.h>
- #endif // HAVE_CURL
+	namespace HTTP {
 
- using namespace std;
+		class UDJAT_API Action : public Udjat::Action {
+		protected:
+			const char *url;
+			const HTTP::Method method;
+			const char *text = "";
+			const MimeType mimetype;
+		
+		public:
 
- /// @brief Register udjat module.
- UDJAT_API Udjat::Module * udjat_module_init() {
+			class Factory : public Udjat::Action::Factory {
+			public:
+				Factory(const char *name = "url") : Udjat::Action::Factory{name} {
+				}
 
-	static const Udjat::ModuleInfo info{
-#if defined(_WIN32)
-		"WinHTTP module for " STRINGIZE_VALUE_OF(PRODUCT_NAME), 	// The module description.
-#elif defined(HAVE_CURL)
-		"CURL " LIBCURL_VERSION " module for " STRINGIZE_VALUE_OF(PRODUCT_NAME), 		// The module description.
-#else
-		"HTTP module for " STRINGIZE_VALUE_OF(PRODUCT_NAME), 		// The module description.
-#endif //
-	};
+				std::shared_ptr<Udjat::Action> ActionFactory(const XML::Node &node) const override;
 
-	return Udjat::HTTP::Module::Factory("http",info);
+			};
+
+			Action(const XML::Node &node);
+
+			int call(Udjat::Request &request, Udjat::Response &response, bool except) override;
+
+		};
+
+	}
+
  }
-

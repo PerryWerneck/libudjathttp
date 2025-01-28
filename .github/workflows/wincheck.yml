@@ -1,4 +1,4 @@
-name: check-msys2
+name: check-win64
 on:
   push:
     branches: [ "win" ]
@@ -6,26 +6,28 @@ on:
     branches: [ "master" ]
 
 jobs:
-  msys2-build:
+  check-msys2:
     runs-on: windows-latest
     defaults:
       run:
         shell: msys2 {0}
     steps:
-      - uses: actions/checkout@v3
-      - uses: msys2/setup-msys2@v2
+      - name: Fetch Sources
+        uses: actions/checkout@v3
+      - name: Setup MSys
+        uses: msys2/setup-msys2@v2
         with:
           msystem: mingw64
           update: true
-          install: dos2unix xz mingw-w64-x86_64-gcc automake autoconf make git pkgconf mingw-w64-x86_64-gettext gettext-devel libtool mingw-w64-x86_64-pugixml
-      - uses: robinraju/release-downloader@v1.7
+          install: dos2unix xz mingw-w64-x86_64-gcc pkgconf mingw-w64-x86_64-gettext mingw-w64-x86_64-meson gettext-devel
+      - name: Download libudjat
+        uses: robinraju/release-downloader@v1.7
         with:
           repository: "PerryWerneck/libudjat"
           latest: true
-          fileName: "mingw-w64-x86_64-libudjat-1.2-0-x86_64.pkg.tar.zst"      
-      - name: CI-Build
+          fileName: "mingw-w64-x86_64-libudjat-1.2.0-0-x86_64.pkg.tar.zst"
+      - name: Run Build
         run: |
           pacman -U --noconfirm *.pkg.tar.zst
           dos2unix PKGBUILD.mingw
           makepkg BUILDDIR=/tmp/pkg -p PKGBUILD.mingw
-

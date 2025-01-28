@@ -18,60 +18,26 @@
  */
 
  #include <config.h>
-
- #include <udjat/tools/systemservice.h>
- #include <udjat/tools/application.h>
- #include <udjat/tools/url.h>
- #include <udjat/tools/http/client.h>
- #include <udjat/tools/configuration.h>
- #include <udjat/agent.h>
- #include <udjat/factory.h>
+ #include <udjat/defs.h>
+ #include <udjat/tests.h>
+ #include <udjat/moduleinfo.h>
  #include <udjat/module.h>
- #include <udjat/tools/http/worker.h>
- #include <iostream>
- #include <memory>
-
+ #include <udjat/tools/application.h>
+ #include <udjat/tools/actions/http.h>
+ #include <udjat/tools/logger.h>
+ 
  using namespace std;
  using namespace Udjat;
 
-//---[ Implement ]------------------------------------------------------------------------------------------
+ int main(int argc, char **argv) {
 
-int main(int argc, char **argv) {
+	static const ModuleInfo info{"url-tester"};
+	
+	return Testing::run(argc,argv,info,[](Application &){
 
-	Udjat::Quark::init();
-	Udjat::Logger::redirect();
-	Udjat::Logger::enable(Udjat::Logger::Trace);
-	Udjat::Logger::enable(Udjat::Logger::Debug);
-	Udjat::Logger::console(true);
+	 	udjat_module_init();
 
-	// cout << HTTP::Worker{"http://127.0.0.1/~perry/libudjat.xml"}.get([](double, double){ return true; }) << endl;
+	});
 
-	try {
+ }
 
-		const char *url = getenv("TEST_URL");
-		if(!url) {
-			url = "http://localhost";
-		}
-
-		std::shared_ptr<Protocol::Worker> worker = make_shared<HTTP::Worker>(url);
-
-		worker->save("/tmp/test.html");
-		debug("--------------------------> Result code: ",worker->result_code());
-
-	} catch(const Udjat::Exception &e) {
-
-		debug("Udjat::Exception");
-		e.write();
-
-	} catch(const std::exception &e) {
-
-		debug("std::exception");
-		cerr << "Error: " << e.what() << endl;
-
-	}
-
-	Udjat::Module::unload();
-
-	return 0;
-
-}

@@ -17,33 +17,41 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
- #include <config.h>
+ /**
+  * @brief Implements HTTP agent.
+  */
+
+ #pragma once
+
  #include <udjat/defs.h>
- #include <udjat/module.h>
- #include <udjat/tools/protocol.h>
- #include <udjat/moduleinfo.h>
- #include <udjat/tools/http/worker.h>
- #include <udjat/module/http.h>
+ #include <udjat/agent/abstract.h>
+ #include <udjat/tools/http/method.h>
+ #include <udjat/tools/actions/http.h>
+ #include <udjat/agent.h>
+ 
+ namespace Udjat {
 
- #ifdef HAVE_CURL
-	#include <curl/curl.h>
- #endif // HAVE_CURL
+	namespace HTTP {
 
- using namespace std;
+		class UDJAT_API Agent : public Udjat::Agent<unsigned int>, private Udjat::HTTP::Action {		
+		public:
 
- /// @brief Register udjat module.
- UDJAT_API Udjat::Module * udjat_module_init() {
+			class Factory : public Udjat::Abstract::Agent::Factory {
+			public:
+				Factory(const char *name = "url") : Udjat::Abstract::Agent::Factory{name} {
+				}
 
-	static const Udjat::ModuleInfo info{
-#if defined(_WIN32)
-		"WinHTTP module for " STRINGIZE_VALUE_OF(PRODUCT_NAME), 	// The module description.
-#elif defined(HAVE_CURL)
-		"CURL " LIBCURL_VERSION " module for " STRINGIZE_VALUE_OF(PRODUCT_NAME), 		// The module description.
-#else
-		"HTTP module for " STRINGIZE_VALUE_OF(PRODUCT_NAME), 		// The module description.
-#endif //
-	};
+				std::shared_ptr<Abstract::Agent> AgentFactory(const Abstract::Object &parent, const XML::Node &node) const override;
 
-	return Udjat::HTTP::Module::Factory("http",info);
+			};
+
+			Agent(const XML::Node &node);
+
+			std::shared_ptr<Abstract::State> computeState() override;
+			bool refresh(bool) override;
+
+		};
+
+	}
+
  }
-

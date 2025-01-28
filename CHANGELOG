@@ -1,83 +1,13 @@
 -------------------------------------------------------------------
-Thu Sep 26 17:41:16 UTC 2024 - perry.werneck@gmail.com
+Thu Oct 24 10:59:36 UTC 2024 - perry.werneck@gmail.com
 
-- Update to version 1.1+git20240926:
-  * Better name for static library.
-  * Fixing build.
-  * Enabling use as library.
-  * Updating static defs (not used).
-
--------------------------------------------------------------------
-Fri Jul 12 12:36:35 UTC 2024 - perry.werneck@gmail.com
-
-- Update to version 1.1+git20240712:
-  * Fixing build with latest libudjat.
-  * Throwing exception on http error.
-  * Checking result codes.
-  * Fixing download error.
-  * Adding debug options.
-  * Debugging socket close & connections.
-  * Fixing warnings.
-  * Fixing legacy builds.
-  * Debugging publisher.
-  * Updating workflows.
-  * Updating CodeQL Workflow.
-  * Refactoring winhttp engine.
-  * Refactoring curl engine.
-  * http worker is now a private object.
-  * Splitting writer.
-  * Fixing download using custom writer.
-  * Fixing exceptions on writer methods.
-  * Pre allocating file before download.
-  * Ignoring timestamp for empty files to avoid '304' when downloading temp files.
-  * Fixing cache usage, adding custom writer method.
-  * Updating version.
-
--------------------------------------------------------------------
-Wed May 08 03:00:09 UTC 2024 - perry.werneck@gmail.com
-
-- Update to version 1.1+git20240507:
-  * Throwing exception on http error.
-  * Checking result codes.
-  * Fixing download error.
-  * Adding debug options.
-  * Debugging sockets.
-  * Fixing warnings.
-  * Fixing legacy builds.
-  * Debugging publisher.
-  * Updating workflows.
-
--------------------------------------------------------------------
-Tue Mar 28 18:59:10 UTC 2023 - perry.werneck@gmail.com
-
-- Update to version 1.0+git20230216:
-  * Fixing ci-build.
-  * Fixing package build.
-  * Updating win32.
-  * Fixing win32 error messages.
-  * Better error message when connection fails.
-  * Update README.md
-  * Adding mingw workflow.
-  * Updating win32 build.
-  * Disabling workflow schedule.
-  * Adding win32 workflow.
-  * Fixing win32 module.
-  * Adding badges.
-  * Fixing build with latest libudjat.
-  * Fixing trace message.
-  * No default timeout.
-  * Launching system_error exception on operation timeout.
-  * set file time log is now 'trace'.
-  * Fixing CodeQL warnings, set protocol as default when using curl.
-  * Fixing CodeQL warnings.
-  * Updating codeql workflow.
-  * Adding deb control files.
-  * Update codeql.yml
-  * Adding codeQL workflow.
-  * Implementing url test() method.
-  * Splitting http engines.
-  * win32 expanding payload.
-  * Cant get socket or connection addresses using winhttp APIs.
+- Update to version 1.2.0+git20241024:
+  * Small fixes.
+  * Setting exception dialog title.
+  * Better messages on connection failure.
+  * Fixing exception on connection errors.
+  * Adding convenience methods.
+  * Updating package control files.
 
 -------------------------------------------------------------------
 Tue Nov 08 13:13:37 UTC 2022 - perry.werneck@gmail.com

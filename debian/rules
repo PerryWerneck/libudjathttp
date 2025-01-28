@@ -9,7 +9,7 @@ export DH_VERBOSE=1
 export DH_COMPAT=9
 
 # Name of the package
-MODULE_NAME=udjat-module-http
+PACKAGE_NAME=libudjathttp
 
 CFLAGS = -g
 ifneq (,$(findstring noopt,$(DEB_BUILD_OPTIONS)))
@@ -23,9 +23,7 @@ build-stamp:
 	dh_testdir
 
 	# Add here commands to compile the package.
-	NOCONFIGURE=1 ./autogen.sh 
-	./configure --prefix=/usr
-	make all
+	meson setup --prefix=/usr .build
 	# --- end custom part for compiling
 
 	touch build-stamp
@@ -48,11 +46,17 @@ install: build
 	dh_installdirs
 
 	# Build package
-	make all
+	meson compile -C .build
+
+	# Install library
+	DESTDIR=$(PWD)/debian/$(PACKAGE_NAME) meson install -C .build --tags runtime,i18n
+
+	# Install dev
+	DESTDIR=$(PWD)/debian/$(PACKAGE_NAME)-dev meson install -C .build --tags devel
 
 	# Install module
-	make DESTDIR=$(PWD)/debian/$(MODULE_NAME) install
-
+	DESTDIR=$(PWD)/debian/udjat-module-http meson install -C .build --tags module
+  
 	# --- end custom part for installing
 
 # Build architecture-independent files here.
@@ -78,7 +82,7 @@ binary-arch: build install
 #	dh_undocumented
 	dh_installchangelogs
 	dh_link
-	dh_strip --dbg-package=$(MODULE_NAME)-dbg
+	dh_strip --dbg-package=$(PACKAGE_NAME)-dbg
 	dh_compress
 	dh_fixperms
 	dh_makeshlibs
