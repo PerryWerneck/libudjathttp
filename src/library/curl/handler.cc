@@ -31,7 +31,6 @@
  #include <curl/curl.h>
  #include <fcntl.h>
  #include <unistd.h>
- #include <system_error>
 
  #ifdef DEBUG
 	#define TRACE_DEFAULT true
@@ -127,6 +126,7 @@
 
 		set(method);
 		context.payload.text = payload;
+		
 		return perform(context,false);
 		
 	}
@@ -167,13 +167,17 @@
 
 		if(except) {
 			if(context.error.system) {
-				throw system_error(
-							context.error.system,
-							std::system_category(),
-							context.error.message[0] ? context.error.message : curl_easy_strerror(res)
-						);
+				throw CurlException(
+						res, 
+						context.error.message[0] ? context.error.message : strerror(context.error.system),
+						context.handler.c_str()
+					);
 			}
-			throw CurlException(res, context.error.message, context.handler.c_str());
+			throw CurlException(
+					res, 
+					context.error.message, 
+					context.handler.c_str()
+				);
 		}
 
 		return context.error.system ? context.error.system : res;

@@ -46,9 +46,11 @@ subdir('po')
 #
 # Required libraries
 #
-libudjat = dependency('libudjat') 
+libudjat = dependency('libudjat')
+json = dependency('json', required: false)
 lib_deps = [
   libudjat,
+  json,
 ]
 
 #
@@ -93,6 +95,10 @@ app_conf.set_quoted('PACKAGE_DESCRIPTION', project_description)
 app_conf.set('PACKAGE_VERSION_MAJOR', pkg_major_version)
 app_conf.set('PACKAGE_VERSION_MINOR', pkg_minor_version)
 app_conf.set('PACKAGE_VERSION_MICRO', pkg_micro_version)
+
+if json.found()
+  app_conf.set('HAVE_JSON', 1)
+endif
 
 app_conf.set_quoted('LOG_DOMAIN', 'http')
 
