@@ -31,6 +31,7 @@
  #include <curl/curl.h>
  #include <fcntl.h>
  #include <unistd.h>
+ #include <system_error>
 
  #ifdef DEBUG
 	#define TRACE_DEFAULT true
@@ -44,9 +45,12 @@
 
  	class UDJAT_PRIVATE CurlException : public Udjat::Exception {
 	public:
-		CurlException(CURLcode res, const char *message, const char *url = "") : Udjat::Exception{res,curl_easy_strerror(res)} {
+		CurlException(CURLcode res, const char *message, const char *url) : Udjat::Exception{res,curl_easy_strerror(res)} {
 			info.title = _( "HTTP operation failed" );
 			info.url = url;
+			if(message && *message) {
+				info.body = message;
+			}
 			info.body = message;
 			info.domain = "curl";
 		}
@@ -85,7 +89,7 @@
 
 		hCurl = curl_easy_init();
 		if(!hCurl) {
-			throw CurlException(CURLE_FAILED_INIT,"Failed to initialize curl");
+			throw CurlException(CURLE_FAILED_INIT,"Failed to initialize curl",url.c_str());
 		}
 
 		curl_easy_setopt(hCurl, CURLOPT_FOLLOWLOCATION, 1L);
@@ -104,31 +108,75 @@
 
 	HTTP::Handler::~Handler() {
 		curl_easy_cleanup(hCurl);
+		if(headers.request) {
+			curl_slist_free_all(headers.request);
+		}
+	}
+
+	URL::Handler & HTTP::Handler::header(const char *name, const char *value) {
+		headers.request = curl_slist_append(headers.request,String{name,": ",value}.c_str());
+		return *this;
 	}
 
 	int HTTP::Handler::test(const HTTP::Method method, const char *payload) {
 
+		Context context{this,[](uint64_t,uint64_t,const char *,size_t){return false;}};
+
+		curl_easy_setopt(hCurl, CURLOPT_WRITEDATA, context);
+		curl_easy_setopt(hCurl, CURLOPT_WRITEFUNCTION, no_write_callback);
+
 		set(method);
-
-
+		context.payload.text = payload;
+		return perform(context,false);
+		
 	}
 
 	int HTTP::Handler::perform(const HTTP::Method method, const char *payload, const std::function<bool(uint64_t current, uint64_t total, const char *data, size_t len)> &progress) {
 
 		Context context{this,progress};
 
-		curl_easy_setopt(hCurl, CURLOPT_ERRORBUFFER, context.error);
-
 		curl_easy_setopt(hCurl, CURLOPT_WRITEDATA, context);
 		curl_easy_setopt(hCurl, CURLOPT_WRITEFUNCTION, write_callback);
 
+		set(method);
+		context.payload.text = payload;
+
+		return perform(context,true);
+
+	}
+
+	int HTTP::Handler::perform(Context &context, bool except) {
+
+		curl_easy_setopt(hCurl, CURLOPT_ERRORBUFFER, context.error);
+
 		curl_easy_setopt(hCurl, CURLOPT_READDATA, context);
 		curl_easy_setopt(hCurl, CURLOPT_READFUNCTION, read_callback);
-		context.payload.text = payload;
 		context.payload.ptr = nullptr;
 
-		set(method);
+		if(headers.request) {
+			curl_easy_setopt(hCurl, CURLOPT_HTTPHEADER, headers.request);
+		}
 
+		CURLcode res = curl_easy_perform(hCurl);
+
+		if(res == CURLE_OK) {
+			long response_code = 0;
+			curl_easy_getinfo(hCurl, CURLINFO_RESPONSE_CODE, &response_code);
+			return response_code;
+		}
+
+		if(except) {
+			if(context.error.system) {
+				throw system_error(
+							context.error.system,
+							std::system_category(),
+							context.error.message[0] ? context.error.message : curl_easy_strerror(res)
+						);
+			}
+			throw CurlException(res, context.error.message, context.handler.c_str());
+		}
+
+		return context.error.system ? context.error.system : res;
 
 	}
 
@@ -202,6 +250,10 @@
 
 	}
 
+	size_t HTTP::Handler::no_write_callback(void *, size_t size, size_t nmemb, Context *) noexcept {
+		return size * nmemb;
+	}
+
 	size_t HTTP::Handler::write_callback(void *contents, size_t size, size_t nmemb, Context *context) noexcept {
 
 		size_t realsize = size * nmemb;
@@ -211,21 +263,19 @@
 		try {
 
 			if(context->write(context->current,context->total,(const char *) contents, realsize)) {
-				strncpy(context->error,strerror(ECANCELED),CURL_ERROR_SIZE);
+				context->system_error(ECANCELED);
 			} else {
 				context->current += realsize;
 				return realsize;
 			}
 
-
 		} catch(const std::exception &e) {
 
-			Logger::String{e.what()}.error("curl");
-			strncpy(context->error,e.what(),CURL_ERROR_SIZE);
+			context->exception(e);
 
 		} catch(...) {
 
-			strncpy(context->error,"Unexpected error receiving data",CURL_ERROR_SIZE);
+			context->error.system = 0;
 
 		}
 
@@ -287,15 +337,13 @@
 		Logger::String{"Connecting to ",context->handler.c_str()}.trace("curl");
 
 		if(purpose != CURLSOCKTYPE_IPCXN) {
-			strncpy(context->error,Logger::String{"Invalid purpose '",purpose,"' in curl_opensocket"}.c_str(),CURL_ERROR_SIZE);
-			Logger::String{"Error '",context->error,"' (",errno,") creating socket host"}.error("curl");
+			Logger::String{"Invalid purpose '",purpose,"' in curl_opensocket"}.error();
 			return CURL_SOCKET_BAD;
 		}
 
 		int sockfd = ::socket(address->family,address->socktype,address->protocol);
 		if(sockfd < 0) {
-			strncpy(context->error,strerror(errno),CURL_ERROR_SIZE);
-			Logger::String{"Error '",context->error,"' (",errno,") creating socket host"}.error("curl");
+			context->system_error();
 			return CURL_SOCKET_BAD;
 		}
 
@@ -309,32 +357,28 @@
 			}
 
 			if(errno != EINPROGRESS) {
-				strncpy(context->error,strerror(errno),CURL_ERROR_SIZE);
-				Logger::String{"Error '",context->error,"' (",errno,") connecting to host"}.error("curl");
+				context->system_error();
 				::close(sockfd);
 				return CURL_SOCKET_BAD;
 			}
 
 			if(Socket::wait_for_connection(sockfd,-1) < 0) {
-				strncpy(context->error,strerror(errno),CURL_ERROR_SIZE);
-				Logger::String{"Error '",context->error,"' (",errno,") connecting to host"}.error("curl");
+				context->system_error();
 				::close(sockfd);
 				return CURL_SOCKET_BAD;
 			}
 
 			Socket::blocking(sockfd,true);
 
-			context->handler.socket(sockfd);
-
 		} catch(const std::exception &e) {
 
-			strncpy(context->error,e.what(),CURL_ERROR_SIZE);
+			context->exception(e);
 			::close(sockfd);
 			return CURL_SOCKET_BAD;
 
 		} catch(...) {
 			
-			strncpy(context->error,"Unexpected error setting socket to non-blocking",CURL_ERROR_SIZE);
+			Logger::String{"Unexpected error setting socket to non-blocking"}.error("curl");
 			::close(sockfd);
 			return CURL_SOCKET_BAD;
 
@@ -361,9 +405,21 @@
 
 	}
 
-	int HTTP::Handler::close_socket_callback(Handler *, curl_socket_t item) {
+	int HTTP::Handler::close_socket_callback(Handler *, curl_socket_t item) noexcept {
 
-		Socket::close(item);
+		try {
+
+			Socket::close(item);
+
+		} catch(const std::exception &e) {
+
+			Logger::String{e.what()}.error("curl");
+
+		} catch(...) {
+
+			Logger::String{"Unexpected error closing socket"}.error("curl");
+
+		}
 		
 		/*
 #ifdef _WIN32
@@ -428,7 +484,7 @@
 				const char *delimiter = strchr(from,':');
 
 				if(delimiter) {
-					context->handler.response_headers.emplace_back(
+					context->handler.headers.response.emplace_back(
 						String{from,(size_t) (delimiter-from)}.strip().c_str(),
 						String{delimiter+1}.strip().c_str()
 					);
@@ -438,14 +494,12 @@
 
 		} catch(const std::exception &e) {
 
-			Logger::String{e.what()}.error("curl");
-			strncpy(context->error,e.what(),CURL_ERROR_SIZE);
+			context->exception(e);
 			return CURL_WRITEFUNC_ERROR;
 
 		} catch(...) {
 
-			strncpy(context->error,"Unexpected error processing header",CURL_ERROR_SIZE);
-			Logger::String{context->error}.error("curl");
+			Logger::String{"Unexpected error processing header"}.error("curl");
 			return CURL_WRITEFUNC_ERROR;
 
 		}

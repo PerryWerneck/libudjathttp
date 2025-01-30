@@ -100,7 +100,7 @@
 			CURL * hCurl;
 
 			static int trace_callback(CURL *handle, curl_infotype type, char *data, size_t size, Handler *handler) noexcept;
-			static int close_socket_callback(Handler *engine, curl_socket_t item);
+			static int close_socket_callback(Handler *engine, curl_socket_t item) noexcept;
 			static int sockopt_callback(Handler *handler, curl_socket_t curlfd, curlsocktype purpose) noexcept;
 
 			/// @brief Current download session.
@@ -119,20 +119,33 @@
 					const char *ptr = nullptr;
 				} payload;
 
-				/// @brief Curl error.
-				char error[CURL_ERROR_SIZE+1] = {0};
+				struct {
+					int system = 0;
+					char message[CURL_ERROR_SIZE+1] = {0};
+				} error;
 
 				Context(HTTP::Handler *h, const std::function<bool(uint64_t current, uint64_t total, const char *data, size_t len)> &w) : handler{*h}, write{w} {
 				}
 
+				inline void system_error(int code = errno) noexcept {
+					error.system = code;
+				}
+
+				inline void exception(const std::exception &e) noexcept {
+					error.system = -1;
+					strncpy(error.message,e.what(),CURL_ERROR_SIZE);
+				}
 			};
+
+			int perform(Context &context, bool except = true);
 
 			static curl_socket_t open_socket_callback(Context *context, curlsocktype purpose, struct curl_sockaddr *address) noexcept;
 			static size_t read_callback(char *buffer, size_t size, size_t nitems, Context *context) noexcept;
 			static size_t write_callback(void *contents, size_t size, size_t nmemb, Context *context) noexcept;
 			static size_t header_callback(char *buffer, size_t size, size_t nitems, Context *context) noexcept;
 
-			const char *outptr = nullptr;
+			/// @brief Dummy writer for 'test' method.
+			static size_t no_write_callback(void *, size_t size, size_t nmemb, Context *context) noexcept;
 
 			void set(const HTTP::Method method);
 
@@ -143,7 +156,10 @@
 				}
 			};
 
-			std::vector<Header> response_headers;
+			struct {
+				std::vector<Header> response;
+				struct curl_slist *request = nullptr;
+			} headers;
 
 #endif // HAVE_WINHTTP
 
@@ -154,7 +170,7 @@
 
 			/// @brief Check result code, launch exception.
 			/// @param except If true launch exception on error code.
-			int check_result(int status_code, bool except = true);
+			// int check_result(int status_code, bool except = true);
 
 		public:
 			Handler(const URL &url);
@@ -167,32 +183,11 @@
 			}
 #endif // HAVE_CURL
 
+			URL::Handler & header(const char *name, const char *value) override;
+
 			int test(const HTTP::Method method, const char *payload) override;
 
 			int perform(const HTTP::Method method, const char *payload, const std::function<bool(uint64_t current, uint64_t total, const char *data, size_t len)> &progress) override;
-
-			/*
-			int response_code();
-
-			inline const char * response_message() const noexcept {
-				return message.c_str();
-			}
-
-			/// @brief Perform.
-			/// @param except If true launch exception if http response is not 200-299.
-			/// @return HTTP status code.
-			/// @retval -1 Unexpected exception.
-			int perform(bool except = true);
-
-			/// @brief Write to output file.
-			virtual void write(const void *contents, size_t length) = 0;
-
-			/// @brief Set content-length from server.
-			virtual void content_length(unsigned long long length);
-
-			/// @brief Set response header.
-			virtual void response(const char *name, const char *value) = 0;
-			*/
 
 		};
 
