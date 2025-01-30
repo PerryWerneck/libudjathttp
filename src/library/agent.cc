@@ -44,6 +44,7 @@
 	bool HTTP::Agent::refresh(bool) {
 
 		// TODO: Use curl directly, get certificate expiration date.
+		// https://curl.se/libcurl/c/CURLOPT_CERTINFO.html
 		
 		return Udjat::Agent<unsigned int>::set((unsigned int) Udjat::URL{HTTP::Action::url}.test(method));
 	}

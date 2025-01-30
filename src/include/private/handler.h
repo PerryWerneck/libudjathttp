@@ -1,7 +1,7 @@
 /* SPDX-License-Identifier: LGPL-3.0-or-later */
 
 /*
- * Copyright (C) 2023 Perry Werneck <perry.werneck@gmail.com>
+ * Copyright (C) 2025 Perry Werneck <perry.werneck@gmail.com>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
@@ -18,21 +18,15 @@
  */
 
  /**
-  * @brief Declare HTTP writer.
+  * @brief Declare curl based url handler.
   */
 
- #error deprecated
-
-/*
  #pragma once
  #include <config.h>
- #include <udjat/tools/http/worker.h>
  #include <udjat/defs.h>
- #include <udjat/tools/protocol.h>
  #include <udjat/tools/url.h>
- #include <udjat/tools/string.h>
- #include <udjat/tools/http/timestamp.h>
-
+ #include <vector>
+ 
 #if defined(HAVE_WINHTTP)
 
 	#include <winhttp.h>
@@ -84,7 +78,7 @@
 #endif // _WIN32
 
 		/// @brief The HTTP client engine.
-		class UDJAT_PRIVATE Engine {
+		class UDJAT_PRIVATE Handler : public Udjat::URL::Handler {
 		private:
 
 #if defined(HAVE_WINHTTP)
@@ -105,20 +99,51 @@
 			/// @brief Handle to curl.
 			CURL * hCurl;
 
-			/// @brief Curl error.
-			char error[CURL_ERROR_SIZE+1];
+			static int trace_callback(CURL *handle, curl_infotype type, char *data, size_t size, Handler *handler) noexcept;
+			static int close_socket_callback(Handler *engine, curl_socket_t item);
+			static int sockopt_callback(Handler *handler, curl_socket_t curlfd, curlsocktype purpose) noexcept;
 
-			static size_t do_write(void *contents, size_t size, size_t nmemb, Engine *engine) noexcept;
-			static size_t read_callback(char *buffer, size_t size, size_t nitems, Engine *engine) noexcept;
-			static size_t write_callback(void *contents, size_t size, size_t nmemb, Engine *engine) noexcept;
-			static int trace_callback(CURL *handle, curl_infotype type, char *data, size_t size, Engine *engine) noexcept;
-			static curl_socket_t open_socket_callback(Engine *engine, curlsocktype purpose, struct curl_sockaddr *address) noexcept;
-			static int close_socket_callback(Engine *engine, curl_socket_t item);
-			static int sockopt_callback(Engine *engine, curl_socket_t curlfd, curlsocktype purpose) noexcept;
-			static size_t header_callback(char *buffer, size_t size, size_t nitems, Engine *engine) noexcept;
+			/// @brief Current download session.
+			struct Context {
+				
+				int sock;
 
-			struct curl_slist *headers = NULL;
+				HTTP::Handler &handler;
+				const std::function<bool(uint64_t current, uint64_t total, const char *data, size_t len)> &write;
+
+				uint64_t current = 0;
+				uint64_t total = 0;
+
+				struct {
+					String text;
+					const char *ptr = nullptr;
+				} payload;
+
+				/// @brief Curl error.
+				char error[CURL_ERROR_SIZE+1] = {0};
+
+				Context(HTTP::Handler *h, const std::function<bool(uint64_t current, uint64_t total, const char *data, size_t len)> &w) : handler{*h}, write{w} {
+				}
+
+			};
+
+			static curl_socket_t open_socket_callback(Context *context, curlsocktype purpose, struct curl_sockaddr *address) noexcept;
+			static size_t read_callback(char *buffer, size_t size, size_t nitems, Context *context) noexcept;
+			static size_t write_callback(void *contents, size_t size, size_t nmemb, Context *context) noexcept;
+			static size_t header_callback(char *buffer, size_t size, size_t nitems, Context *context) noexcept;
+
 			const char *outptr = nullptr;
+
+			void set(const HTTP::Method method);
+
+			struct Header {
+				std::string name;
+				std::string value;
+				Header(const char *n, const char *v) : name{n}, value{v} {
+				}
+			};
+
+			std::vector<Header> response_headers;
 
 #endif // HAVE_WINHTTP
 
@@ -127,20 +152,26 @@
 
 		protected:
 
-			HTTP::Worker &worker;
-
 			/// @brief Check result code, launch exception.
 			/// @param except If true launch exception on error code.
-			int check_result(int status_code, bool except);
+			int check_result(int status_code, bool except = true);
 
 		public:
-			Engine(HTTP::Worker &worker, const HTTP::Method method, time_t timeout = 0);
+			Handler(const URL &url);
 
-			Engine(HTTP::Worker &worker, time_t timeout = 0) : Engine(worker,worker.method(),timeout) {
+			virtual ~Handler();
+
+#if defined(HAVE_CURL)
+			inline operator CURL *() noexcept {
+				return hCurl;
 			}
+#endif // HAVE_CURL
 
-			virtual ~Engine();
+			int test(const HTTP::Method method, const char *payload) override;
 
+			int perform(const HTTP::Method method, const char *payload, const std::function<bool(uint64_t current, uint64_t total, const char *data, size_t len)> &progress) override;
+
+			/*
 			int response_code();
 
 			inline const char * response_message() const noexcept {
@@ -161,10 +192,11 @@
 
 			/// @brief Set response header.
 			virtual void response(const char *name, const char *value) = 0;
+			*/
 
 		};
 
  	}
 
  }
-*/
+

@@ -19,36 +19,56 @@
 
  #include <config.h>
  #include <udjat/defs.h>
- #include <udjat/module.h>
- #include <udjat/tools/protocol.h>
  #include <udjat/moduleinfo.h>
- #include <udjat/tools/http/worker.h>
- #include <udjat/module/http.h>
  #include <udjat/tools/logger.h>
+ #include <udjat/tools/url.h>
+ #include <udjat/module/http.h>
+ #include <private/handler.h>
 
- #ifdef HAVE_CURL
+ #if defined(HAVE_CURL)
 	#include <curl/curl.h>
  #endif // HAVE_CURL
 
- using namespace std;
-
  namespace Udjat {
 
-#ifdef HAVE_CURL
-	#define ALLOW_DEFAULT true
+       static const Udjat::ModuleInfo moduleinfo{
+#if defined(_WIN32)
+			"WinHTTP module for " STRINGIZE_VALUE_OF(PRODUCT_NAME),         // The module description.
+#elif defined(HAVE_CURL)
+			"CURL " LIBCURL_VERSION " module for " STRINGIZE_VALUE_OF(PRODUCT_NAME),                // The module description.
 #else
-	#define ALLOW_DEFAULT false
-#endif
+			"HTTP module for " STRINGIZE_VALUE_OF(PRODUCT_NAME),            // The module description.
+#endif //
+       };
 
-	Udjat::Module * HTTP::Module::Factory(const char *name, const ModuleInfo &info) {
+	Udjat::Module * HTTP::Module::Factory(const char *name) {
 
 		class Module : public HTTP::Module {
 		private:
-			std::shared_ptr<Protocol> http, https;
+
+			class Factory : public Udjat::HTTP::Handler::Factory {
+			public:
+				Factory(const char *name) : Udjat::HTTP::Handler::Factory{name} {
+				}
+
+				virtual ~Factory() {
+				}
+
+				std::shared_ptr<Udjat::URL::Handler> HandlerFactory(const URL &url) const override {
+					return std::make_shared<HTTP::Handler>(url);
+				}
+			};
+
+			Factory http{"http"};
+			Factory https{"https"};
+
+#if defined(HAVE_CURL)
+			Factory def{"default"};
+#endif // HAVE_CURL
 
 		public:
-			Module(const char *name, const ModuleInfo &info) 
-				: HTTP::Module{name,info},http{make_shared<Protocol>("http",info,ALLOW_DEFAULT)},https{make_shared<Protocol>("https",info)} {
+			Module(const char *name) 
+				: HTTP::Module{name} {
 			}
 
 			virtual ~Module() {
@@ -56,16 +76,15 @@
 
 		};
 
-		return new Module(name,info);
+		return new Module(name);
+
 	}
 
-	HTTP::Module::Module(const char *name, const ModuleInfo &modinfo) : Udjat::Module(name,modinfo) {
-		debug("Loading ",modinfo.description,"...");
+	HTTP::Module::Module(const char *name) : Udjat::Module(name,moduleinfo) {
 	}
 
 	HTTP::Module::~Module() {
 	}
 
  }
-
 

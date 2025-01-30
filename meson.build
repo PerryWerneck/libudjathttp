@@ -109,8 +109,6 @@ includes_dir = include_directories('src/include')
 # Sources
 #
 lib_src = [
-  'src/library/engine.cc',
-  'src/library/worker.cc',
   'src/library/module.cc',
   'src/library/agent.cc',
 ]
@@ -155,12 +153,8 @@ if host_machine.system() == 'windows'
   )
 
   lib_src += [
-    'src/library/engines/winhttp/get.cc',
-    'src/library/engines/winhttp/test.cc',
-    'src/library/engines/winhttp/winhttp.cc',
-    'src/library/engines/winhttp/worker.cc',
-    'src/library/os/windows/base64.cc'
   ]
+
 else
 
   pkg.generate(
@@ -183,9 +177,7 @@ else
   ]
 
   lib_src += [
-    'src/library/engines/curl/test.cc',
-    'src/library/engines/curl/action.cc',
-    'src/library/engines/curl/curl.cc',
+    'src/library/curl/handler.cc',
   ]
 
 endif
@@ -287,10 +279,10 @@ executable(
   include_directories: includes_dir
 )
 
-install_headers(
-  'src/include/udjat/tools/http/worker.h',
-  subdir: 'udjat/tools/http'  
-)
+#install_headers(
+#  'src/include/udjat/tools/http/worker.h',
+#  subdir: 'udjat/tools/http'  
+#)
 
 install_headers(
   'src/include/udjat/tools/actions/http.h',
