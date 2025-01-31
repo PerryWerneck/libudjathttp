@@ -25,6 +25,7 @@
 
  #include <udjat/defs.h>
  #include <udjat/tools/actions/abstract.h>
+ #include <udjat/tools/url.h>
  #include <udjat/tools/request.h>
  #include <udjat/tools/response.h>
  
@@ -34,9 +35,9 @@
 
 		class UDJAT_API Action : public Udjat::Action {
 		protected:
-			const char *url;
+			const URL url;
 			const HTTP::Method method;
-			const char *text = "";
+			const char *payload;
 			const MimeType mimetype;
 		
 		public:

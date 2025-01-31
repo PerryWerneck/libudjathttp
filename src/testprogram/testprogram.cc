@@ -25,12 +25,23 @@
  #include <udjat/tools/application.h>
  #include <udjat/tools/actions/http.h>
  #include <udjat/tools/logger.h>
+ #include <udjat/tools/url.h>
+ #include <private/handler.h>
  
  using namespace std;
  using namespace Udjat;
 
  int main(int argc, char **argv) {
 
+	Udjat::Logger::console(true);
+	Udjat::Logger::verbosity(9);
+	Udjat::Logger::redirect();
+
+	Udjat::URL url{"http://localhost"};	
+	HTTP::Handler{url}.test();
+
+
+	/*
 	static const ModuleInfo info{"url-tester"};
 	
 	return Testing::run(argc,argv,info,[](Application &){
@@ -38,6 +49,7 @@
 	 	udjat_module_init();
 
 	});
+	*/
 
  }
 

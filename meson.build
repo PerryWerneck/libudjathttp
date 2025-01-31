@@ -117,6 +117,7 @@ includes_dir = include_directories('src/include')
 lib_src = [
   'src/library/module.cc',
   'src/library/agent.cc',
+  'src/library/action.cc',
 ]
 
 module_src = [

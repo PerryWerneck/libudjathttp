@@ -78,7 +78,7 @@
 #endif // _WIN32
 
 		/// @brief The HTTP client engine.
-		class UDJAT_PRIVATE Handler : public Udjat::URL::Handler {
+		class UDJAT_API Handler : public Udjat::URL::Handler {
 		private:
 
 #if defined(HAVE_WINHTTP)
@@ -98,10 +98,6 @@
 
 			/// @brief Handle to curl.
 			CURL * hCurl;
-
-			static int trace_callback(CURL *handle, curl_infotype type, char *data, size_t size, Handler *handler) noexcept;
-			static int close_socket_callback(Handler *engine, curl_socket_t item) noexcept;
-			static int sockopt_callback(Handler *handler, curl_socket_t curlfd, curlsocktype purpose) noexcept;
 
 			/// @brief Current download session.
 			struct Context {
@@ -139,7 +135,11 @@
 
 			int perform(Context &context, bool except = true);
 
+			static int trace_callback(CURL *handle, curl_infotype type, char *data, size_t size, Handler *handler) noexcept;
+			static int sockopt_callback(Context *context, curl_socket_t curlfd, curlsocktype purpose) noexcept;
+
 			static curl_socket_t open_socket_callback(Context *context, curlsocktype purpose, struct curl_sockaddr *address) noexcept;
+			static int close_socket_callback(Context *engine, curl_socket_t item) noexcept;
 			static size_t read_callback(char *buffer, size_t size, size_t nitems, Context *context) noexcept;
 			static size_t write_callback(void *contents, size_t size, size_t nmemb, Context *context) noexcept;
 			static size_t header_callback(char *buffer, size_t size, size_t nitems, Context *context) noexcept;
@@ -184,12 +184,12 @@
 #endif // HAVE_CURL
 
 #if defined(HAVE_JSON_C)
-			bool get(Udjat::Value &value) override;
+			bool get(Udjat::Value &value, const HTTP::Method method = HTTP::Get, const char *payload = "") override;
 #endif // HAVE_JSON_C
 
 			URL::Handler & header(const char *name, const char *value) override;
 
-			int test(const HTTP::Method method, const char *payload) override;
+			int test(const HTTP::Method method = HTTP::Get, const char *payload = "") override;
 
 			int perform(const HTTP::Method method, const char *payload, const std::function<bool(uint64_t current, uint64_t total, const char *data, size_t len)> &progress) override;
 

@@ -98,15 +98,8 @@
 			throw CurlException(CURLE_FAILED_INIT,"Failed to initialize curl",url.c_str());
 		}
 
-		curl_easy_setopt(hCurl, CURLOPT_FOLLOWLOCATION, 1L);
-		curl_easy_setopt(hCurl, CURLOPT_HEADERDATA, (void *) this);
-		curl_easy_setopt(hCurl, CURLOPT_HEADERFUNCTION, header_callback);
-		curl_easy_setopt(hCurl, CURLOPT_OPENSOCKETDATA, this);
-		curl_easy_setopt(hCurl, CURLOPT_OPENSOCKETFUNCTION, open_socket_callback);
-		curl_easy_setopt(hCurl, CURLOPT_CLOSESOCKETDATA, this);
-		curl_easy_setopt(hCurl, CURLOPT_CLOSESOCKETFUNCTION, close_socket_callback);
-		curl_easy_setopt(hCurl, CURLOPT_SOCKOPTDATA, this);
-		curl_easy_setopt(hCurl, CURLOPT_SOCKOPTFUNCTION, sockopt_callback);
+		// curl_easy_setopt(hCurl, CURLOPT_FOLLOWLOCATION, 1L);
+		
 		curl_easy_setopt(hCurl, CURLOPT_FORBID_REUSE, 1L);
 		curl_easy_setopt(hCurl, CURLOPT_URL, url.c_str());
 
@@ -128,7 +121,7 @@
 
 		Context context{this,[](uint64_t,uint64_t,const char *,size_t){return false;}};
 
-		curl_easy_setopt(hCurl, CURLOPT_WRITEDATA, context);
+		curl_easy_setopt(hCurl, CURLOPT_WRITEDATA, &context);
 		curl_easy_setopt(hCurl, CURLOPT_WRITEFUNCTION, no_write_callback);
 
 		set(method);
@@ -141,12 +134,11 @@
 	int HTTP::Handler::perform(const HTTP::Method method, const char *payload, const std::function<bool(uint64_t current, uint64_t total, const char *data, size_t len)> &progress) {
 
 		Context context{this,progress};
-
-		curl_easy_setopt(hCurl, CURLOPT_WRITEDATA, context);
-		curl_easy_setopt(hCurl, CURLOPT_WRITEFUNCTION, write_callback);
-
 		set(method);
 		context.payload.text = payload;
+
+		curl_easy_setopt(hCurl, CURLOPT_WRITEDATA, &context);
+		curl_easy_setopt(hCurl, CURLOPT_WRITEFUNCTION, write_callback);
 
 		return perform(context,true);
 
@@ -154,9 +146,21 @@
 
 	int HTTP::Handler::perform(Context &context, bool except) {
 
-		curl_easy_setopt(hCurl, CURLOPT_ERRORBUFFER, context.error);
+		curl_easy_setopt(hCurl, CURLOPT_ERRORBUFFER, context.error.message);
 
-		curl_easy_setopt(hCurl, CURLOPT_READDATA, context);
+		curl_easy_setopt(hCurl, CURLOPT_OPENSOCKETDATA, &context);
+		curl_easy_setopt(hCurl, CURLOPT_OPENSOCKETFUNCTION, open_socket_callback);
+
+		curl_easy_setopt(hCurl, CURLOPT_SOCKOPTDATA, &context);
+		curl_easy_setopt(hCurl, CURLOPT_SOCKOPTFUNCTION, sockopt_callback);
+
+		curl_easy_setopt(hCurl, CURLOPT_CLOSESOCKETDATA, &context);
+		curl_easy_setopt(hCurl, CURLOPT_CLOSESOCKETFUNCTION, close_socket_callback);
+
+		curl_easy_setopt(hCurl, CURLOPT_HEADERDATA, &context);
+		curl_easy_setopt(hCurl, CURLOPT_HEADERFUNCTION, header_callback);
+
+		curl_easy_setopt(hCurl, CURLOPT_READDATA, &context);
 		curl_easy_setopt(hCurl, CURLOPT_READFUNCTION, read_callback);
 		context.payload.ptr = nullptr;
 
@@ -165,6 +169,8 @@
 		}
 
 		CURLcode res = curl_easy_perform(hCurl);
+
+		debug("length=",context.total," message='",context.error.message,"'");
 
 		if(res == CURLE_OK) {
 			long response_code = 0;
@@ -416,7 +422,7 @@
 
 	}
 
-	int HTTP::Handler::close_socket_callback(Handler *, curl_socket_t item) noexcept {
+	int HTTP::Handler::close_socket_callback(Context *, curl_socket_t item) noexcept {
 
 		try {
 
@@ -453,13 +459,14 @@
 
 	}
 
-	int HTTP::Handler::sockopt_callback(Handler *handler, curl_socket_t curlfd, curlsocktype purpose) noexcept {
+	int HTTP::Handler::sockopt_callback(Context *, curl_socket_t curlfd, curlsocktype purpose) noexcept {
 		return CURL_SOCKOPT_ALREADY_CONNECTED;
 	}
 
 	size_t HTTP::Handler::header_callback(char *buffer, size_t size, size_t nitems, Context *context) noexcept {
 
 		String header{(const char *) buffer,(size_t) (size*nitems)};
+		debug("header=",header);
 
 		try {
 
@@ -571,11 +578,11 @@
 
 	}
 
-	bool HTTP::Handler::get(Udjat::Value &value) {
+	bool HTTP::Handler::get(Udjat::Value &value, const HTTP::Method method, const char *payload) {
 
 		URL::Handler::set(MimeType::json);
 
-		String response{URL::Handler::get()};
+		String response{URL::Handler::get(method,payload)};
 
 		if(response.empty()) {
 			throw system_error(ENODATA,system_category(),String{"Empty response from ", c_str()});
