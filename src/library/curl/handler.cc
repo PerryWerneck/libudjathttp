@@ -25,12 +25,19 @@
  #include <udjat/tools/logger.h>
  #include <udjat/tools/configuration.h>
  #include <udjat/tools/socket.h>
+ #include <udjat/tools/value.h>
+ #include <udjat/tools/http/mimetype.h>
 
  #include <private/handler.h>
  #include <errno.h>
  #include <curl/curl.h>
  #include <fcntl.h>
  #include <unistd.h>
+ #include <system_error>
+
+ #if defined(HAVE_JSON_C)
+	#include <json.h>
+ #endif // HAVE_JSON_C
 
  #ifdef DEBUG
 	#define TRACE_DEFAULT true
@@ -511,6 +518,83 @@
 		return size*nitems;
 
 	}
+
+#if defined(HAVE_JSON_C)
+
+	static void load(Udjat::Value &value, struct json_object *jobj) {
+
+		switch(json_object_get_type(jobj)) {
+		case json_type_null:
+			break;
+
+		case json_type_boolean:
+			value = json_object_get_boolean(jobj);
+			break;
+
+		case json_type_double:
+			value = json_object_get_double(jobj);
+			break;
+
+		case json_type_int:
+			value = json_object_get_int(jobj);
+
+			break;
+
+		case json_type_object:
+			{
+				value.set(Value::Object);
+				json_object_object_foreach(jobj, key, val) {
+					load(value[(const char *) key],val);
+				}
+			}
+			break;
+
+		case json_type_array:
+			{
+				value.set(Value::Array);
+				int arraylen = json_object_array_length(jobj);
+				for (int i = 0; i < arraylen; i++) {
+					struct json_object *elem = json_object_array_get_idx(jobj, i);
+					load(value[i], elem);
+				}
+			}
+			break;
+
+		case json_type_string:
+			value = json_object_get_string(jobj);
+			break;
+
+		default:
+			value = json_object_get_string(jobj);
+
+		}
+
+	}
+
+	bool HTTP::Handler::get(Udjat::Value &value) {
+
+		URL::Handler::set(MimeType::json);
+
+		String response{URL::Handler::get()};
+
+		if(response.empty()) {
+			throw system_error(ENODATA,system_category(),String{"Empty response from ", c_str()});
+		}
+
+		struct json_object *jobj = json_tokener_parse(response.c_str());
+		if(!jobj) {
+			throw runtime_error(String{"Error parsing response from ",c_str()});
+		}
+
+		json_object_object_foreach(jobj, key, val) {
+			load(value[(const char *) key],val);
+		}
+		
+		json_object_put(jobj);
+
+		return true;
+	}
+#endif // HAVE_JSON_C
 
  }
 

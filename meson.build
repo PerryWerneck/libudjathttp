@@ -47,10 +47,10 @@ subdir('po')
 # Required libraries
 #
 libudjat = dependency('libudjat')
-json = dependency('json', required: false)
+json_c = dependency('json', required: false)
 lib_deps = [
   libudjat,
-  json,
+  json_c,
 ]
 
 #
@@ -96,8 +96,8 @@ app_conf.set('PACKAGE_VERSION_MAJOR', pkg_major_version)
 app_conf.set('PACKAGE_VERSION_MINOR', pkg_minor_version)
 app_conf.set('PACKAGE_VERSION_MICRO', pkg_micro_version)
 
-if json.found()
-  app_conf.set('HAVE_JSON', 1)
+if json_c.found()
+  app_conf.set('HAVE_JSON_C', 1)
 endif
 
 app_conf.set_quoted('LOG_DOMAIN', 'http')
@@ -151,6 +151,7 @@ if host_machine.system() == 'windows'
   pkg.generate(
     name: 'lib' + meson.project_name() + '-static',
     description: project_description,
+    requires: [ json_c ],
     libraries: [ 
       '-l' + meson.project_name(),
       '-lws2_32',
@@ -170,17 +171,18 @@ else
     libraries: [ '-l' + meson.project_name() ]
   )
 
+  app_conf.set('HAVE_CURL', 1)
+  curl = dependency('libcurl')
+  lib_deps += [
+    curl,
+  ]
+
   pkg.generate(
     name: 'lib' + meson.project_name() + '-static',
     description: project_description,
-    requires: [ 'libcurl' ],
+    requires: [ curl, json_c ],
     libraries: [ '-l:lib' + meson.project_name() + '.a' ]
   )
-
-  app_conf.set('HAVE_CURL', 1)
-  lib_deps += [
-    dependency('libcurl'),
-  ]
 
   lib_src += [
     'src/library/curl/handler.cc',

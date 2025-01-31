@@ -183,6 +183,10 @@
 			}
 #endif // HAVE_CURL
 
+#if defined(HAVE_JSON_C)
+			bool get(Udjat::Value &value) override;
+#endif // HAVE_JSON_C
+
 			URL::Handler & header(const char *name, const char *value) override;
 
 			int test(const HTTP::Method method, const char *payload) override;
