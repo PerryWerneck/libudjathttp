@@ -46,24 +46,11 @@
 		class Module : public HTTP::Module {
 		private:
 
-			class Factory : public Udjat::HTTP::Handler::Factory {
-			public:
-				Factory(const char *name) : Udjat::HTTP::Handler::Factory{name} {
-				}
-
-				virtual ~Factory() {
-				}
-
-				std::shared_ptr<Udjat::URL::Handler> HandlerFactory(const URL &url) const override {
-					return std::make_shared<HTTP::Handler>(url);
-				}
-			};
-
-			Factory http{"http"};
-			Factory https{"https"};
+			HTTP::Handler::Factory http{"http"};
+			HTTP::Handler::Factory https{"https"};
 
 #if defined(HAVE_CURL)
-			Factory def{"default"};
+			HTTP::Handler::Factory def{"default"};
 #endif // HAVE_CURL
 
 		public:

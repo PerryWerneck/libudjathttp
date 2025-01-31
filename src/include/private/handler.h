@@ -173,6 +173,14 @@
 			// int check_result(int status_code, bool except = true);
 
 		public:
+
+			class Factory : public Udjat::URL::Handler::Factory {
+			public:
+				Factory(const char *name);
+				virtual ~Factory();
+				std::shared_ptr<Udjat::URL::Handler> HandlerFactory(const URL &url) const override;
+			};
+
 			Handler(const URL &url);
 
 			virtual ~Handler();

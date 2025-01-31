@@ -89,6 +89,16 @@
 
 	};
 
+	HTTP::Handler::Factory::Factory(const char *name) : Udjat::URL::Handler::Factory{name} {
+	}
+
+	HTTP::Handler::Factory::~Factory() {
+	}
+
+	std::shared_ptr<Udjat::URL::Handler> HTTP::Handler::Factory::HandlerFactory(const URL &url) const {
+		return std::make_shared<HTTP::Handler>(url);
+	}
+
 	HTTP::Handler::Handler(const URL &url) : Udjat::URL::Handler{url} {
 
 		CurlSingleton::instance();
@@ -98,8 +108,7 @@
 			throw CurlException(CURLE_FAILED_INIT,"Failed to initialize curl",url.c_str());
 		}
 
-		// curl_easy_setopt(hCurl, CURLOPT_FOLLOWLOCATION, 1L);
-		
+		curl_easy_setopt(hCurl, CURLOPT_FOLLOWLOCATION, 1L);
 		curl_easy_setopt(hCurl, CURLOPT_FORBID_REUSE, 1L);
 		curl_easy_setopt(hCurl, CURLOPT_URL, url.c_str());
 
@@ -146,6 +155,8 @@
 
 	int HTTP::Handler::perform(Context &context, bool except) {
 
+		debug(context.handler.c_str());
+
 		curl_easy_setopt(hCurl, CURLOPT_ERRORBUFFER, context.error.message);
 
 		curl_easy_setopt(hCurl, CURLOPT_OPENSOCKETDATA, &context);
@@ -170,13 +181,16 @@
 
 		CURLcode res = curl_easy_perform(hCurl);
 
-		debug("length=",context.total," message='",context.error.message,"'");
+		debug("length=",context.total," message='",context.error.message,"' syserror=",context.error.system);
 
 		if(res == CURLE_OK) {
 			long response_code = 0;
 			curl_easy_getinfo(hCurl, CURLINFO_RESPONSE_CODE, &response_code);
+			debug("result=CURLE_OK, response_code=",response_code);
 			return response_code;
 		}
+
+		debug("Curl response=",res," '",curl_easy_strerror(res),"'");
 
 		if(except) {
 			if(context.error.system) {
@@ -193,6 +207,7 @@
 				);
 		}
 
+		debug(__FUNCTION__,"=",(context.error.system ? context.error.system : res));
 		return context.error.system ? context.error.system : res;
 
 	}
@@ -275,7 +290,7 @@
 
 		size_t realsize = size * nmemb;
 
-		debug("realsize=",realsize);
+		debug("----> realsize=",realsize,"\n",std::string{(const char *) contents,realsize}.c_str(),"\n");
 
 		try {
 

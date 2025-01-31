@@ -37,8 +37,12 @@
 	Udjat::Logger::verbosity(9);
 	Udjat::Logger::redirect();
 
-	Udjat::URL url{"http://localhost"};	
-	HTTP::Handler{url}.test();
+	Udjat::URL url{"http://127.0.0.1/udjat/css/style.css"};
+	auto handler = HTTP::Handler::Factory{"http"}.HandlerFactory(url);
+
+	auto response = handler->get();
+
+	cout << "-----" << endl << response << endl << "-----" << endl;
 
 
 	/*
