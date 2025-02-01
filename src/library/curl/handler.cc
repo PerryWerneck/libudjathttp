@@ -137,7 +137,7 @@
 		context.payload.text = payload;
 		
 		return perform(context,false);
-		
+
 	}
 
 	int HTTP::Handler::perform(const HTTP::Method method, const char *payload, const std::function<bool(uint64_t current, uint64_t total, const char *data, size_t len)> &progress) {
@@ -186,7 +186,7 @@
 		if(res == CURLE_OK) {
 			long response_code = 0;
 			curl_easy_getinfo(hCurl, CURLINFO_RESPONSE_CODE, &response_code);
-			debug("result=CURLE_OK, response_code=",response_code);
+			debug("result=CURLE_OK, response_code=",response_code," except=",except);	
 			return response_code;
 		}
 

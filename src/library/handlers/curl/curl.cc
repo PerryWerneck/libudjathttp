@@ -19,6 +19,7 @@
 
 #error deprecated
 
+/*
  #include <config.h>
  #include <udjat/defs.h>
  #include <private/engine.h>
@@ -76,6 +77,8 @@
 
 		long response_code = 0;
 		curl_easy_getinfo(hCurl, CURLINFO_RESPONSE_CODE, &response_code);
+
+	
 
 		return check_result((int) response_code, except);
 	}
@@ -581,3 +584,4 @@
 
  }
 
+*/

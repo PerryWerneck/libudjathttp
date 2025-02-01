@@ -26,6 +26,7 @@
  #include <udjat/agent.h>
  #include <udjat/agent/http.h>
  #include <udjat/tools/http/error.h>
+ #include <udjat/tools/http/exception.h>
  #include <udjat/tools/actions/http.h>
  #include <udjat/tools/url.h>
  #include <memory>
@@ -44,10 +45,21 @@
 
 	bool HTTP::Agent::refresh(bool) {
 
-		// TODO: Use curl directly, get certificate expiration date.
-		// https://curl.se/libcurl/c/CURLOPT_CERTINFO.html
+		try {
+
+			// TODO: Use curl directly, get certificate expiration date.
+			// https://curl.se/libcurl/c/CURLOPT_CERTINFO.html
+
+			debug("----> Refreshing agent ",name());
+			return Udjat::Agent<unsigned int>::set((unsigned int) Udjat::URL::test());
+
+		} catch(const HTTP::Exception &e) {
+
+			debug("Unexpected exception");
+			return Udjat::Agent<unsigned int>::set(e.code());
+
+		}
 		
-		return Udjat::Agent<unsigned int>::set((unsigned int) Udjat::URL::test());
 	}
 		
 	std::shared_ptr<Abstract::State> HTTP::Agent::computeState() {

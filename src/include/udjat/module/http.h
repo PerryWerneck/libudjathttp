@@ -37,7 +37,7 @@
 	namespace HTTP {
 
 		/// @brief Generic http module.
-		class UDJAT_API Module : public Udjat::Module, private Udjat::HTTP::Action::Factory {		
+		class UDJAT_API Module : public Udjat::Module, private Udjat::HTTP::Action::Factory, private Udjat::HTTP::Agent::Factory {			
 		public:
 
 			static Udjat::Module * Factory(const char *name = "http");
