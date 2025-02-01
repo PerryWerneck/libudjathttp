@@ -67,23 +67,18 @@
 		// TODO: Check certificate expiration states.
 
 		unsigned int value = Udjat::Agent<unsigned int>::get();
-
 		for(auto state : states) {
 			if(state->compare(value))
 				return state;
 		}
 
-		std::shared_ptr<Abstract::State> state;
-
-		if(!state) {
-			state = HTTP::Error::StateFactory(value);
+		auto state = Udjat::URL::StateFactory(value);
+		if(state) {
+			return state;
 		}
 
-		if(!state) {
-			state = Abstract::Agent::computeState();
-		}
-
-		return state;
+		// TODO: Build customized state.
+		return Abstract::Agent::computeState();
 
 	}
 
