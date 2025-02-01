@@ -27,7 +27,7 @@
  #include <udjat/agent/http.h>
  #include <udjat/tools/http/error.h>
  #include <udjat/tools/http/exception.h>
- #include <udjat/tools/actions/http.h>
+ #include <udjat/agent/http.h>
  #include <udjat/tools/url.h>
  #include <memory>
 
@@ -40,23 +40,27 @@
 	}
 
 	HTTP::Agent::Agent(const XML::Node &node) 
-		: 	Udjat::Agent<unsigned int>{node}, Udjat::URL{node,"url"} {
+		: 	Udjat::Agent<int32_t>{node,200}, Udjat::URL{node,"url"} {
 	}
 
 	bool HTTP::Agent::refresh(bool) {
 
 		try {
 
-			// TODO: Use curl directly, get certificate expiration date.
+			auto handler = Udjat::URL::handler();
+
+			// TODO: setup handler to watch certificates.
 			// https://curl.se/libcurl/c/CURLOPT_CERTINFO.html
 
 			debug("----> Refreshing agent ",name());
-			return Udjat::Agent<unsigned int>::set((unsigned int) Udjat::URL::test());
+			int rc = handler->test();
+
+			return Udjat::Agent<int32_t>::set(rc);
 
 		} catch(const HTTP::Exception &e) {
 
 			debug("Unexpected exception");
-			return Udjat::Agent<unsigned int>::set(e.code());
+			return Udjat::Agent<int32_t>::set(e.code());
 
 		}
 		
@@ -66,7 +70,7 @@
 
 		// TODO: Check certificate expiration states.
 
-		unsigned int value = Udjat::Agent<unsigned int>::get();
+		unsigned int value = Udjat::Agent<int32_t>::get();
 		for(auto state : states) {
 			if(state->compare(value))
 				return state;
@@ -77,7 +81,6 @@
 			return state;
 		}
 
-		// TODO: Build customized state.
 		return Abstract::Agent::computeState();
 
 	}

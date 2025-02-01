@@ -394,7 +394,7 @@
 				return CURL_SOCKET_BAD;
 			}
 
-			if(Socket::wait_for_connection(sockfd,-1) < 0) {
+			if(Socket::wait_for_connection(sockfd,0) < 0) {
 				context->system_error();
 				::close(sockfd);
 				return CURL_SOCKET_BAD;

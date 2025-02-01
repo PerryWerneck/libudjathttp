@@ -124,11 +124,11 @@
 				}
 
 				inline void system_error(int code = errno) noexcept {
-					error.system = code;
+					error.system = -code;
 				}
 
 				inline void exception(const std::exception &e) noexcept {
-					error.system = -1;
+					error.system = 0;
 					strncpy(error.message,e.what(),CURL_ERROR_SIZE);
 				}
 			};
