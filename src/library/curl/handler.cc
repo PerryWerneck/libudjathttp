@@ -501,7 +501,8 @@
 						}
 					}
 
-					context->handler.message = str;
+					strncpy(context->error.message,str,CURL_ERROR_SIZE);
+				
 				}
 
 

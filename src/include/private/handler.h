@@ -163,9 +163,6 @@
 
 #endif // HAVE_WINHTTP
 
-			/// @brief HTTP response message.
-			std::string message;
-
 		protected:
 
 			/// @brief Check result code, launch exception.
