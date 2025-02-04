@@ -122,11 +122,16 @@
 	}
 
 	URL::Handler & HTTP::Handler::header(const char *name, const char *value) {
+
+		debug(__FUNCTION__,"(",name,",",value,")");
+
 		headers.request = curl_slist_append(headers.request,String{name,": ",value}.c_str());
 		return *this;
 	}
 
 	int HTTP::Handler::test(const HTTP::Method method, const char *payload) {
+
+		debug("Running ",__FUNCTION__,": ",method," ",url.c_str());
 
 		Context context{this,[](uint64_t,uint64_t,const char *,size_t){return false;}};
 
@@ -142,6 +147,8 @@
 
 	int HTTP::Handler::perform(const HTTP::Method method, const char *payload, const std::function<bool(uint64_t current, uint64_t total, const char *data, size_t len)> &progress) {
 
+		debug("Running ",__FUNCTION__,": ",method," ",url.c_str());
+
 		Context context{this,progress};
 		set(method);
 		context.payload.text = payload;
@@ -155,7 +162,7 @@
 
 	int HTTP::Handler::perform(Context &context, bool except) {
 
-		debug(context.handler.c_str());
+		debug("Context=",((unsigned long long) &context)," handler=",context.handler.c_str());
 
 		curl_easy_setopt(hCurl, CURLOPT_ERRORBUFFER, context.error.message);
 
@@ -183,14 +190,21 @@
 
 		debug("length=",context.total," message='",context.error.message,"' syserror=",context.error.system);
 
+		if(context.error.message[0]) {
+			status.message = context.error.message;
+		} else if(context.error.system) {
+			status.message = strerror(context.error.system);
+		}
+
 		if(res == CURLE_OK) {
 			long response_code = 0;
 			curl_easy_getinfo(hCurl, CURLINFO_RESPONSE_CODE, &response_code);
 			debug("result=CURLE_OK, response_code=",response_code," except=",except);	
+			status.code = (int) response_code;
 			return response_code;
 		}
 
-		debug("Curl response=",res," '",curl_easy_strerror(res),"'");
+		debug("Curl response=",res," '",curl_easy_strerror(res),"' message='",status.message.c_str(),"'");
 
 		if(except) {
 			if(context.error.system) {
@@ -365,6 +379,8 @@
 	}
 
 	curl_socket_t HTTP::Handler::open_socket_callback(Context *context, curlsocktype purpose, struct curl_sockaddr *address) noexcept {
+
+		debug("Context=",((unsigned long long) context)," handler=",context->handler.c_str());
 
 		Logger::String{"Connecting to ",context->handler.c_str()}.trace("curl");
 

@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 
-<config>
+<udjat src='http://127.0.0.1/~perry/libudjat.xml' update-timer='600'>
 
 	<module name='information' required='no' />
 	<agent name='intvalue' type='integer' value='0' />
@@ -8,5 +8,5 @@
 	<agent type='url' name='localhost' url='http://10.0.0.1/urlprobe' update-timer='120'>
 	</agent>
 
-</config>
+</udjat>
 
