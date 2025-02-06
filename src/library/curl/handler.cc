@@ -99,7 +99,7 @@
 		return std::make_shared<HTTP::Handler>(url);
 	}
 
-	HTTP::Handler::Handler(const URL &url) : Udjat::URL::Handler{url} {
+	HTTP::Handler::Handler(const URL &u) : url{u} {
 
 		CurlSingleton::instance();
 
@@ -119,6 +119,10 @@
 		if(headers.request) {
 			curl_slist_free_all(headers.request);
 		}
+	}
+
+	const char * HTTP::Handler::c_str() const noexcept {
+		return url.c_str();
 	}
 
 	URL::Handler & HTTP::Handler::header(const char *name, const char *value) {

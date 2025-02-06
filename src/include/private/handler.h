@@ -81,6 +81,8 @@
 		class UDJAT_API Handler : public Udjat::URL::Handler {
 		private:
 
+			const URL url;
+
 #if defined(HAVE_WINHTTP)
 
 			/// @brief WinHTTP session handle.
@@ -148,6 +150,8 @@
 			static size_t no_write_callback(void *, size_t size, size_t nmemb, Context *context) noexcept;
 
 			void set(const HTTP::Method method);
+
+			const char *c_str() const noexcept override;
 
 			struct Header {
 				std::string name;
