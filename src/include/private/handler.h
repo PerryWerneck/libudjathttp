@@ -25,6 +25,7 @@
  #include <config.h>
  #include <udjat/defs.h>
  #include <udjat/tools/url.h>
+ #include <udjat/tools/url/handler.h>
  #include <vector>
  
 #if defined(HAVE_WINHTTP)

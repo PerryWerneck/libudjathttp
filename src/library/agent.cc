@@ -29,6 +29,7 @@
  #include <udjat/tools/http/exception.h>
  #include <udjat/agent/http.h>
  #include <udjat/tools/url.h>
+ #include <udjat/tools/url/handler.h>
  #include <memory>
 
  using namespace std;
@@ -52,7 +53,7 @@
 			// TODO: setup handler to watch certificates.
 			// https://curl.se/libcurl/c/CURLOPT_CERTINFO.html
 
-			debug("----> Refreshing agent ",name());
+			debug("----> Refreshing agent ",Abstract::Agent::name());
 			int rc = handler->test();
 
 			return Udjat::Agent<int32_t>::set(rc);
