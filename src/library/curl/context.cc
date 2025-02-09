@@ -28,17 +28,13 @@
  #include <udjat/tools/socket.h>
  #include <udjat/tools/value.h>
  #include <udjat/tools/http/mimetype.h>
+ #include <private/context.h>
 
- #include <private/handler.h>
  #include <errno.h>
  #include <curl/curl.h>
  #include <fcntl.h>
  #include <unistd.h>
  #include <system_error>
-
- #if defined(HAVE_JSON_C)
-	#include <json.h>
- #endif // HAVE_JSON_C
 
  #ifdef DEBUG
 	#define TRACE_DEFAULT true
@@ -90,28 +86,132 @@
 
 	};
 
-	HTTP::Handler::Factory::Factory(const char *name) : Udjat::URL::Handler::Factory{name} {
-	}
-
-	HTTP::Handler::Factory::~Factory() {
-	}
-
-	std::shared_ptr<Udjat::URL::Handler> HTTP::Handler::Factory::HandlerFactory(const URL &url) const {
-		return std::make_shared<HTTP::Handler>(url);
-	}
-
-	HTTP::Handler::Handler(const URL &u) : url{u} {
+	HTTP::Context::Context(HTTP::Handler &h, const std::function<bool(uint64_t current, uint64_t total, const char *data, size_t len)> &w) 
+		: handler{h}, writer{w} {
 
 		CurlSingleton::instance();
 
 		hCurl = curl_easy_init();
 		if(!hCurl) {
-			throw CurlException(CURLE_FAILED_INIT,"Failed to initialize curl",url.c_str());
+			throw CurlException(CURLE_FAILED_INIT,"Failed to initialize curl",handler.url.c_str());
 		}
+
+		curl_easy_setopt(hCurl, CURLOPT_WRITEDATA, this);
 
 		curl_easy_setopt(hCurl, CURLOPT_FOLLOWLOCATION, 1L);
 		curl_easy_setopt(hCurl, CURLOPT_FORBID_REUSE, 1L);
-		curl_easy_setopt(hCurl, CURLOPT_URL, url.c_str());
+		curl_easy_setopt(hCurl, CURLOPT_URL, handler.url.c_str());
+
+		curl_easy_setopt(hCurl, CURLOPT_ERRORBUFFER, error.message);
+
+		curl_easy_setopt(hCurl, CURLOPT_OPENSOCKETDATA, this);
+		curl_easy_setopt(hCurl, CURLOPT_OPENSOCKETFUNCTION, open_socket_callback);
+
+		curl_easy_setopt(hCurl, CURLOPT_SOCKOPTDATA, this);
+		curl_easy_setopt(hCurl, CURLOPT_SOCKOPTFUNCTION, sockopt_callback);
+
+		curl_easy_setopt(hCurl, CURLOPT_CLOSESOCKETDATA, this);
+		curl_easy_setopt(hCurl, CURLOPT_CLOSESOCKETFUNCTION, close_socket_callback);
+
+		curl_easy_setopt(hCurl, CURLOPT_HEADERDATA, this);
+		curl_easy_setopt(hCurl, CURLOPT_HEADERFUNCTION, header_callback);
+
+		curl_easy_setopt(hCurl, CURLOPT_READDATA, this);
+		curl_easy_setopt(hCurl, CURLOPT_READFUNCTION, read_callback);
+
+		// Load heaers
+		if(!handler.headers.request.empty()) {
+			for(const auto &header : handler.headers.request) {
+				headers.request = curl_slist_append(headers.request,String{header.name,": ",header.value}.c_str());
+			}
+		}
+
+		
+
+	}
+	
+	HTTP::Context::~Context() {
+		curl_easy_cleanup(hCurl);
+		if(headers.request) {
+			curl_slist_free_all(headers.request);
+		}
+	}
+
+	int HTTP::Context::test(const HTTP::Method method, const char *pl) noexcept {
+
+		set(method);
+		payload.text = pl;
+
+		curl_easy_setopt(hCurl, CURLOPT_WRITEFUNCTION, no_write_callback);
+
+		return perform(false);
+	}
+
+	int HTTP::Context::perform(const HTTP::Method method, const char *pl) {
+
+		set(method);
+		payload.text = pl;
+
+		curl_easy_setopt(hCurl, CURLOPT_WRITEFUNCTION, write_callback);
+
+		return perform(true);
+
+	}
+
+
+	int HTTP::Context::perform(bool except) {
+
+		debug(__FUNCTION__," handler=",handler.c_str());
+
+		payload.ptr = nullptr;
+
+		if(headers.request) {
+			curl_easy_setopt(hCurl, CURLOPT_HTTPHEADER, headers.request);
+		}
+
+		CURLcode res = curl_easy_perform(hCurl);
+
+		debug("length=",total," message='",error.message,"' syserror=",error.system);
+
+		if(error.message[0]) {
+			handler.status.message = error.message;
+		} else if(error.system) {
+			handler.status.message = strerror(error.system);
+		}
+
+		if(res == CURLE_OK) {
+			long response_code = 0;
+			curl_easy_getinfo(hCurl, CURLINFO_RESPONSE_CODE, &response_code);
+			debug("result=CURLE_OK, response_code=",response_code," except=",except);	
+			handler.status.code = (int) response_code;
+			return response_code;
+		}
+
+		debug("Curl response=",res," '",curl_easy_strerror(res),"' message='",handler.status.message.c_str(),"'");
+
+		if(except) {
+			if(error.system) {
+				throw CurlException(
+						res, 
+						error.message[0] ? error.message : strerror(error.system),
+						handler.c_str()
+					);
+			}
+			throw CurlException(
+					res, 
+					error.message, 
+					handler.c_str()
+				);
+		}
+
+		debug(__FUNCTION__,"=",(error.system ? error.system : res));
+		return error.system ? error.system : res;
+		
+	}
+
+/*
+	HTTP::Handler::Handler(const URL &u) : url{u} {
+
 
 	}
 
@@ -474,24 +574,7 @@
 
 		}
 		
-		/*
-#ifdef _WIN32
-		if(sockclose(item)) {
-			Logger::String{"Error '",WSAGetLastError(),"' closing socket ",item}.warning("curl");
-			return 1;
-		}
-#else
-		int rc = ::close(item);
-		if(rc) {
-			Logger::String{"Error '",strerror(rc),"' closing socket ",item}.warning("curl");
-			return 1;
-		}
-#endif // _WIN32
-
-		Logger::String{"Socket ",item," was closed"}.trace("curl");
-		*/
-
-		return 0;
+				return 0;
 
 	}
 
@@ -614,9 +697,11 @@
 		}
 
 	}
+#endif // HAVE_JSON_C
 
 	bool HTTP::Handler::get(Udjat::Value &value, const HTTP::Method method, const char *payload) {
 
+#ifdef HAVE_JSON_C
 		URL::Handler::set(MimeType::json);
 
 		String response{URL::Handler::get(method,payload)};
@@ -637,8 +722,16 @@
 		json_object_put(jobj);
 
 		return true;
-	}
+
+#else
+
+		return URL::Handler::get(value,method,payload);
+
 #endif // HAVE_JSON_C
+
+	}
+*/
+
 
  }
 

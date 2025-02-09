@@ -118,6 +118,7 @@ lib_src = [
   'src/library/module.cc',
   'src/library/agent.cc',
   'src/library/action.cc',
+  'src/library/handler.cc',
 ]
 
 module_src = [
@@ -186,7 +187,7 @@ else
   )
 
   lib_src += [
-    'src/library/curl/handler.cc',
+    'src/library/curl/context.cc',
   ]
 
 endif
@@ -288,11 +289,6 @@ executable(
   include_directories: includes_dir
 )
 
-#install_headers(
-#  'src/include/udjat/tools/http/worker.h',
-#  subdir: 'udjat/tools/http'  
-#)
-
 install_headers(
   'src/include/udjat/tools/actions/http.h',
   subdir: 'udjat/tools/actions'  
@@ -306,4 +302,9 @@ install_headers(
 install_headers(
   'src/include/udjat/agent/http.h',
   subdir: 'udjat/agent'  
+)
+
+install_headers(
+  'src/include/udjat/tools/url/handler/http.h',
+  subdir: 'udjat/tools/url/handler'  
 )

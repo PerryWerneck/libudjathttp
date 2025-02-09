@@ -21,12 +21,15 @@
   * @brief Declare curl based url handler.
   */
 
+
  #pragma once
  #include <config.h>
  #include <udjat/defs.h>
  #include <udjat/tools/url.h>
  #include <udjat/tools/url/handler.h>
+ #include <udjat/tools/url/handler/http.h>
  #include <vector>
+ #include <functional>
  
 #if defined(HAVE_WINHTTP)
 
@@ -46,8 +49,6 @@
  namespace Udjat {
 
  	namespace HTTP {
-
-#ifdef _WIN32
 
 		template <typename T>
 		class UDJAT_API Handle {
@@ -75,6 +76,87 @@
 			}
 
 		};
+
+		class UDJAT_PRIVATE Context {
+		private:
+			HTTP::Handler &handler;
+			const std::function<bool(uint64_t current, uint64_t total, const char *data, size_t len)> &writer;
+
+#ifdef _WIN32
+			/// @brief WinHTTP session handle.
+			HTTP::Handle<HINTERNET> session;
+			const HTTP::Method method;
+			wchar_t *pwszUrl;
+			DWORD dwStatusCode = 0;
+
+#elif defined(HAVE_CURL)
+
+			/// @brief Handle to curl.
+			CURL * hCurl;
+			int sock;
+
+			uint64_t current = 0;
+			uint64_t total = 0;
+
+			struct {
+				curl_slist *request = nullptr;
+			} headers;
+
+			struct {
+				String text;
+				const char *ptr = nullptr;
+			} payload;
+
+			struct {
+				int system = 0;
+				char message[CURL_ERROR_SIZE+1] = {0};
+			} error;
+
+			inline void system_error(int code = errno) noexcept {
+				error.system = -code;
+			}
+
+			inline void exception(const std::exception &e) noexcept {
+				error.system = 0;
+				strncpy(error.message,e.what(),CURL_ERROR_SIZE);
+			}
+
+			int perform(bool except);
+
+			static int trace_callback(CURL *handle, curl_infotype type, char *data, size_t size, Handler *handler) noexcept;
+			static int sockopt_callback(Context *context, curl_socket_t curlfd, curlsocktype purpose) noexcept;
+
+			static curl_socket_t open_socket_callback(Context *context, curlsocktype purpose, struct curl_sockaddr *address) noexcept;
+			static int close_socket_callback(Context *engine, curl_socket_t item) noexcept;
+			static size_t read_callback(char *buffer, size_t size, size_t nitems, Context *context) noexcept;
+			static size_t write_callback(void *contents, size_t size, size_t nmemb, Context *context) noexcept;
+			static size_t header_callback(char *buffer, size_t size, size_t nitems, Context *context) noexcept;
+			static size_t no_write_callback(void *, size_t size, size_t nmemb, Context *context) noexcept;
+
+#endif
+
+		public:
+			Context(HTTP::Handler &handler, const std::function<bool(uint64_t current, uint64_t total, const char *data, size_t len)> &writer);
+			~Context();
+
+			void set(const HTTP::Method method);
+
+			int test(const HTTP::Method method, const char *payload) noexcept;
+			int perform(const HTTP::Method method, const char *payload);
+
+		};
+
+	}
+
+ }
+
+/*
+ namespace Udjat {
+
+ 	namespace HTTP {
+
+#ifdef _WIN32
+
 
 #endif // _WIN32
 
@@ -105,47 +187,8 @@
 			/// @brief Current download session.
 			struct Context {
 				
-				int sock;
-
-				HTTP::Handler &handler;
-				const std::function<bool(uint64_t current, uint64_t total, const char *data, size_t len)> &write;
-
-				uint64_t current = 0;
-				uint64_t total = 0;
-
-				struct {
-					String text;
-					const char *ptr = nullptr;
-				} payload;
-
-				struct {
-					int system = 0;
-					char message[CURL_ERROR_SIZE+1] = {0};
-				} error;
-
-				Context(HTTP::Handler *h, const std::function<bool(uint64_t current, uint64_t total, const char *data, size_t len)> &w) : handler{*h}, write{w} {
-				}
-
-				inline void system_error(int code = errno) noexcept {
-					error.system = -code;
-				}
-
-				inline void exception(const std::exception &e) noexcept {
-					error.system = 0;
-					strncpy(error.message,e.what(),CURL_ERROR_SIZE);
-				}
 			};
 
-			int perform(Context &context, bool except = true);
-
-			static int trace_callback(CURL *handle, curl_infotype type, char *data, size_t size, Handler *handler) noexcept;
-			static int sockopt_callback(Context *context, curl_socket_t curlfd, curlsocktype purpose) noexcept;
-
-			static curl_socket_t open_socket_callback(Context *context, curlsocktype purpose, struct curl_sockaddr *address) noexcept;
-			static int close_socket_callback(Context *engine, curl_socket_t item) noexcept;
-			static size_t read_callback(char *buffer, size_t size, size_t nitems, Context *context) noexcept;
-			static size_t write_callback(void *contents, size_t size, size_t nmemb, Context *context) noexcept;
-			static size_t header_callback(char *buffer, size_t size, size_t nitems, Context *context) noexcept;
 
 			/// @brief Dummy writer for 'test' method.
 			static size_t no_write_callback(void *, size_t size, size_t nmemb, Context *context) noexcept;
@@ -209,3 +252,4 @@
 
  }
 
+*/
