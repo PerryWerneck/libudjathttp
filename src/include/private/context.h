@@ -84,6 +84,9 @@
 			HTTP::Handler &handler;
 			const std::function<bool(uint64_t current, uint64_t total, const char *data, size_t len)> &write;
 
+			void set_local(const sockaddr_storage &addr) noexcept;
+			void set_remote(const sockaddr_storage &addr) noexcept;
+
 #ifdef _WIN32
 			/// @brief WinHTTP session handle.
 			HTTP::Handle<HINTERNET> session;

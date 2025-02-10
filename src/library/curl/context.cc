@@ -29,6 +29,8 @@
  #include <udjat/tools/value.h>
  #include <udjat/tools/http/mimetype.h>
  #include <private/context.h>
+ #include <udjat/tools/string.h>
+ #include <udjat/net/ip/address.h>
 
  #include <errno.h>
  #include <curl/curl.h>
@@ -106,6 +108,7 @@
 
 		curl_easy_setopt(hCurl, CURLOPT_OPENSOCKETDATA, this);
 		curl_easy_setopt(hCurl, CURLOPT_OPENSOCKETFUNCTION, open_socket_callback);
+		// curl_easy_setopt(hCurl, CURLOPT_CONNECTTIMEOUT, Config::Value<long>("http","timeout",10).get());
 
 		curl_easy_setopt(hCurl, CURLOPT_SOCKOPTDATA, this);
 		curl_easy_setopt(hCurl, CURLOPT_SOCKOPTFUNCTION, sockopt_callback);
@@ -254,9 +257,6 @@
 				return 0;
 			}
 
-			// TODO: Expand payload getting connection data from socket.
-
-
 			// Point to start of payload.
 			context->payload.ptr = context->payload.text.c_str();
 		}
@@ -365,7 +365,11 @@
 
 		debug("Context=",((unsigned long long) context)," handler=",context->handler.c_str());
 
-		Logger::String{"Connecting to ",context->handler.c_str()}.trace("curl");
+		int seconds = Config::Value<unsigned int>("network","timeout",10).get();
+
+		// curl_easy_setopt(context->hCurl, CURLOPT_CONNECTTIMEOUT, seconds);
+
+		Logger::String{"Connecting to ",context->handler.c_str()," with timeout of ",seconds," seconds"}.trace("curl");
 
 		if(purpose != CURLSOCKTYPE_IPCXN) {
 			Logger::String{"Invalid purpose '",purpose,"' in curl_opensocket"}.error();
@@ -380,22 +384,21 @@
 
 		try {
 
+			debug("--------------");
 			Socket::blocking(sockfd,false);
 
-			if(!connect(sockfd,(struct sockaddr *)(&(address->addr)),address->addrlen)) {
-				Logger::String{"Connected to host using socket '",sockfd,"'"}.trace("curl");
-				return (curl_socket_t) sockfd;
-			}
-
-			if(errno != EINPROGRESS) {
+			debug("Connecting...");
+			if(::connect(sockfd,(struct sockaddr *)(&(address->addr)),address->addrlen) && errno != EINPROGRESS) {
 				context->system_error();
 				::close(sockfd);
 				return CURL_SOCKET_BAD;
 			}
 
-			if(Socket::wait_for_connection(sockfd,0) < 0) {
+			debug("Waiting for connection...");
+			if(Socket::wait_for_connection(sockfd,seconds) < 0) {
 				context->system_error();
 				::close(sockfd);
+				debug("Timeout connecting to socket");
 				return CURL_SOCKET_BAD;
 			}
 
@@ -409,7 +412,7 @@
 
 		} catch(...) {
 			
-			Logger::String{"Unexpected error setting socket to non-blocking"}.error("curl");
+			Logger::String{"Unexpected error while connecting to host"}.error("curl");
 			::close(sockfd);
 			return CURL_SOCKET_BAD;
 
@@ -431,7 +434,6 @@
 			setsockopt(sockfd, SOL_SOCKET, SO_SNDTIMEO,(struct timeval *)&tv,sizeof(struct timeval));
 		}
 	
-		context->sock = sockfd;
 		return (curl_socket_t) sockfd;
 
 	}
@@ -456,7 +458,25 @@
 
 	}
 
-	int HTTP::Context::sockopt_callback(Context *, curl_socket_t curlfd, curlsocktype purpose) noexcept {
+	int HTTP::Context::sockopt_callback(Context *context, curl_socket_t curlfd, curlsocktype purpose) noexcept {
+
+		debug(__FUNCTION__," context=",((unsigned long long) context)," curlfd=",curlfd," purpose=",purpose);
+
+		context->sock = curlfd;
+
+		sockaddr_storage addr;
+		socklen_t length;
+
+		length = sizeof(addr);
+		if(!getsockname(curlfd, (sockaddr *) &addr, &length)) {
+			context->set_local(addr);
+		}
+
+		length = sizeof(addr);
+		if(!getpeername(curlfd, (sockaddr *) &addr, &length)) {
+			context->set_remote(addr);
+		}
+
 		return CURL_SOCKOPT_ALREADY_CONNECTED;
 	}
 

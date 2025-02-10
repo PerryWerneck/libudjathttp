@@ -41,10 +41,14 @@
 	 	udjat_module_init();
 
 		cout << "---[ Client teste begin ]------------------------------" << endl;
-		Udjat::URL url{"http://127.0.0.1/udjat/css/style.css"};
+		
+		// Udjat::URL url{"http://127.0.0.1/udjat/css/style.css"};
+
+		Udjat::URL url{getenv("UDJAT_URL")};
 		auto handler = HTTP::Handler::Factory{"http"}.HandlerFactory(url);
 
-		auto response = handler->get("/tmp/style.css");
+		debug("URL name = ",url.name().c_str());
+		auto response = handler->get(String{"/tmp/",url.name()}.c_str());
 
 		cout << "-----" << endl << response << endl << "-----" << endl;
 		cout << "---[ Client test complete ]----------------------------" << endl;

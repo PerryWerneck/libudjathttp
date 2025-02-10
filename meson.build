@@ -119,6 +119,7 @@ lib_src = [
   'src/library/agent.cc',
   'src/library/action.cc',
   'src/library/handler.cc',
+  'src/library/context.cc',
 ]
 
 module_src = [
