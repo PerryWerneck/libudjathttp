@@ -50,6 +50,7 @@
 
  	namespace HTTP {
 
+#ifdef _WIN32
 		template <typename T>
 		class UDJAT_API Handle {
 		private:
@@ -76,11 +77,12 @@
 			}
 
 		};
+#endif // _WIN32
 
 		class UDJAT_PRIVATE Context {
 		private:
 			HTTP::Handler &handler;
-			const std::function<bool(uint64_t current, uint64_t total, const char *data, size_t len)> &writer;
+			const std::function<bool(uint64_t current, uint64_t total, const char *data, size_t len)> &write;
 
 #ifdef _WIN32
 			/// @brief WinHTTP session handle.
@@ -123,7 +125,7 @@
 
 			int perform(bool except);
 
-			static int trace_callback(CURL *handle, curl_infotype type, char *data, size_t size, Handler *handler) noexcept;
+			static int trace_callback(CURL *handle, curl_infotype type, char *data, size_t size, Context *context) noexcept;
 			static int sockopt_callback(Context *context, curl_socket_t curlfd, curlsocktype purpose) noexcept;
 
 			static curl_socket_t open_socket_callback(Context *context, curlsocktype purpose, struct curl_sockaddr *address) noexcept;

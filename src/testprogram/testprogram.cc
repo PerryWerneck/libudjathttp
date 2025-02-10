@@ -26,7 +26,7 @@
  #include <udjat/tools/actions/http.h>
  #include <udjat/tools/logger.h>
  #include <udjat/tools/url.h>
- #include <private/handler.h>
+ #include <udjat/tools/url/handler/http.h>
  
  using namespace std;
  using namespace Udjat;

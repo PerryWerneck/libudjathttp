@@ -22,8 +22,8 @@
  #include <udjat/moduleinfo.h>
  #include <udjat/tools/logger.h>
  #include <udjat/tools/url.h>
+ #include <udjat/tools/url/handler/http.h>
  #include <udjat/module/http.h>
- #include <private/handler.h>
 
  #if defined(HAVE_CURL)
 	#include <curl/curl.h>
