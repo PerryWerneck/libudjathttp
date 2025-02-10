@@ -197,6 +197,7 @@
 
 		debug(__FUNCTION__," handler=",handler.c_str());
 
+		handler.headers.response.clear();
 		payload.ptr = nullptr;
 
 		if(headers.request) {

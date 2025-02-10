@@ -54,6 +54,9 @@
 	HTTP::Handler::Handler(const URL &u) : url{u} {
 	}
 
+	HTTP::Handler::~Handler() {
+	}
+
 	const char * HTTP::Handler::c_str() const noexcept {
 		return url.c_str();
 	}
