@@ -43,8 +43,11 @@
 		cout << "---[ Client teste begin ]------------------------------" << endl;
 		
 		// Udjat::URL url{"http://127.0.0.1/udjat/css/style.css"};
-
-		Udjat::URL url{getenv("UDJAT_URL")};
+		const char *env = getenv("UDJAT_URL");
+		if(!env) {
+			env = "http://127.0.0.1/udjat/css/style.css";
+		}
+		Udjat::URL url{env};
 		auto handler = HTTP::Handler::Factory{"http"}.HandlerFactory(url);
 
 		debug("URL name = ",url.name().c_str());

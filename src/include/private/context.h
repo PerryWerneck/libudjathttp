@@ -82,7 +82,7 @@
 		class UDJAT_PRIVATE Context {
 		private:
 			HTTP::Handler &handler;
-			const std::function<bool(uint64_t current, uint64_t total, const char *data, size_t len)> &write;
+			const std::function<bool(uint64_t current, uint64_t total, const void *data, size_t len)> &write;
 
 			void set_local(const sockaddr_storage &addr) noexcept;
 			void set_remote(const sockaddr_storage &addr) noexcept;
@@ -141,7 +141,7 @@
 #endif
 
 		public:
-			Context(HTTP::Handler &handler, const std::function<bool(uint64_t current, uint64_t total, const char *data, size_t len)> &writer);
+			Context(HTTP::Handler &handler, const std::function<bool(uint64_t current, uint64_t total, const void *data, size_t len)> &writer);
 			~Context();
 
 			void set(const HTTP::Method method);

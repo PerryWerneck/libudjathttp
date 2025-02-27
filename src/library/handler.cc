@@ -166,12 +166,12 @@
 	int HTTP::Handler::test(const HTTP::Method method, const char *payload) {
 		return Context{
 			*this,
-			[](uint64_t,uint64_t,const char *,size_t){return false;}
+			[](uint64_t,uint64_t,const void *,size_t){return false;}
 		}.test(method,payload);
 
 	}
                                                                                  
-	int HTTP::Handler::perform(const HTTP::Method method, const char *payload, const std::function<bool(uint64_t current, uint64_t total, const char *data, size_t len)> &progress) {
+	int HTTP::Handler::perform(const HTTP::Method method, const char *payload, const std::function<bool(uint64_t current, uint64_t total, const void *data, size_t len)> &progress) {
 		return Context{
 			*this,
 			progress
