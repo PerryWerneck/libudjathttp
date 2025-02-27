@@ -418,7 +418,7 @@
 
 		}
 
-		Logger::String{"Connected to host using socket '",sockfd,"'"}.trace("curl");
+		// Logger::String{"Connected to host using socket '",sockfd,"'"}.trace("curl");
 
 		//
 		// Setup socket timeouts.
