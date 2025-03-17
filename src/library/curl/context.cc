@@ -292,6 +292,9 @@
 		try {
 
 			if(context->write(context->current,context->total,(const char *) contents, realsize)) {
+				if(Logger::enabled(Logger::Debug)) {
+					Logger::String{"HTTP action was canceled by the application"}.write(Logger::Debug, "curl");
+				}
 				context->system_error(ECANCELED);
 			} else {
 				context->current += realsize;
@@ -300,9 +303,17 @@
 
 		} catch(const std::exception &e) {
 
+			if(Logger::enabled(Logger::Debug)) {
+				Logger::String{"Error '",e.what(),"' writing http data to output context"}.write(Logger::Debug,"curl");
+			}
+
 			context->exception(e);
 
 		} catch(...) {
+
+			if(Logger::enabled(Logger::Debug)) {
+				Logger::String{"Unexpected error writing http data to output context"}.write(Logger::Debug,"curl");
+			}
 
 			context->error.system = 0;
 
