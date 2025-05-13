@@ -44,6 +44,10 @@
 	#define TRACE_DEFAULT false
  #endif  // DEBUG
 
+ #ifndef CURL_WRITEFUNC_ERROR
+ 	#define CURL_WRITEFUNC_ERROR -1
+ #endif
+
  using namespace std;
 
  namespace Udjat {
@@ -319,11 +323,7 @@
 
 		}
 
-#ifdef CURL_WRITEFUNC_ERROR
 		return CURL_WRITEFUNC_ERROR;
-#else
-		return -1;
-#endif // CURL_WRITEFUNC_ERROR
 
 	}
 
