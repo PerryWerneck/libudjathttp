@@ -41,6 +41,10 @@
 	#include <json.h>
  #endif // HAVE_JSON_C
 
+ #if defined(HAVE_CURL)
+	#include <curl/curl.h>
+ #endif // HAVE_CURL	
+
  #ifdef DEBUG
 	#define TRACE_DEFAULT true
  #else
@@ -178,8 +182,16 @@
 		}.perform(method,payload);
 	}
 
+#if defined(HAVE_CURL)
+	HTTP::Handler::Factory::Factory(const char *name) : Udjat::URL::Handler::Factory{name,"Curl " LIBCURL_VERSION} {
+	}
+#elif defined(HAVE_WINHTTP)
+	HTTP::Handler::Factory::Factory(const char *name) : Udjat::URL::Handler::Factory{name,"WinHTTP"} {
+	}
+#else
 	HTTP::Handler::Factory::Factory(const char *name) : Udjat::URL::Handler::Factory{name} {
 	}
+#endif // HAVE_CURL
 
 	HTTP::Handler::Factory::~Factory() {
 	}
