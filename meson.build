@@ -66,7 +66,6 @@ endif
 
 compiler_flags = [
   '-ggdb3',
-  '-ffat-lto-objects',
   '-fvisibility=hidden',
   '-fPIC',
   '-DHAVE_CONFIG_H=1',
@@ -252,6 +251,7 @@ else
     install: true,
     version : libversion,
     soversion : libversion,
+    cpp_args: [ '-ffat-lto-objects' ],    
     gnu_symbol_visibility: 'hidden',
     dependencies: lib_deps,
     include_directories: includes_dir
@@ -277,6 +277,7 @@ static_library(
   config_src + lib_src,
   install: true,
   dependencies: lib_deps,
+  cpp_args: [ '-DSTATIC_LIBRARY', '-fno-lto' ],
   include_directories: includes_dir
 )
 

@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: udjathttp 1.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-04-24 08:55-0300\n"
+"POT-Creation-Date: 2025-06-05 07:42-0300\n"
 "PO-Revision-Date: 2025-04-24 08:56-0300\n"
 "Last-Translator: Perry Werneck <perry.werneck@gmail.com>\n"
 "Language-Team: Brazilian Portuguese <perry.werneck@gmail.com>\n"
@@ -20,7 +20,7 @@ msgstr ""
 "X-Poedit-SourceCharset: utf-8\n"
 "X-Generator: Poedit 3.5\n"
 
-#: src/library/curl/context.cc:54
+#: src/library/curl/context.cc:58
 msgid "HTTP operation failed"
 msgstr "Requisição HTTP falhou"
 
