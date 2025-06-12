@@ -21,7 +21,7 @@
 
 Summary:		HTTP client library for %{product_name}
 Name:			mingw64-libudjat%{module_name}
-Version: 2.0.0
+Version: 2.0.1
 Release:		0
 License:		LGPL-3.0
 Source:			libudjat%{module_name}-%{version}.tar.xz
