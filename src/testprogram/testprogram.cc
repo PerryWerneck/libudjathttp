@@ -19,26 +19,29 @@
 
  #include <config.h>
  #include <udjat/defs.h>
- #include <udjat/tests.h>
- #include <udjat/moduleinfo.h>
  #include <udjat/module.h>
  #include <udjat/tools/application.h>
- #include <udjat/tools/actions/http.h>
  #include <udjat/tools/logger.h>
- #include <udjat/tools/url.h>
- #include <udjat/tools/url/handler/http.h>
- 
- using namespace std;
+ #include <udjat/tools/configuration.h>
+  
  using namespace Udjat;
 
  int main(int argc, char **argv) {
 
+	Logger::verbosity(9);
+	Logger::console(true);
+	Config::allow_user_homedir(true);
 
+	udjat_module_init();
+	return Udjat::Application{argc,argv}.run("test.xml");
+
+ }
+
+	/*
 	static const ModuleInfo info{"url-tester"};
 	
 	return Testing::run(argc,argv,info,[](Application &){
 
-	 	udjat_module_init();
 
 		cout << "---[ Client tests begin ]------------------------------" << endl;
 		
@@ -73,6 +76,6 @@
 		cout << "---[ Client tests complete ]----------------------------" << endl;
 
 	});
+	*/
 
- }
 
