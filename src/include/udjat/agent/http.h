@@ -18,7 +18,7 @@
  */
 
  /**
-  * @brief Implements HTTP agent.
+  * @brief Declares HTTP agent.
   */
 
  #pragma once
@@ -33,7 +33,7 @@
 
 	namespace HTTP {
 
-		class UDJAT_API Agent : public Udjat::Agent<unsigned int>, private Udjat::HTTP::Action {		
+		class UDJAT_API Agent : public Udjat::Agent<int32_t>, private Udjat::URL {		
 		public:
 
 			class Factory : public Udjat::Abstract::Agent::Factory {

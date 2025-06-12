@@ -24,9 +24,9 @@
  #include <config.h>
  #include <udjat/defs.h>
  #include <curl/curl.h>
- #include <udjat/tools/protocol.h>
  #include <udjat/tools/actions/abstract.h>
  #include <udjat/tools/actions/http.h>
+ #include <udjat/tools/url.h>
  #include <memory>
 
  using namespace std;
@@ -34,41 +34,25 @@
  namespace Udjat {
 
 	std::shared_ptr<Udjat::Action> HTTP::Action::Factory::ActionFactory(const XML::Node &node) const {
-		debug("---> Building action");
 		return make_shared<HTTP::Action>(node);
 	}
 
 	HTTP::Action::Action(const XML::Node &node) 
 		: 	Udjat::Action{node}, 
-			url{String{node,"url"}.as_quark()},
+			url{node,"url",true},
 			method{HTTP::MethodFactory(node,"get")},
-			text{payload(node)}, 
+			payload{super::payload(node)}, 
 			mimetype{MimeTypeFactory(String{node,"payload-format","json"}.c_str())} {
-
-		if(!(url && *url)) {
-			throw runtime_error("Required attribute 'url' is missing or empty");
-		}
 	}
 
 	int HTTP::Action::call(Udjat::Request &request, Udjat::Response &response, bool except) {
 		return Udjat::Action::exec(response,except,[&]() {
 
-			// Get payload
-			String payload{text};
-			if(payload.empty()) {
-				payload = request.to_string(mimetype);
-			} else {
-				payload.expand(request);
-			}
+			String payload{this->payload};
+			payload.expand(request);
 
-			String response = Protocol::call(
-									String{url}.expand(request).c_str(),
-									method,
-									payload.c_str()
-								);
-
-			if(!response.empty()) {
-				Logger::String{response.c_str()}.write(Logger::Trace,name());
+			if(!url.get(response,method,payload.c_str())) {
+				return -1;
 			}
 
 			return 0;

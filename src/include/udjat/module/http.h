@@ -24,10 +24,11 @@
  #include <udjat/version.h>
  #include <udjat/module/abstract.h>
  #include <udjat/module/info.h>
- #include <udjat/tools/protocol.h>
- #include <udjat/tools/http/worker.h>
+ 
  #include <udjat/tools/actions/http.h>
  #include <udjat/agent/http.h>
+ #include <udjat/tools/url.h>
+
  
  #include <memory>
 
@@ -36,27 +37,12 @@
 	namespace HTTP {
 
 		/// @brief Generic http module.
-		class UDJAT_API Module : public Udjat::Module, private Udjat::HTTP::Action::Factory, private Udjat::HTTP::Agent::Factory {
-		protected:
-
-			class Protocol : public Udjat::Protocol {
-			public:
-				Protocol(const char *name, const ModuleInfo &info, bool def = false) : Udjat::Protocol(name,info) {
-					if(def) {
-						setDefault();
-					}
-				}
-
-				std::shared_ptr<Worker> WorkerFactory() const override {
-					return std::make_shared<Udjat::HTTP::Worker>();
-				}
-			};
-
+		class UDJAT_API Module : public Udjat::Module, private Udjat::HTTP::Action::Factory, private Udjat::HTTP::Agent::Factory {			
 		public:
 
-			static Udjat::Module * Factory(const char *name, const ModuleInfo &info);
+			static Udjat::Module * Factory(const char *name = "http");
 
-			Module(const char *name, const ModuleInfo &info);
+			Module(const char *name);
 			virtual ~Module();
 
 		};

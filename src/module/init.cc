@@ -19,31 +19,12 @@
 
  #include <config.h>
  #include <udjat/defs.h>
- #include <udjat/module.h>
- #include <udjat/tools/protocol.h>
- #include <udjat/moduleinfo.h>
- #include <udjat/tools/http/worker.h>
  #include <udjat/module/http.h>
-
- #ifdef HAVE_CURL
-	#include <curl/curl.h>
- #endif // HAVE_CURL
 
  using namespace std;
 
  /// @brief Register udjat module.
  UDJAT_API Udjat::Module * udjat_module_init() {
-
-	static const Udjat::ModuleInfo info{
-#if defined(_WIN32)
-		"WinHTTP module for " STRINGIZE_VALUE_OF(PRODUCT_NAME), 	// The module description.
-#elif defined(HAVE_CURL)
-		"CURL " LIBCURL_VERSION " module for " STRINGIZE_VALUE_OF(PRODUCT_NAME), 		// The module description.
-#else
-		"HTTP module for " STRINGIZE_VALUE_OF(PRODUCT_NAME), 		// The module description.
-#endif //
-	};
-
-	return Udjat::HTTP::Module::Factory("http",info);
+	return Udjat::HTTP::Module::Factory();
  }
 

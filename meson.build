@@ -46,9 +46,11 @@ subdir('po')
 #
 # Required libraries
 #
-libudjat = dependency('libudjat') 
+libudjat = dependency('libudjat')
+json_c = dependency('json', required: false)
 lib_deps = [
   libudjat,
+  json_c,
 ]
 
 #
@@ -64,7 +66,6 @@ endif
 
 compiler_flags = [
   '-ggdb3',
-  '-ffat-lto-objects',
   '-fvisibility=hidden',
   '-fPIC',
   '-DHAVE_CONFIG_H=1',
@@ -94,6 +95,10 @@ app_conf.set('PACKAGE_VERSION_MAJOR', pkg_major_version)
 app_conf.set('PACKAGE_VERSION_MINOR', pkg_minor_version)
 app_conf.set('PACKAGE_VERSION_MICRO', pkg_micro_version)
 
+if json_c.found()
+  app_conf.set('HAVE_JSON_C', 1)
+endif
+
 app_conf.set_quoted('LOG_DOMAIN', 'http')
 
 app_conf.set('PRODUCT_NAME', libudjat.get_variable('product_name'))
@@ -109,10 +114,11 @@ includes_dir = include_directories('src/include')
 # Sources
 #
 lib_src = [
-  'src/library/engine.cc',
-  'src/library/worker.cc',
   'src/library/module.cc',
   'src/library/agent.cc',
+  'src/library/action.cc',
+  'src/library/handler.cc',
+  'src/library/context.cc',
 ]
 
 module_src = [
@@ -147,6 +153,7 @@ if host_machine.system() == 'windows'
   pkg.generate(
     name: 'lib' + meson.project_name() + '-static',
     description: project_description,
+    requires: [ json_c ],
     libraries: [ 
       '-l' + meson.project_name(),
       '-lws2_32',
@@ -155,12 +162,8 @@ if host_machine.system() == 'windows'
   )
 
   lib_src += [
-    'src/library/engines/winhttp/get.cc',
-    'src/library/engines/winhttp/test.cc',
-    'src/library/engines/winhttp/winhttp.cc',
-    'src/library/engines/winhttp/worker.cc',
-    'src/library/os/windows/base64.cc'
   ]
+
 else
 
   pkg.generate(
@@ -170,22 +173,21 @@ else
     libraries: [ '-l' + meson.project_name() ]
   )
 
+  app_conf.set('HAVE_CURL', 1)
+  curl = dependency('libcurl')
+  lib_deps += [
+    curl,
+  ]
+
   pkg.generate(
     name: 'lib' + meson.project_name() + '-static',
     description: project_description,
-    requires: [ 'libcurl' ],
+    requires: [ curl, json_c ],
     libraries: [ '-l:lib' + meson.project_name() + '.a' ]
   )
 
-  app_conf.set('HAVE_CURL', 1)
-  lib_deps += [
-    dependency('libcurl'),
-  ]
-
   lib_src += [
-    'src/library/engines/curl/test.cc',
-    'src/library/engines/curl/action.cc',
-    'src/library/engines/curl/curl.cc',
+    'src/library/curl/context.cc',
   ]
 
 endif
@@ -249,6 +251,7 @@ else
     install: true,
     version : libversion,
     soversion : libversion,
+    cpp_args: [ '-ffat-lto-objects' ],    
     gnu_symbol_visibility: 'hidden',
     dependencies: lib_deps,
     include_directories: includes_dir
@@ -274,6 +277,7 @@ static_library(
   config_src + lib_src,
   install: true,
   dependencies: lib_deps,
+  cpp_args: [ '-DSTATIC_LIBRARY', '-fno-lto' ],
   include_directories: includes_dir
 )
 
@@ -285,11 +289,6 @@ executable(
   link_args: [ '-l:libudjat-testing.a' ],
   dependencies: [ libudjat ],
   include_directories: includes_dir
-)
-
-install_headers(
-  'src/include/udjat/tools/http/worker.h',
-  subdir: 'udjat/tools/http'  
 )
 
 install_headers(
@@ -305,4 +304,9 @@ install_headers(
 install_headers(
   'src/include/udjat/agent/http.h',
   subdir: 'udjat/agent'  
+)
+
+install_headers(
+  'src/include/udjat/tools/url/handler/http.h',
+  subdir: 'udjat/tools/url/handler'  
 )

@@ -25,17 +25,52 @@
  #include <udjat/tools/application.h>
  #include <udjat/tools/actions/http.h>
  #include <udjat/tools/logger.h>
+ #include <udjat/tools/url.h>
+ #include <udjat/tools/url/handler/http.h>
  
  using namespace std;
  using namespace Udjat;
 
  int main(int argc, char **argv) {
 
+
 	static const ModuleInfo info{"url-tester"};
 	
 	return Testing::run(argc,argv,info,[](Application &){
 
 	 	udjat_module_init();
+
+		cout << "---[ Client tests begin ]------------------------------" << endl;
+		
+		// Udjat::URL url{"http://127.0.0.1/udjat/css/style.css"};
+		const char *env = getenv("UDJAT_URL");
+		if(!env) {
+			env = "http://127.0.0.1/udjat/css/style.css";
+		}
+
+		{
+			Udjat::URL url{env};
+			auto handler = HTTP::Handler::Factory{"http"}.HandlerFactory(url);
+	
+			debug("URL name = ",url.name().c_str());
+			auto response = handler->get(String{"/tmp/",url.name()}.c_str());
+	
+			cout << "-----" << endl << response << endl << "-----" << endl;
+		
+		}
+
+		{
+			cout << endl;
+
+			auto filename = Udjat::URL{env}.tempfile([](double current, double total){
+				return false;
+			});
+	
+			cout << "Filename = " << filename << endl;
+		}
+
+
+		cout << "---[ Client tests complete ]----------------------------" << endl;
 
 	});
 
