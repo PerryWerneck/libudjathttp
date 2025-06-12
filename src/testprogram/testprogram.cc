@@ -19,22 +19,12 @@
 
  #include <config.h>
  #include <udjat/defs.h>
- #include <udjat/module.h>
- #include <udjat/tools/application.h>
- #include <udjat/tools/logger.h>
- #include <udjat/tools/configuration.h>
-  
+ #include <udjat/loader.h>
+ 
  using namespace Udjat;
 
  int main(int argc, char **argv) {
-
-	Logger::verbosity(9);
-	Logger::console(true);
-	Config::allow_user_homedir(true);
-
-	udjat_module_init();
-	return Udjat::Application{argc,argv}.run("test.xml");
-
+	return loader(argc,argv);
  }
 
 	/*
