@@ -30,7 +30,10 @@
  #include <udjat/tools/http/mimetype.h>
  #include <private/context.h>
  #include <udjat/tools/string.h>
+ 
+ #if __cplusplus >= 201703L 
  #include <udjat/net/ip/address.h>
+ #endif
 
  #include <errno.h>
  #include <curl/curl.h>
