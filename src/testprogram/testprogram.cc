@@ -20,11 +20,56 @@
  #include <config.h>
  #include <udjat/defs.h>
  #include <udjat/loader.h>
- 
+ #include <udjat/module/abstract.h>
+ #include <udjat/tools/url.h>
+ #include <udjat/tools/url/handler.h>
+ #include <udjat/tools/url/handler/http.h>
+ #include <iostream>
+
  using namespace Udjat;
+ using namespace std;
 
  int main(int argc, char **argv) {
-	return loader(argc,argv);
+	return loader(argc,argv,[](Application &app) {
+
+		debug("Initializing " PACKAGE_NAME "...");
+		udjat_module_init();
+		debug("... initilization of " PACKAGE_NAME " is complete");
+
+		cout << "---[ Client tests begin ]------------------------------" << endl;
+		
+		// Udjat::URL url{"http://127.0.0.1/udjat/css/style.css"};
+		const char *env = getenv("UDJAT_URL");
+		if(!env) {
+			env = "http://127.0.0.1/udjat/css/style.css";
+		}
+
+		{
+			Udjat::URL url{env};
+			auto handler = HTTP::Handler::Factory{"http"}.HandlerFactory(url);
+	
+			debug("URL name = ",url.name().c_str());
+			auto response = handler->get(String{"/tmp/",url.name()}.c_str());
+	
+			cout << "-----" << endl << response << endl << "-----" << endl;
+		
+		}
+
+		{
+			cout << endl;
+
+			auto filename = Udjat::URL{env}.tempfile([](double current, double total){
+				return false;
+			});
+	
+			cout << "Filename = " << filename << endl;
+		}
+
+
+		cout << "---[ Client tests complete ]----------------------------" << endl;
+
+	});
+
  }
 
 	/*
