@@ -95,21 +95,27 @@
 
 	};
 
+#if __cplusplus >= 201703L	
 	HTTP::Context::Context(HTTP::Handler &h, const std::function<bool(uint64_t current, uint64_t total, const void *data, size_t len)> &w) 
-		: handler{h}, write{w} {
+		: handler{&h}, write{&w} {
+#else
+	HTTP::Context::Context(HTTP::Handler &h, const std::function<bool(uint64_t current, uint64_t total, const void *data, size_t len)> &w) {
+		handler = &h;
+		write = &w;	
+#endif
 
 		CurlSingleton::instance();
 
 		hCurl = curl_easy_init();
 		if(!hCurl) {
-			throw CurlException(CURLE_FAILED_INIT,"Failed to initialize curl",handler.url.c_str());
+			throw CurlException(CURLE_FAILED_INIT,"Failed to initialize curl",handler->url.c_str());
 		}
 
 		curl_easy_setopt(hCurl, CURLOPT_WRITEDATA, this);
 
 		curl_easy_setopt(hCurl, CURLOPT_FOLLOWLOCATION, 1L);
 		curl_easy_setopt(hCurl, CURLOPT_FORBID_REUSE, 1L);
-		curl_easy_setopt(hCurl, CURLOPT_URL, handler.url.c_str());
+		curl_easy_setopt(hCurl, CURLOPT_URL, handler->url.c_str());
 
 		curl_easy_setopt(hCurl, CURLOPT_ERRORBUFFER, error.message);
 
@@ -130,8 +136,8 @@
 		curl_easy_setopt(hCurl, CURLOPT_READFUNCTION, read_callback);
 
 		// Load heaers
-		if(!handler.headers.request.empty()) {
-			for(const auto &header : handler.headers.request) {
+		if(!handler->headers.request.empty()) {
+			for(const auto &header : handler->headers.request) {
 				headers.request = curl_slist_append(headers.request,String{header.name,": ",header.value}.c_str());
 			}
 		}
@@ -205,9 +211,9 @@
 
 	int HTTP::Context::perform(bool except) {
 
-		debug(__FUNCTION__," handler=",handler.c_str());
+		debug(__FUNCTION__," handler=",handler->c_str());
 
-		handler.headers.response.clear();
+		handler->headers.response.clear();
 		payload.ptr = nullptr;
 
 		if(headers.request) {
@@ -219,33 +225,33 @@
 		debug("length=",total," message='",error.message,"' syserror=",error.system);
 
 		if(error.message[0]) {
-			handler.status.message = error.message;
+			handler->status.message = error.message;
 		} else if(error.system) {
-			handler.status.message = strerror(error.system);
+			handler->status.message = strerror(error.system);
 		}
 
 		if(res == CURLE_OK) {
 			long response_code = 0;
 			curl_easy_getinfo(hCurl, CURLINFO_RESPONSE_CODE, &response_code);
 			debug("result=CURLE_OK, response_code=",response_code," except=",except);	
-			handler.status.code = (int) response_code;
+			handler->status.code = (int) response_code;
 			return response_code;
 		}
 
-		debug("Curl response=",res," '",curl_easy_strerror(res),"' message='",handler.status.message.c_str(),"'");
+		debug("Curl response=",res," '",curl_easy_strerror(res),"' message='",handler->status.message.c_str(),"'");
 
 		if(except) {
 			if(error.system) {
 				throw CurlException(
 						res, 
 						error.message[0] ? error.message : strerror(error.system),
-						handler.c_str()
+						handler->c_str()
 					);
 			}
 			throw CurlException(
 					res, 
 					error.message, 
-					handler.c_str()
+					handler->c_str()
 				);
 		}
 
@@ -298,7 +304,7 @@
 
 		try {
 
-			if(context->write(context->current,context->total,(const char *) contents, realsize)) {
+			if((*context->write)(context->current,context->total,(const char *) contents, realsize)) {
 				if(Logger::enabled(Logger::Debug)) {
 					Logger::String{"HTTP action was canceled by the application"}.write(Logger::Debug, "curl");
 				}
@@ -377,13 +383,13 @@
 
 	curl_socket_t HTTP::Context::open_socket_callback(Context *context, curlsocktype purpose, struct curl_sockaddr *address) noexcept {
 
-		debug("Context=",((unsigned long long) context)," handler=",context->handler.c_str());
+		debug("Context=",((unsigned long long) context)," handler=",context->handler->c_str());
 
 		int seconds = Config::Value<unsigned int>("network","timeout",10).get();
 
 		// curl_easy_setopt(context->hCurl, CURLOPT_CONNECTTIMEOUT, seconds);
 
-		Logger::String{"Connecting to ",context->handler.c_str()," with timeout of ",seconds," seconds"}.trace("curl");
+		Logger::String{"Connecting to ",context->handler->c_str()," with timeout of ",seconds," seconds"}.trace("curl");
 
 		if(purpose != CURLSOCKTYPE_IPCXN) {
 			Logger::String{"Invalid purpose '",purpose,"' in curl_opensocket"}.error();
@@ -526,7 +532,7 @@
 
 				char *end = nullptr;
 				context->total = strtoull(header.c_str()+16,&end,10);
-				context->write(0,context->total,nullptr,0);
+				(*(context->write))(0,context->total,nullptr,0);
 
 			} else if(!header.strip().empty()) {
 
@@ -534,7 +540,7 @@
 				const char *delimiter = strchr(from,':');
 
 				if(delimiter) {
-					context->handler.headers.response.emplace_back(
+					context->handler->headers.response.emplace_back(
 						String{from,(size_t) (delimiter-from)}.strip().c_str(),
 						String{delimiter+1}.strip().c_str()
 					);
