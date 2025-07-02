@@ -229,6 +229,23 @@ if host_machine.system() == 'windows'
     include_directories: includes_dir
   )
 
+  static_library = declare_dependency(
+    link_with: static_library(
+      meson.project_name(), 
+      config_src + lib_src,
+      install: true,
+      dependencies: lib_deps,
+      cpp_args: [ '-DSTATIC_LIBRARY', '-fno-lto' ],
+      include_directories: includes_dir
+    ),
+    include_directories: includes_dir,
+    dependencies: lib_deps,
+    link_args: [ 
+      '-lws2_32',
+      '-lwinhttp',
+    ],
+  )
+
   # https://mesonbuild.com/Reference-manual_functions.html#shared_library
   module = shared_library(
     'http', 
@@ -270,16 +287,20 @@ else
     include_directories: includes_dir
   )
 
-endif
+  static_library = declare_dependency(
+    link_with: static_library(
+      meson.project_name(), 
+      config_src + lib_src,
+      install: true,
+      dependencies: lib_deps,
+      cpp_args: [ '-DSTATIC_LIBRARY', '-fno-lto' ],
+      include_directories: includes_dir
+    ),
+    include_directories: includes_dir,
+    dependencies: [ curl, json_c ],
+  )
 
-static_library(
-  meson.project_name(), 
-  config_src + lib_src,
-  install: true,
-  dependencies: lib_deps,
-  cpp_args: [ '-DSTATIC_LIBRARY', '-fno-lto' ],
-  include_directories: includes_dir
-)
+endif
 
 executable(
   meson.project_name(),
