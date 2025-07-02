@@ -302,6 +302,11 @@ else
 
 endif
 
+dynamic_library = declare_dependency(
+  link_with: dynamic,
+  include_directories: includes_dir,
+)
+
 executable(
   meson.project_name(),
   config_src + test_src,
