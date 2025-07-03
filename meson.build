@@ -166,18 +166,19 @@ if host_machine.system() == 'windows'
 
 else
 
-  pkg.generate(
-    name: 'lib' + meson.project_name(),
-    description: project_description,
-    requires: [ 'libudjat' ],
-    libraries: [ '-l' + meson.project_name() ]
-  )
-
   app_conf.set('HAVE_CURL', 1)
   curl = dependency('libcurl')
   lib_deps += [
     curl,
   ]
+
+  pkg.generate(
+    name: 'lib' + meson.project_name(),
+    description: project_description,
+    requires: [ 'libudjat' ],
+    requires_private: [ curl, json_c ],
+    libraries: [ '-l' + meson.project_name() ]
+  )
 
   pkg.generate(
     name: 'lib' + meson.project_name() + '-static',
