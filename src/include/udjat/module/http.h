@@ -21,7 +21,6 @@
 
  #include <config.h>
  #include <udjat/defs.h>
- #include <udjat/version.h>
  #include <udjat/module/abstract.h>
  #include <udjat/module/info.h>
  
