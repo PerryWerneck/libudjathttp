@@ -3,4 +3,6 @@
                 <param name="url">https://github.com/PerryWerneck/udjat-module-http.git</param>
               <param name="changesrevision">80d960c5cd57b9a184ea9be6c3b87a189fe34cd2</param></service><service name="tar_scm">
                 <param name="url">https://git.autoban.desenv.bb.com.br/udjat/module/udjat-module-http.git</param>
-              <param name="changesrevision">b81e09cf0e72e4866822caf84bd59476c5d0f841</param></service></servicedata>
+              <param name="changesrevision">b81e09cf0e72e4866822caf84bd59476c5d0f841</param></service><service name="tar_scm">
+                <param name="url">https://github.com/PerryWerneck/libudjathttp</param>
+              <param name="changesrevision">02dace1ad632c2be126fd1de22c63b7d7d265473</param></service></servicedata>

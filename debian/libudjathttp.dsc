@@ -1,6 +1,6 @@
 Format: 1.0
 Source: libudjathttp
-Version: 2.2.0
+Version: 2.0.1+git20250704
 Binary: libudjathttp
 Maintainer: Perry Werneck <perry.werneck@gmail.com>
 Architecture: any

@@ -1,4 +1,19 @@
 -------------------------------------------------------------------
+Sat Jul 05 01:58:30 UTC 2025 - perry.werneck@gmail.com
+
+- Update to version 2.0.1+git20250704:
+  * Updating to latest libudjat.
+  * Debugging subproject.
+  * Debugging static library.
+  * Enabling dynamic library submodule.
+  * Adjustments for use as subproject.
+  * Fixing legacy build.
+  * Debugging with new libudjat.
+  * Debugging legacy build.
+  * Enabling legacy builds.
+  * Updating to use libudjat's test loader.
+
+-------------------------------------------------------------------
 Thu Oct 24 10:59:36 UTC 2024 - perry.werneck@gmail.com
 
 - Update to version 1.2.0+git20241024:
