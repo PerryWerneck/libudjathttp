@@ -2,12 +2,12 @@ src/library/os/windows/base64.cc
 src/library/action.cc
 src/library/agent.cc
 src/library/curl/context.cc
+src/library/handler.cc
 src/library/handlers/curl/curl.cc
 src/library/handlers/winhttp/get.cc
 src/library/handlers/winhttp/test.cc
 src/library/handlers/winhttp/winhttp.cc
 src/library/handlers/winhttp/worker.cc
 src/library/module.cc
-src/library/handler.cc
 src/library/context.cc
 src/module/init.cc

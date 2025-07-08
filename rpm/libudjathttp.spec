@@ -19,7 +19,7 @@
 
 Summary:		HTTP client library for %{udjat_product_name}  
 Name:			libudjat%{module_name}
-Version: 2.0.0
+Version:		2.0.1+git20250704
 Release:		0
 License:		LGPL-3.0
 Source:			%{name}-%{version}.tar.xz
@@ -34,6 +34,7 @@ BuildRequires:	pkgconfig(libcurl)
 BuildRequires:	pkgconfig(libudjat) >= 2.0.0
 
 BuildRequires:	meson >= 0.61.4
+BuildRequires:	udjat-rpm-macros 
 
 %description
 HTTP client library for %{udjat_product_name}
@@ -71,11 +72,11 @@ C++ HTTP client classes for use with lib%{product_name}
 
 %install
 %meson_install
-%find_lang %{name}-%{udjat_major}.%{udjat_minor} langfiles
+%find_lang %{name}-%{udjat_package_major}.%{udjat_package_minor} langfiles
 
 %files -n %{udjat_library}
 %defattr(-,root,root)
-%{_libdir}/%{name}.so.%{udjat_major}.%{udjat_minor}
+%{_libdir}/%{name}.so.%{udjat_package_major}.%{udjat_package_minor}
 
 %files -n %{udjat_library}-lang -f langfiles
 
@@ -86,13 +87,12 @@ C++ HTTP client classes for use with lib%{product_name}
 %{_libdir}/*.a
 %{_libdir}/pkgconfig/*.pc
 
-%dir %{_includedir}/udjat/tools/http
-%{_includedir}/udjat/tools/http/*.h
 %{_includedir}/udjat/module/*.h
 %{_includedir}/udjat/tools/actions/*.h
+%{_includedir}/udjat/agent/*.h
 
-%dir %{_includedir}/udjat/agent
-%{_includedir}/udjat/agent/http.h
+%dir %{_includedir}/udjat/tools/url/handler
+%{_includedir}/udjat/tools/url/handler/*.h
 
 %post -n %{udjat_library} -p /sbin/ldconfig
 

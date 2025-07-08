@@ -20,7 +20,7 @@
 project(
 	'udjathttp', 
 	['cpp'],
-	version: '2.0.0',
+	version: '2.0.1',
 	default_options : ['c_std=c11', 'cpp_std=c++17'],
 	license: 'GPL-3.0-or-later',
 )
@@ -166,18 +166,19 @@ if host_machine.system() == 'windows'
 
 else
 
-  pkg.generate(
-    name: 'lib' + meson.project_name(),
-    description: project_description,
-    requires: [ 'libudjat' ],
-    libraries: [ '-l' + meson.project_name() ]
-  )
-
   app_conf.set('HAVE_CURL', 1)
   curl = dependency('libcurl')
   lib_deps += [
     curl,
   ]
+
+  pkg.generate(
+    name: 'lib' + meson.project_name(),
+    description: project_description,
+    requires: [ 'libudjat' ],
+    requires_private: [ curl, json_c ],
+    libraries: [ '-l' + meson.project_name() ]
+  )
 
   pkg.generate(
     name: 'lib' + meson.project_name() + '-static',
@@ -229,6 +230,23 @@ if host_machine.system() == 'windows'
     include_directories: includes_dir
   )
 
+  static_library = declare_dependency(
+    link_with: static_library(
+      meson.project_name(), 
+      config_src + lib_src,
+      install: true,
+      dependencies: lib_deps,
+      cpp_args: [ '-DSTATIC_LIBRARY', '-fno-lto' ],
+      include_directories: includes_dir
+    ),
+    include_directories: includes_dir,
+    dependencies: lib_deps,
+    link_args: [ 
+      '-lws2_32',
+      '-lwinhttp',
+    ],
+  )
+
   # https://mesonbuild.com/Reference-manual_functions.html#shared_library
   module = shared_library(
     'http', 
@@ -270,23 +288,31 @@ else
     include_directories: includes_dir
   )
 
+  static_library = declare_dependency(
+    link_with: static_library(
+      meson.project_name(), 
+      config_src + lib_src,
+      install: true,
+      dependencies: lib_deps,
+      cpp_args: [ '-DSTATIC_LIBRARY', '-fno-lto' ],
+      include_directories: includes_dir
+    ),
+    include_directories: includes_dir,
+    dependencies: [ curl, json_c ],
+  )
+
 endif
 
-static_library(
-  meson.project_name(), 
-  config_src + lib_src,
-  install: true,
-  dependencies: lib_deps,
-  cpp_args: [ '-DSTATIC_LIBRARY', '-fno-lto' ],
-  include_directories: includes_dir
+dynamic_library = declare_dependency(
+  link_with: dynamic,
+  include_directories: includes_dir,
 )
 
 executable(
-  'httptest',
+  meson.project_name(),
   config_src + test_src,
   install: false,
   link_with : [ dynamic, module ],
-  link_args: [ '-l:libudjat-testing.a' ],
   dependencies: [ libudjat ],
   include_directories: includes_dir
 )

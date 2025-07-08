@@ -3,9 +3,9 @@
 <udjat src='http://127.0.0.1/~perry/libudjat.xml' update-timer='600'>
 
 	<module name='information' required='no' />
-	<agent name='intvalue' type='integer' value='0' />
+	<agent name='intvalue' type='random' value='0' update-timer='60' />
 
-	<agent type='url' name='localhost' url='http://10.0.0.1/urlprobe' update-timer='120'>
+	<agent type='url' name='10.0.0.1' url='http://10.0.0.1/urlprobe' update-timer='120'>
 	</agent>
 
 </udjat>

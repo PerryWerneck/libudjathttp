@@ -21,14 +21,18 @@
  #include <udjat/defs.h>
  #include <private/context.h>
  #include <udjat/tools/string.h>
- #include <udjat/net/ip/address.h>
 
+ #if __cplusplus >= 201703L
+ #include <udjat/net/ip/address.h>
+ #endif
+ 
  using namespace std;
 
  namespace Udjat {
 
 	void HTTP::Context::set_local(const sockaddr_storage &addr) noexcept {
 
+ #if __cplusplus >= 201703L
 		payload.text.expand([addr](const char *key, std::string &value){
 
 			if(strcasecmp(key,"ipaddr") == 0) {
@@ -49,11 +53,13 @@
 			return false;
 
         },false,false);
+#endif
 
 	}
 
 	void HTTP::Context::set_remote(const sockaddr_storage &addr) noexcept {
 
+ #if __cplusplus >= 201703L
 		payload.text.expand([addr](const char *key, std::string &value){
 
 			if(strcasecmp(key,"hostip") == 0) {
@@ -64,6 +70,7 @@
 			return false;
 
 		},false,false);
+#endif
 
 	}
 
