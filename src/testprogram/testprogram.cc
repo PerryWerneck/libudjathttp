@@ -30,7 +30,7 @@
  using namespace std;
 
  int main(int argc, char **argv) {
-	return loader(argc,argv,[](Application &app) {
+	return loader(argc,argv,[](Application &app) -> int {
 
 		debug("Initializing " PACKAGE_NAME "...");
 		udjat_module_init();
@@ -68,6 +68,7 @@
 
 		cout << "---[ Client tests complete ]----------------------------" << endl;
 
+		return 0;
 	});
 
  }
