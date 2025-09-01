@@ -41,7 +41,7 @@
 				Factory(const char *name = "url") : Udjat::Abstract::Agent::Factory{name} {
 				}
 
-				std::shared_ptr<Abstract::Agent> AgentFactory(const Abstract::Agent &parent, const XML::Node &node) const override;
+				std::shared_ptr<Abstract::Agent> AgentFactory(const XML::Node &node) const override;
 
 			};
 

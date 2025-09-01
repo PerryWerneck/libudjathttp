@@ -20,7 +20,7 @@
 project(
 	'udjathttp', 
 	['cpp'],
-	version: '2.0.1',
+	version: '2.1.0',
 	default_options : ['c_std=c11', 'cpp_std=c++17'],
 	license: 'GPL-3.0-or-later',
 )
@@ -46,7 +46,11 @@ subdir('po')
 #
 # Required libraries
 #
-libudjat = dependency('libudjat')
+libudjat = dependency(
+  'libudjat',
+  version: '>=2.2.0',
+)
+
 json_c = dependency('json', required: false)
 lib_deps = [
   libudjat,
