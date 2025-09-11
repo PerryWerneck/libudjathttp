@@ -150,14 +150,15 @@ if host_machine.system() == 'windows'
   pkg.generate(
     name: 'lib' + meson.project_name(),
     description: project_description,
-    requires: [ 'libudjat' ],
+    requires: [ libudjat ],
     libraries: [ '-l' + meson.project_name() + '.dll' ]
   )
 
   pkg.generate(
     name: 'lib' + meson.project_name() + '-static',
     description: project_description,
-    requires: [ json_c ],
+    requires: [ libudjat ],
+    requires_private: [ json_c ],
     libraries: [ 
       '-l' + meson.project_name(),
       '-lws2_32',
@@ -171,7 +172,11 @@ if host_machine.system() == 'windows'
 else
 
   app_conf.set('HAVE_CURL', 1)
-  curl = dependency('libcurl')
+  curl = dependency(
+    'libcurl',
+    static: false,
+  )
+
   lib_deps += [
     curl,
   ]
@@ -179,15 +184,15 @@ else
   pkg.generate(
     name: 'lib' + meson.project_name(),
     description: project_description,
-    requires: [ 'libudjat' ],
-    requires_private: [ curl, json_c ],
+    requires: [ libudjat, curl ],
+    requires_private: [ json_c ],
     libraries: [ '-l' + meson.project_name() ]
   )
 
   pkg.generate(
     name: 'lib' + meson.project_name() + '-static',
     description: project_description,
-    requires: [ curl, json_c ],
+    requires: [ libudjat, curl, json_c ],
     libraries: [ '-l:lib' + meson.project_name() + '.a' ]
   )
 
