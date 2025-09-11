@@ -175,6 +175,7 @@ else
   curl = dependency(
     'libcurl',
     static: false,
+    default_options: ['default_library=shared'],
   )
 
   lib_deps += [
