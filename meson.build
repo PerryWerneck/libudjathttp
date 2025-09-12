@@ -186,7 +186,7 @@ else
   pkg.generate(
     name: 'lib' + meson.project_name(),
     description: project_description,
-    requires: [ libudjat, curl ],
+    requires: [ 'libudjat', curl ],
     requires_private: [ json_c ],
     libraries: [ '-l' + meson.project_name() ]
   )
@@ -194,7 +194,7 @@ else
   pkg.generate(
     name: 'lib' + meson.project_name() + '-static',
     description: project_description,
-    requires: [ libudjat, curl, json_c ],
+    requires: [ 'libudjat', curl, json_c ],
     libraries: [ '-l:lib' + meson.project_name() + '.a' ]
   )
 
