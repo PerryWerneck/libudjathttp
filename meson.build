@@ -72,6 +72,7 @@ endif
 compiler_flags = [
   '-ggdb3',
   '-fvisibility=hidden',
+  '-Wno-overloaded-virtual',
   '-fPIC',
   '-DHAVE_CONFIG_H=1',
   '-DBUILD_DATE='+time_epoch,
