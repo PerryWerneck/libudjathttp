@@ -40,7 +40,7 @@
 
 			static Udjat::Module * Factory(const char *name = "http");
 
-			Module(const char *name, const char *description = nullptr);
+			Module(const char *name = "http", const char *description = nullptr);
 			virtual ~Module();
 
 		};
