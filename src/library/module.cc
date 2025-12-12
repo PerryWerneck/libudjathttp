@@ -18,8 +18,9 @@
  */
 
  #include <config.h>
+
  #include <udjat/defs.h>
- #include <udjat/moduleinfo.h>
+ #include <udjat/module/abstract.h>
  #include <udjat/tools/logger.h>
  #include <udjat/tools/url.h>
  #include <udjat/tools/url/handler/http.h>
@@ -29,17 +30,15 @@
 	#include <curl/curl.h>
  #endif // HAVE_CURL
 
- namespace Udjat {
-
-       static const Udjat::ModuleInfo moduleinfo{
 #if defined(_WIN32)
-			"WinHTTP module for " STRINGIZE_VALUE_OF(PRODUCT_NAME),         // The module description.
+	#define DESCRIPTION "WinHTTP module for " STRINGIZE_VALUE_OF(PRODUCT_NAME)
 #elif defined(HAVE_CURL)
-			"CURL " LIBCURL_VERSION " module for " STRINGIZE_VALUE_OF(PRODUCT_NAME),                // The module description.
+	#define DESCRIPTION "CURL " LIBCURL_VERSION " module for " STRINGIZE_VALUE_OF(PRODUCT_NAME)
 #else
-			"HTTP module for " STRINGIZE_VALUE_OF(PRODUCT_NAME),            // The module description.
+	#define DESCRIPTION "HTTP module for " STRINGIZE_VALUE_OF(PRODUCT_NAME)
 #endif //
-       };
+
+ namespace Udjat {
 
 	Udjat::Module * HTTP::Module::Factory(const char *name) {
 
@@ -54,8 +53,7 @@
 #endif // HAVE_CURL
 
 		public:
-			Module(const char *name) 
-				: HTTP::Module{name} {
+			Module(const char *name) : HTTP::Module{name, DESCRIPTION} {
 			}
 
 			virtual ~Module() {
@@ -67,7 +65,7 @@
 
 	}
 
-	HTTP::Module::Module(const char *name) : Udjat::Module(name,moduleinfo) {
+	HTTP::Module::Module(const char *name, const char *description) : Udjat::Module(name,(description ? description : DESCRIPTION)) {
 	}
 
 	HTTP::Module::~Module() {

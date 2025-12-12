@@ -22,7 +22,6 @@
  #include <config.h>
  #include <udjat/defs.h>
  #include <udjat/module/abstract.h>
- #include <udjat/module/info.h>
  
  #include <udjat/tools/actions/http.h>
  #include <udjat/agent/http.h>
@@ -41,7 +40,7 @@
 
 			static Udjat::Module * Factory(const char *name = "http");
 
-			Module(const char *name);
+			Module(const char *name, const char *description = nullptr);
 			virtual ~Module();
 
 		};
