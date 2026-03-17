@@ -5,4 +5,4 @@
                 <param name="url">https://git.autoban.desenv.bb.com.br/udjat/module/udjat-module-http.git</param>
               <param name="changesrevision">b81e09cf0e72e4866822caf84bd59476c5d0f841</param></service><service name="tar_scm">
                 <param name="url">https://github.com/PerryWerneck/libudjathttp</param>
-              <param name="changesrevision">02dace1ad632c2be126fd1de22c63b7d7d265473</param></service></servicedata>
+              <param name="changesrevision">17ec07eb04aeb33dee1e17b9444d8aabd61e4921</param></service></servicedata>
