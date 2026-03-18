@@ -20,8 +20,8 @@
 project(
 	'udjathttp', 
 	['cpp'],
-	version: '2.0.1',
-	default_options : ['c_std=c11', 'cpp_std=c++17'],
+	version: '2.1.0',
+	default_options : ['c_std=c11', 'cpp_std=c++17', 'buildtype=release'],
 	license: 'GPL-3.0-or-later',
 )
 
@@ -46,7 +46,12 @@ subdir('po')
 #
 # Required libraries
 #
-libudjat = dependency('libudjat')
+libudjat = dependency(
+  'libudjat',
+  version: '>=2.2.0',
+  fallback: ['libudjat', 'static_library'],
+)
+
 json_c = dependency('json', required: false)
 lib_deps = [
   libudjat,
@@ -67,6 +72,7 @@ endif
 compiler_flags = [
   '-ggdb3',
   '-fvisibility=hidden',
+  '-Wno-overloaded-virtual',
   '-fPIC',
   '-DHAVE_CONFIG_H=1',
   '-DBUILD_DATE='+time_epoch,
@@ -146,14 +152,15 @@ if host_machine.system() == 'windows'
   pkg.generate(
     name: 'lib' + meson.project_name(),
     description: project_description,
-    requires: [ 'libudjat' ],
+    requires: [ libudjat ],
     libraries: [ '-l' + meson.project_name() + '.dll' ]
   )
 
   pkg.generate(
     name: 'lib' + meson.project_name() + '-static',
     description: project_description,
-    requires: [ json_c ],
+    requires: [ libudjat ],
+    requires_private: [ json_c ],
     libraries: [ 
       '-l' + meson.project_name(),
       '-lws2_32',
@@ -167,7 +174,12 @@ if host_machine.system() == 'windows'
 else
 
   app_conf.set('HAVE_CURL', 1)
-  curl = dependency('libcurl')
+  curl = dependency(
+    'libcurl',
+    static: false,
+    default_options: ['default_library=shared'],
+  )
+
   lib_deps += [
     curl,
   ]
@@ -176,14 +188,14 @@ else
     name: 'lib' + meson.project_name(),
     description: project_description,
     requires: [ 'libudjat' ],
-    requires_private: [ curl, json_c ],
+    requires_private: [ json_c, curl ],
     libraries: [ '-l' + meson.project_name() ]
   )
 
   pkg.generate(
     name: 'lib' + meson.project_name() + '-static',
     description: project_description,
-    requires: [ curl, json_c ],
+    requires: [ 'libudjat', json_c, curl ],
     libraries: [ '-l:lib' + meson.project_name() + '.a' ]
   )
 

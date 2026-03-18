@@ -2,7 +2,7 @@ Source: libudjathttp
 Section: unknown
 Priority: optional
 Maintainer: Perry Werneck <perry.werneck@gmail.com>
-Build-Depends: debhelper (>= 7), meson, pkg-config, libudjat2-dev, libcurl-dev
+Build-Depends: debhelper (>= 7), meson, pkg-config, libudjat2-dev, libcurl4-openssl-dev
 
 Package: libudjathttp
 Architecture: any
@@ -23,7 +23,7 @@ Package: libudjathttp-dev
 Architecture: any
 Provides: libudjathttp-dev (= ${binary:Version})
 Section: libdevel
-Depends: ${misc:Depends}, pkg-config, libudjathttp (= ${binary:Version})
+Depends: ${misc:Depends}, pkg-config, libcurl4-openssl-dev, libudjathttp (= ${binary:Version})
 Description: Libudjat development files.
  Development headers for libudjathttp
 

@@ -36,7 +36,7 @@
  
  namespace Udjat {
 
-	std::shared_ptr<Abstract::Agent> HTTP::Agent::Factory::AgentFactory(const Abstract::Agent &, const XML::Node &node) const {
+	std::shared_ptr<Abstract::Agent> HTTP::Agent::Factory::AgentFactory(const XML::Node &node) const {
 		return make_shared<HTTP::Agent>(node);
 	}
 

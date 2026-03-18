@@ -24,7 +24,7 @@
  #include <config.h>
  #include <udjat/defs.h>
  #include <curl/curl.h>
- #include <udjat/tools/actions/abstract.h>
+ #include <udjat/action.h>
  #include <udjat/tools/actions/http.h>
  #include <udjat/tools/url.h>
  #include <memory>

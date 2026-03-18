@@ -23,7 +23,7 @@ build-stamp:
 	dh_testdir
 
 	# Add here commands to compile the package.
-	meson setup --prefix=/usr .build
+	meson setup --buildtype=release --prefix=/usr .build
 	# --- end custom part for compiling
 
 	touch build-stamp
@@ -53,6 +53,9 @@ install: build
 
 	# Install dev
 	DESTDIR=$(PWD)/debian/$(PACKAGE_NAME)-dev meson install -C .build --tags devel
+
+	# Fix curl usage
+	find $(PWD)/debian/$(PACKAGE_NAME)-dev -name '*.pc' -exec sed -i -e "s@ ,libcurl@@g" {} \;
 
 	# Install module
 	DESTDIR=$(PWD)/debian/udjat-module-http meson install -C .build --tags module

@@ -19,7 +19,7 @@
 
 Summary:		HTTP client library for %{udjat_product_name}  
 Name:			libudjat%{module_name}
-Version: 2.0.1
+Version: 2.1.0
 Release:		0
 License:		LGPL-3.0
 Source:			%{name}-%{version}.tar.xz
@@ -29,11 +29,22 @@ URL:			https://github.com/PerryWerneck/libudjat%{module_name}
 Group:			Development/Libraries/C and C++
 BuildRoot:		/var/tmp/%{name}-%{version}
 
-BuildRequires:	gcc-c++ >= 5
-BuildRequires:	pkgconfig(libcurl)
-BuildRequires:	pkgconfig(libudjat) >= 2.0.0
+%if 0%{?suse_version} >= 1504
+BuildRequires:	meson
+%else
+BuildRequires:	automake
+BuildRequires:	libtool
+BuildRequires:	gettext-devel
+%endif
 
-BuildRequires:	meson >= 0.61.4
+%if 0%{?suse_version} >= 1500
+BuildRequires:	gcc-c++ 
+%else
+BuildRequires:	gcc48-c++
+%endif
+
+BuildRequires:	pkgconfig(libcurl)
+BuildRequires:	pkgconfig(libudjat) >= 2.0
 BuildRequires:	udjat-rpm-macros 
 
 %description
@@ -65,20 +76,42 @@ C++ HTTP client classes for use with lib%{product_name}
 
 %prep
 %autosetup
+
+%if 0%{?suse_version} < 1500
+export CC=gcc-4.8
+export CXX=g++-4.8 
+%endif
+
+%if 0%{?suse_version} >= 1504
 %meson
+%else
+ln -f legacy/* .
+NOCONFIGURE=1 ./autogen.sh
+%configure
+%endif
 
 %build
+%if 0%{?suse_version} >= 1504
 %meson_build
+%else
+make all
+%endif
 
 %install
+%if 0%{?suse_version} >= 1504
 %meson_install
 %find_lang %{name}-%{udjat_package_major}.%{udjat_package_minor} langfiles
+%else
+%makeinstall
+%endif
 
 %files -n %{udjat_library}
 %defattr(-,root,root)
 %{_libdir}/%{name}.so.%{udjat_package_major}.%{udjat_package_minor}
 
+%if 0%{?suse_version} >= 1504
 %files -n %{udjat_library}-lang -f langfiles
+%endif
 
 %files devel
 %defattr(-,root,root)

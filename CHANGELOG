@@ -1,4 +1,12 @@
 -------------------------------------------------------------------
+Fri Dec 12 20:10:45 UTC 2025 - perry.werneck@gmail.com
+
+- Update to version 2.1.0+git20251212:
+  * Updating to latest libudjat.
+  * Better version handling for legacy builds.
+  * Archiving autoconf build.
+
+-------------------------------------------------------------------
 Sat Jul 05 01:58:30 UTC 2025 - perry.werneck@gmail.com
 
 - Update to version 2.0.1+git20250704:
