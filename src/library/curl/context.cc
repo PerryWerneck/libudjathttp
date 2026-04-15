@@ -18,6 +18,12 @@
  */
 
  #include <config.h>
+
+ #ifdef LOG_DOMAIN
+ 	#undef LOG_DOMAIN
+ #endif
+ #define LOG_DOMAIN "curl"
+
  #include <udjat/defs.h>
  #include <udjat/tools/url.h>
  #include <udjat/tools/url/handler.h>
@@ -146,8 +152,6 @@
 			}
 		}
 
-		
-
 	}
 	
 	HTTP::Context::~Context() {
@@ -181,7 +185,7 @@
 			break;
 
 		default:
-			throw std::system_error(EINVAL,std::system_category(),"Unsupported HTTP verb");
+			throw std::system_error(EINVAL,std::system_category(),_("Unsupported HTTP verb"));
 		}
 
 		if(Config::Value<bool>("http","trace",TRACE_DEFAULT).get()) {
@@ -236,13 +240,32 @@
 
 		if(res == CURLE_OK) {
 			long response_code = 0;
-			curl_easy_getinfo(hCurl, CURLINFO_RESPONSE_CODE, &response_code);
-			debug("result=CURLE_OK, response_code=",response_code," except=",except);	
-			handler->status.code = (int) response_code;
-			return response_code;
+			auto rc = curl_easy_getinfo(hCurl, CURLINFO_RESPONSE_CODE, &response_code);
+
+			if(rc == CURLE_OK) {
+
+				if(Logger::enabled(Logger::Trace)) {
+					Logger::String{"result=CURLE_OK, response_code=",response_code," except=",except}.trace();
+				}
+
+				handler->status.code = (int) response_code;
+				return response_code;
+			}
+
+			if(except) {
+				throw Curl::Exception(
+						rc, 
+						_("Failed to get response code from curl"),
+						handler->c_str()
+					);
+			}
+
+			return rc;
 		}
 
-		debug("Curl response=",res," '",curl_easy_strerror(res),"' message='",handler->status.message.c_str(),"'");
+		if(Logger::enabled(Logger::Trace)) {
+			Logger::String{"Curl response=",res," '",curl_easy_strerror(res),"' message='",handler->status.message.c_str(),"'"}.trace();
+		}
 
 		if(except) {
 			if(error.system) {
@@ -393,7 +416,7 @@
 
 		// curl_easy_setopt(context->hCurl, CURLOPT_CONNECTTIMEOUT, seconds);
 
-		Logger::String{"Connecting to ",context->handler->c_str()," with timeout of ",seconds," seconds"}.trace("curl");
+		Logger::String{"Connecting to ",context->handler->c_str()," with timeout of ",seconds," seconds"}.trace();
 
 		if(purpose != CURLSOCKTYPE_IPCXN) {
 			Logger::String{"Invalid purpose '",purpose,"' in curl_opensocket"}.error();
@@ -422,7 +445,7 @@
 			if(Socket::wait_for_connection(sockfd,seconds) < 0) {
 				context->system_error();
 				::close(sockfd);
-				debug("Timeout connecting to socket");
+				Logger::String{"Timeout connecting to socket"}.warning();
 				return CURL_SOCKET_BAD;
 			}
 
@@ -436,13 +459,15 @@
 
 		} catch(...) {
 			
-			Logger::String{"Unexpected error while connecting to host"}.error("curl");
+			Logger::String{"Unexpected error while connecting to host"}.error();
 			::close(sockfd);
 			return CURL_SOCKET_BAD;
 
 		}
 
-		// Logger::String{"Connected to host using socket '",sockfd,"'"}.trace("curl");
+		if(Logger::enabled(Logger::Trace)) {
+			Logger::String{"Connected to host using socket '",sockfd,"'"}.trace();
+		}
 
 		//
 		// Setup socket timeouts.
