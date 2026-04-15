@@ -55,45 +55,50 @@
 
  namespace Udjat {
 
- 	class UDJAT_PRIVATE CurlException : public Udjat::Exception {
-	public:
-		CurlException(CURLcode res, const char *message, const char *url) : Udjat::Exception{res,curl_easy_strerror(res)} {
-			info.title = _( "HTTP operation failed" );
-			info.url = url;
-			if(message && *message) {
+	namespace Curl {
+
+		class UDJAT_PRIVATE Exception : public Udjat::Exception {
+		public:
+			Exception(CURLcode res, const char *message, const char *url) : Udjat::Exception{res,curl_easy_strerror(res)} {
+				info.title = _( "HTTP operation failed" );
+				info.url = url;
+				if(message && *message) {
+					info.body = message;
+				}
 				info.body = message;
+				info.domain = "curl";
 			}
-			info.body = message;
-			info.domain = "curl";
-		}
 
-		void write(const Logger::Level level = Logger::Error) const noexcept override {
-			debug("Title: ",info.title.c_str());
-			debug("what:  ",what());
-			debug("body:  ",info.body.c_str());
-			Logger::String{info.body.c_str()}.write(level,"curl");
-		}
+			void write(const Logger::Level level = Logger::Error) const noexcept override {
+				debug("Title: ",info.title.c_str());
+				debug("what:  ",what());
+				debug("body:  ",info.body.c_str());
+				Logger::String{info.body.c_str()}.write(level,"curl");
+			}
 
-	};
+		};
 
-	class UDJAT_PRIVATE CurlSingleton {
-	private:
-		CurlSingleton() {
-			Logger::String{"Intializing curl version ", curl_version_info(CURLVERSION_NOW)->version}.trace(PACKAGE_NAME);
-			curl_global_init(CURL_GLOBAL_ALL);
-		}
+		class UDJAT_PRIVATE Singleton {
+		private:
+			Singleton() {
+				Logger::String{"Intializing curl version ", curl_version_info(CURLVERSION_NOW)->version}.trace(PACKAGE_NAME);
+				curl_global_init(CURL_GLOBAL_ALL);
+			}
 
-	public:
-		~CurlSingleton() {
-			curl_global_cleanup();
-		}
+		public:
+			~Singleton() {
+				curl_global_cleanup();
+			}
 
-		static CurlSingleton &instance() {
-			static CurlSingleton instance;
-			return instance;
-		}	
+			static Singleton &instance() {
+				static Singleton instance;
+				return instance;
+			}	
 
-	};
+		};
+
+
+	}
 
 #if __cplusplus >= 201703L	
 	HTTP::Context::Context(HTTP::Handler &h, const std::function<bool(uint64_t current, uint64_t total, const void *data, size_t len)> &w) 
@@ -104,11 +109,11 @@
 		write = &w;	
 #endif
 
-		CurlSingleton::instance();
+		Curl::Singleton::instance();
 
 		hCurl = curl_easy_init();
 		if(!hCurl) {
-			throw CurlException(CURLE_FAILED_INIT,"Failed to initialize curl",handler->url.c_str());
+			throw Curl::Exception(CURLE_FAILED_INIT,"Failed to initialize curl",handler->url.c_str());
 		}
 
 		curl_easy_setopt(hCurl, CURLOPT_WRITEDATA, this);
@@ -121,7 +126,6 @@
 
 		curl_easy_setopt(hCurl, CURLOPT_OPENSOCKETDATA, this);
 		curl_easy_setopt(hCurl, CURLOPT_OPENSOCKETFUNCTION, open_socket_callback);
-		// curl_easy_setopt(hCurl, CURLOPT_CONNECTTIMEOUT, Config::Value<long>("http","timeout",10).get());
 
 		curl_easy_setopt(hCurl, CURLOPT_SOCKOPTDATA, this);
 		curl_easy_setopt(hCurl, CURLOPT_SOCKOPTFUNCTION, sockopt_callback);
@@ -242,13 +246,13 @@
 
 		if(except) {
 			if(error.system) {
-				throw CurlException(
+				throw Curl::Exception(
 						res, 
 						error.message[0] ? error.message : strerror(error.system),
 						handler->c_str()
 					);
 			}
-			throw CurlException(
+			throw Curl::Exception(
 					res, 
 					error.message, 
 					handler->c_str()

@@ -52,6 +52,10 @@
 				std::vector<Header> response;
 			} headers;
 
+
+			/// @brief if true and the local file exists set the 'If-Modified-Since' header to prevent download an already downloaded file
+			bool conditional = true;
+
 		protected:
 			const URL url;
 
