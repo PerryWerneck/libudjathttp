@@ -432,7 +432,7 @@
 		try {
 
 			debug("--------------");
-			Socket::blocking(sockfd,false);
+			Socket::set_blocking(sockfd,false);
 
 			debug("Connecting...");
 			if(::connect(sockfd,(struct sockaddr *)(&(address->addr)),address->addrlen) && errno != EINPROGRESS) {
@@ -449,7 +449,7 @@
 				return CURL_SOCKET_BAD;
 			}
 
-			Socket::blocking(sockfd,true);
+			Socket::set_blocking(sockfd,true);
 
 		} catch(const std::exception &e) {
 
