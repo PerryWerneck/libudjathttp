@@ -19,12 +19,13 @@
 
  #include <config.h>
  #include <udjat/defs.h>
+ #include <udjat/module.h>
  #include <udjat/module/http.h>
 
  using namespace std;
 
  /// @brief Register udjat module.
- UDJAT_API Udjat::Module * udjat_module_init() {
+ UDJAT_API Udjat::Module * udjat_module_init(const Udjat::XML::Node &) {
 	return Udjat::HTTP::Module::Factory();
  }
 

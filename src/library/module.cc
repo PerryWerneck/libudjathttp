@@ -54,6 +54,7 @@
 
 		public:
 			Module(const char *name) : HTTP::Module{name, DESCRIPTION} {
+				autoclean();
 			}
 
 			virtual ~Module() {
