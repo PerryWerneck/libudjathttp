@@ -25,7 +25,7 @@
  using namespace std;
 
  /// @brief Register udjat module.
- UDJAT_API Udjat::Module * udjat_module_init(const Udjat::XML::Node &) {
+ UDJAT_API Udjat::Module * udjat_module_init(const Udjat::Properties &) {
 	return Udjat::HTTP::Module::Factory();
  }
 
