@@ -19,7 +19,7 @@
 
  #include <config.h>
  #include <udjat/defs.h>
- #include <udjat/loader.h>
+ #include <udjat/tools/loader.h>
  #include <udjat/module/abstract.h>
  #include <udjat/tools/url.h>
  #include <udjat/tools/url/handler.h>
@@ -29,9 +29,10 @@
  using namespace Udjat;
  using namespace std;
 
- int main(int argc, char **argv) {
+ int main(const int argc, const char **argv) {
 	return loader(argc,argv,[](Application &app) -> int {
 
+		/*
 		debug("Initializing " PACKAGE_NAME "...");
 		udjat_module_init();
 		debug("... initilization of " PACKAGE_NAME " is complete");
@@ -67,6 +68,7 @@
 
 
 		cout << "---[ Client tests complete ]----------------------------" << endl;
+		*/
 
 		return 0;
 	});

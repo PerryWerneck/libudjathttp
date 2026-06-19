@@ -125,6 +125,7 @@ lib_src = [
   'src/library/action.cc',
   'src/library/handler.cc',
   'src/library/context.cc',
+  'src/library/testprogram.cc',
 ]
 
 module_src = [
