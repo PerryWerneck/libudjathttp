@@ -56,6 +56,26 @@
 				}
 				return true;
 			}
+		},
+		UnitTests::Worker{
+			"Test url get to tempfile",
+			[]() {
+				// Udjat::URL url{"http://127.0.0.1/udjat/css/style.css"};
+				const char *env = getenv("UDJAT_URL");
+				if(!env) {
+					env = "http://127.0.0.1/udjat/css/style.css";
+				}
+
+				{
+					auto filename = Udjat::URL{env}.tempfile([](double, double){
+						return false;
+					});
+			
+					cout << "Filename = " << filename << endl;
+				
+				}
+				return true;
+			}
 		}
 	);
 
@@ -64,7 +84,7 @@
 
 //  #include <udjat/defs.h>
 //  #include <udjat/tools/loader.h>
-//  #include <udjat/module/abstract.h>
+//  #include <udjat/module.h>
 //  #include <udjat/tools/url.h>
 //  #include <udjat/tools/url/handler.h>
 //  #include <udjat/tools/url/handler/http.h>
