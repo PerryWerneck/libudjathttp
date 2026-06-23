@@ -49,7 +49,7 @@ subdir('po')
 libudjat = dependency(
   'libudjat',
   version: '>=2.7.0',
-  fallback: ['libudjat', 'dynamic_library'],
+  fallback: ['libudjat'],
 )
 
 json_c = dependency('json', required: false)

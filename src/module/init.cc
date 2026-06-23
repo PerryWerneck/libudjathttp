@@ -26,6 +26,10 @@
 
  /// @brief Register udjat module.
  UDJAT_API Udjat::Module * udjat_module_init(const Udjat::Properties &) {
+#ifdef LIBUDJAT_STATIC
+	throw logic_error("Cant use modules on static libudjat");
+#else
 	return Udjat::HTTP::Module::Factory();
+#endif // LIBUDJAT_STATIC
  }
 
