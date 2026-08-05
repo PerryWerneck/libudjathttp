@@ -33,16 +33,16 @@
  
  namespace Udjat {
 
-	std::shared_ptr<Udjat::Action> HTTP::Action::Factory::ActionFactory(const XML::Node &node) const {
-		return make_shared<HTTP::Action>(node);
+	std::shared_ptr<Udjat::Action> HTTP::Action::Factory::ActionFactory(const Properties &props) const {
+		return make_shared<HTTP::Action>(props);
 	}
 
-	HTTP::Action::Action(const XML::Node &node) 
-		: 	Udjat::Action{node}, 
-			url{node,"url",true},
-			method{HTTP::MethodFactory(node,"get")},
-			payload{super::payload(node)}, 
-			mimetype{MimeTypeFactory(String{node,"payload-format","json"}.c_str())} {
+	HTTP::Action::Action(const Properties &props) 
+		: 	Udjat::Action{props}, 
+			url{props,"url",true},
+			method{HTTP::MethodFactory(props,"get")},
+			payload{super::payload(props)}, 
+			mimetype{MimeTypeFactory(props.get("payload-format","json").c_str())} {
 	}
 
 	int HTTP::Action::call(Udjat::Request &request, Udjat::Response &response, bool except) {

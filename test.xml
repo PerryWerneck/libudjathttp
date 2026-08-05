@@ -2,9 +2,9 @@
 
 <udjat src='http://127.0.0.1/~perry/libudjat.xml' update-timer='600'>
 
-	<module name='information' required='no' />
+	<module path='.build/udjat-module-http.so' required='yes' preload='yes' />
+
 	<agent name='intvalue' type='random' value='0' update-timer='60' />
-	<module path='.build/udjat-module-http.so' required='yes' />
 	
 	<agent type='url' name='10.0.0.1' url='http://10.0.0.1/urlprobe' update-timer='120'>
 	</agent>

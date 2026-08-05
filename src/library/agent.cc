@@ -36,12 +36,12 @@
  
  namespace Udjat {
 
-	std::shared_ptr<Abstract::Agent> HTTP::Agent::Factory::AgentFactory(const XML::Node &node) const {
-		return make_shared<HTTP::Agent>(node);
+	std::shared_ptr<Abstract::Agent> HTTP::Agent::Factory::AgentFactory(const Properties &props) const {
+		return make_shared<HTTP::Agent>(props);
 	}
 
-	HTTP::Agent::Agent(const XML::Node &node) 
-		: 	Udjat::Agent<int32_t>{node,200}, Udjat::URL{node,"url"} {
+	HTTP::Agent::Agent(const Properties &props) 
+		: Udjat::Agent<int32_t>{props,200}, Udjat::URL{props,"url"} {
 	}
 
 	bool HTTP::Agent::refresh(bool) {

@@ -28,6 +28,7 @@
  #include <udjat/tools/url.h>
  #include <udjat/tools/request.h>
  #include <udjat/tools/response.h>
+ #include <udjat/tools/properties.h>
  
  namespace Udjat {
 
@@ -47,11 +48,11 @@
 				Factory(const char *name = "url") : Udjat::Action::Factory{name} {
 				}
 
-				std::shared_ptr<Udjat::Action> ActionFactory(const XML::Node &node) const override;
+				std::shared_ptr<Udjat::Action> ActionFactory(const Properties &props) const override;
 
 			};
 
-			Action(const XML::Node &node);
+			Action(const Properties &props);
 
 			int call(Udjat::Request &request, Udjat::Response &response, bool except) override;
 

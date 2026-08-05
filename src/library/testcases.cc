@@ -1,0 +1,87 @@
+/* SPDX-License-Identifier: LGPL-3.0-or-later */
+
+/*
+ * Copyright (C) 2026 Perry Werneck <perry.werneck@gmail.com>
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as published
+ * by the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
+
+ #include <config.h>
+ 
+ #if defined(DEBUG) and ! defined(LIBUDJAT_STATIC) 
+
+ #include <udjat/tools/logger.h>
+ #include <udjat/tools/testsuite.h>
+ #include <udjat/tools/url.h>
+ #include <udjat/tools/url/handler.h>
+ #include <udjat/tools/url/handler/http.h>
+
+ #include <iostream>
+
+ using namespace Udjat;
+ using namespace std;
+
+ UDJAT_API void udjat_register_tests(Udjat::TestSuite &suite) noexcept {
+
+	using Case = TestSuite::Case;
+
+	suite.add(
+		Case{
+			"Test url get",
+			[](std::ostream &) {
+				// Udjat::URL url{"http://127.0.0.1/udjat/css/style.css"};
+				const char *env = getenv("UDJAT_URL");
+				if(!env) {
+					env = "http://127.0.0.1/udjat/css/style.css";
+				}
+
+				{
+					Udjat::URL url{env};
+					auto handler = HTTP::Handler::Factory{"http"}.HandlerFactory(url);
+			
+					debug("URL name = ",url.name().c_str());
+					auto response = handler->get(String{"/tmp/",url.name()}.c_str());
+			
+					cout << "-----" << endl << response << endl << "-----" << endl;
+				
+				}
+				return "Ok";
+			}
+		},
+		Case{
+			"Test url get to tempfile",
+			[](std::ostream &) {
+				// Udjat::URL url{"http://127.0.0.1/udjat/css/style.css"};
+				const char *env = getenv("UDJAT_URL");
+				if(!env) {
+					env = "http://127.0.0.1/udjat/css/style.css";
+				}
+
+				{
+					auto filename = Udjat::URL{env}.tempfile([](double, double){
+						return false;
+					});
+			
+					cout << "Filename = " << filename << endl;
+				
+				}
+				return "Ok";
+			}
+		}
+	);
+
+ }
+
+ #endif
+

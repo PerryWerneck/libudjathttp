@@ -27,7 +27,7 @@
  #include <udjat/tools/logger.h>
  #include <udjat/tools/configuration.h>
  #include <udjat/tools/socket.h>
- #include <udjat/tools/value.h>
+ #include <udjat/tools/variant.h>
  #include <udjat/tools/http/mimetype.h>
 
  #include <private/context.h>
@@ -83,7 +83,7 @@
 	
 #if defined(HAVE_JSON_C)
 
-	static void load(Udjat::Value &value, struct json_object *jobj) {
+	static void load(Udjat::Variant &value, struct json_object *jobj) {
 
 		switch(json_object_get_type(jobj)) {
 		case json_type_null:
@@ -134,7 +134,7 @@
 	}
 #endif // HAVE_JSON_C
 
-	bool HTTP::Handler::get(Udjat::Value &value, const HTTP::Method method, const char *payload) {
+	bool HTTP::Handler::get(Udjat::Variant &value, const HTTP::Method method, const char *payload) {
 
 #ifdef HAVE_JSON_C
 

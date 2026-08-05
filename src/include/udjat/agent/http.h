@@ -24,9 +24,10 @@
  #pragma once
 
  #include <udjat/defs.h>
- #include <udjat/agent/abstract.h>
+ #include <udjat/agent.h>
  #include <udjat/tools/http/method.h>
  #include <udjat/tools/actions/http.h>
+ #include <udjat/tools/properties.h>
  #include <udjat/agent.h>
  
  namespace Udjat {
@@ -41,11 +42,11 @@
 				Factory(const char *name = "url") : Udjat::Abstract::Agent::Factory{name} {
 				}
 
-				std::shared_ptr<Abstract::Agent> AgentFactory(const XML::Node &node) const override;
+				std::shared_ptr<Abstract::Agent> AgentFactory(const Properties &props) const override;
 
 			};
 
-			Agent(const XML::Node &node);
+			Agent(const Properties &props);
 
 			std::shared_ptr<Abstract::State> computeState() override;
 			bool refresh(bool) override;

@@ -32,7 +32,6 @@
  #include <udjat/tools/logger.h>
  #include <udjat/tools/configuration.h>
  #include <udjat/tools/socket.h>
- #include <udjat/tools/value.h>
  #include <udjat/tools/http/mimetype.h>
  #include <private/context.h>
  #include <udjat/tools/string.h>
