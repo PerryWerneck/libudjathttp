@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: udjathttp 1.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-08-05 06:08-0300\n"
+"POT-Creation-Date: 2026-08-05 06:33-0300\n"
 "PO-Revision-Date: 2026-04-15 16:40-0300\n"
 "Last-Translator: Perry Werneck <perry.werneck@gmail.com>\n"
 "Language-Team: Brazilian Portuguese <perry.werneck@gmail.com>\n"
@@ -20,14 +20,14 @@ msgstr ""
 "X-Poedit-SourceCharset: utf-8\n"
 "X-Generator: Poedit 3.8\n"
 
-#: src/library/curl/context.cc:69
+#: src/library/curl/context.cc:68
 msgid "HTTP operation failed"
 msgstr "Requisição HTTP falhou"
 
-#: src/library/curl/context.cc:188
+#: src/library/curl/context.cc:187
 msgid "Unsupported HTTP verb"
 msgstr "Verbo HTTP inválido ou não suportado"
 
-#: src/library/curl/context.cc:258
+#: src/library/curl/context.cc:257
 msgid "Failed to get response code from curl"
 msgstr "Erro ao tentar obter resposta da libcurl"

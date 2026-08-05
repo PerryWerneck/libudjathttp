@@ -22,7 +22,7 @@
 
 Summary:		HTTP client module for udjat 
 Name:			mingw64-udjat-http
-Version: 2.1.2
+Version: 3.0.0
 Release:		0
 License:		LGPL-3.0
 Source:			udjat-protocol-http-%{version}.tar.xz

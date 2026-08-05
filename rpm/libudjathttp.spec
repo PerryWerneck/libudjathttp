@@ -19,7 +19,7 @@
 
 Summary:		HTTP client library for %{udjat_product_name}  
 Name:			libudjat%{module_name}
-Version: 2.1.2
+Version: 3.0.0
 Release:		0
 License:		LGPL-3.0
 Source:			%{name}-%{version}.tar.xz
