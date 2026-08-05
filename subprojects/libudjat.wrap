@@ -1,6 +1,6 @@
 [wrap-git]
 url = https://github.com/PerryWerneck/libudjat
-revision = v2
+revision = v3
 depth = 1
 
 [provide]

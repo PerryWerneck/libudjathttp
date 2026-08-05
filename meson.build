@@ -20,7 +20,7 @@
 project(
 	'udjathttp', 
 	['cpp'],
-	version: '2.1.2',
+	version: '3.0.0',
 	default_options : ['c_std=c11', 'cpp_std=c++17', 'buildtype=release'],
 	license: 'GPL-3.0-or-later',
 )
@@ -48,7 +48,7 @@ subdir('po')
 #
 libudjat = dependency(
   'libudjat',
-  version: '>=2.7.0',
+  version: '>=3.0.0',
   fallback: ['libudjat'],
 )
 
