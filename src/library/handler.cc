@@ -38,7 +38,10 @@
  #include <system_error>
 
  #if defined(HAVE_JSON_C)
+	#pragma GCC diagnostic push
+	#pragma GCC diagnostic ignored "-Wunused-function"
 	#include <json.h>
+	#pragma GCC diagnostic pop
  #endif // HAVE_JSON_C
 
  #if defined(HAVE_CURL)
@@ -104,7 +107,7 @@
 
 		case json_type_object:
 			{
-				value.set(Value::Object);
+				value.clear(Value::Object);
 				json_object_object_foreach(jobj, key, val) {
 					load(value[(const char *) key],val);
 				}
@@ -113,7 +116,7 @@
 
 		case json_type_array:
 			{
-				value.set(Value::Array);
+				value.clear(Value::Array);
 				int arraylen = json_object_array_length(jobj);
 				for (int i = 0; i < arraylen; i++) {
 					struct json_object *elem = json_object_array_get_idx(jobj, i);
