@@ -46,11 +46,11 @@
  #include <unistd.h>
  #include <system_error>
 
- #ifdef DEBUG
-	#define TRACE_DEFAULT true
- #else
+//  #ifdef DEBUG
+// 	#define TRACE_DEFAULT true
+//  #else
 	#define TRACE_DEFAULT false
- #endif  // DEBUG
+//  #endif  // DEBUG
 
  #ifndef CURL_WRITEFUNC_ERROR
  	#define CURL_WRITEFUNC_ERROR -1
@@ -218,7 +218,7 @@
 
 	int HTTP::Context::perform(bool except) {
 
-		debug(__FUNCTION__," handler=",handler->c_str());
+//		debug(__FUNCTION__," handler=",handler->c_str());
 
 		handler->headers.response.clear();
 		payload.ptr = nullptr;
@@ -326,7 +326,7 @@
 
 		size_t realsize = size * nmemb;
 
-		debug("----> realsize=",realsize,"\n",std::string{(const char *) contents,realsize}.c_str(),"\n");
+		// debug("----> realsize=",realsize,"\n",std::string{(const char *) contents,realsize}.c_str(),"\n");
 
 		try {
 
@@ -409,7 +409,7 @@
 
 	curl_socket_t HTTP::Context::open_socket_callback(Context *context, curlsocktype purpose, struct curl_sockaddr *address) noexcept {
 
-		debug("Context=",((unsigned long long) context)," handler=",context->handler->c_str());
+//		debug("Context=",((unsigned long long) context)," handler=",context->handler->c_str());
 
 		int seconds = Config::Value<unsigned int>("network","timeout",10).get();
 
@@ -430,17 +430,17 @@
 
 		try {
 
-			debug("--------------");
+//			debug("--------------");
 			Socket::set_blocking(sockfd,false);
 
-			debug("Connecting...");
+//			debug("Connecting...");
 			if(::connect(sockfd,(struct sockaddr *)(&(address->addr)),address->addrlen) && errno != EINPROGRESS) {
 				context->system_error();
 				::close(sockfd);
 				return CURL_SOCKET_BAD;
 			}
 
-			debug("Waiting for connection...");
+//			debug("Waiting for connection...");
 			if(Socket::wait_for_connection(sockfd,seconds) < 0) {
 				context->system_error();
 				::close(sockfd);
@@ -531,7 +531,7 @@
 	size_t HTTP::Context::header_callback(char *buffer, size_t size, size_t nitems, Context *context) noexcept {
 
 		String header{(const char *) buffer,(size_t) (size*nitems)};
-		debug("header=",header);
+//		debug("header=",header);
 
 		try {
 
