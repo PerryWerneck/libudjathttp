@@ -35,6 +35,7 @@ version_array = pkg_version.split('.')
 pkg_major_version = version_array[0].to_int()
 pkg_minor_version = version_array[1].to_int()
 pkg_micro_version = version_array[2].to_int()
+#library_type = get_option('default_library')  # 'shared', 'static', or 'both'
 
 libversion = '@0@.@1@'.format(pkg_major_version,pkg_minor_version)
 
@@ -155,13 +156,6 @@ if host_machine.system() == 'windows'
     name: 'lib' + meson.project_name(),
     description: project_description,
     requires: [ libudjat ],
-    libraries: [ '-l' + meson.project_name() + '.dll' ]
-  )
-
-  pkg.generate(
-    name: 'lib' + meson.project_name() + '-static',
-    description: project_description,
-    requires: [ libudjat ],
     requires_private: [ json_c ],
     libraries: [ 
       '-l' + meson.project_name(),
@@ -194,13 +188,6 @@ else
     libraries: [ '-l' + meson.project_name() ]
   )
 
-  pkg.generate(
-    name: 'lib' + meson.project_name() + '-static',
-    description: project_description,
-    requires: [ 'libudjat', json_c, curl ],
-    libraries: [ '-l:lib' + meson.project_name() + '.a' ]
-  )
-
   lib_src += [
     'src/library/curl/context.cc',
   ]
@@ -229,9 +216,9 @@ if host_machine.system() == 'windows'
     )
   )
 
-  dynamic = shared_library(
+  libudjathttp = library(
     meson.project_name(), 
-    config_src + lib_src + resources,
+    config_src + lib_src,
     install: true,
     version : libversion,
     soversion : libversion,
@@ -244,23 +231,6 @@ if host_machine.system() == 'windows'
     include_directories: includes_dir
   )
 
-  static_library = declare_dependency(
-    link_with: static_library(
-      meson.project_name(), 
-      config_src + lib_src,
-      install: true,
-      dependencies: lib_deps,
-      cpp_args: [ '-DSTATIC_LIBRARY', '-fno-lto' ],
-      include_directories: includes_dir
-    ),
-    include_directories: includes_dir,
-    dependencies: lib_deps,
-    link_args: [ 
-      '-lws2_32',
-      '-lwinhttp',
-    ],
-  )
-
   # https://mesonbuild.com/Reference-manual_functions.html#shared_library
   module = shared_library(
     'http', 
@@ -268,7 +238,7 @@ if host_machine.system() == 'windows'
     name_prefix: 'udjat-module-',
     install: true,
     install_tag: 'module',
-    link_with: dynamic,
+    link_with: libudjathttp,
     install_dir: libudjat.get_variable('module_path'),
     gnu_symbol_visibility: 'hidden',
     dependencies: lib_deps,
@@ -277,7 +247,7 @@ if host_machine.system() == 'windows'
 
 else
 
-  dynamic = shared_library(
+  libudjathttp = library(
     meson.project_name(), 
     config_src + lib_src,
     install: true,
@@ -295,38 +265,25 @@ else
     config_src + module_src,
     name_prefix: 'udjat-module-',
     install: true,
-    link_with: dynamic,
+    link_with: libudjathttp,
     install_dir: libudjat.get_variable('module_path'),
     gnu_symbol_visibility: 'hidden',
     dependencies: lib_deps,
     include_directories: includes_dir
   )
 
-  static_library = declare_dependency(
-    link_with: static_library(
-      meson.project_name(), 
-      config_src + lib_src,
-      install: true,
-      dependencies: lib_deps,
-      cpp_args: [ '-DSTATIC_LIBRARY', '-fno-lto' ],
-      include_directories: includes_dir
-    ),
-    include_directories: includes_dir,
-    dependencies: [ curl, json_c ],
-  )
-
 endif
 
-dynamic_library = declare_dependency(
-  link_with: dynamic,
-  include_directories: includes_dir,
-)
+libudjathttp_dep = declare_dependency(
+  link_with : libudjathttp,
+  include_directories : includes_dir
+) 
 
 executable(
   meson.project_name(),
   config_src + test_src,
   install: false,
-  link_with : [ dynamic, module ],
+  link_with : [ libudjathttp, module ],
   dependencies: [ libudjat ],
   include_directories: includes_dir
 )
