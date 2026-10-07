@@ -4,4 +4,4 @@ revision = v3
 depth = 1
 
 [provide]
-libudjat = dynamic_library
+libudjat = libudjat_dep

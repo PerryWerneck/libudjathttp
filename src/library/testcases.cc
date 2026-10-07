@@ -37,6 +37,7 @@
 	using Case = TestSuite::Case;
 
 	suite.add(
+		"HTTP client library",
 		Case{
 			"Test url get",
 			[](std::ostream &) {
