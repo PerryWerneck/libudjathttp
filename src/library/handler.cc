@@ -107,7 +107,7 @@
 
 		case json_type_object:
 			{
-				value.clear(Value::Object);
+				value.clear(Value::ValueMap);
 				json_object_object_foreach(jobj, key, val) {
 					load(value[(const char *) key],val);
 				}
